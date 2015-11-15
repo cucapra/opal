@@ -59,6 +59,15 @@ $(DOCSDIR)/build/%.html: docs/%.md $(MADOKO)
 	$(MADOKO) --odir=docs/build $<
 
 
+# Deploy docs to Web server.
+
+.PHONY: deploy
+RSYNCARGS := --compress --recursive --checksum --delete -e ssh
+DEST := dh:domains/adriansampson.net/opal
+deploy: docs
+	rsync $(RSYNCARGS) docs/build/ $(DEST)
+
+
 # Auto-build using https://facebook.github.io/watchman/
 
 .PHONY: watch
