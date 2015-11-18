@@ -2,7 +2,7 @@
 	"version": "0.1.0",
 	"configurations": [
 		{
-			"name": "launch",
+			"name": "Run opal.js",
 			"type": "node",
 			"program": "opal.js",
 			"stopOnEntry": false,
