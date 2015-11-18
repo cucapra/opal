@@ -1,7 +1,14 @@
 'use strict';
 
+class Message {
+}
+
+class Weight<T> {
+  values: { [world: string]: T};
+}
+
 class Context {
-  worlds: Iterable<any>[];
+  worlds: Iterable<Event>[];
 
   hypothetical(f: GeneratorFunction) {
     this.worlds.push(f());
@@ -10,5 +17,5 @@ class Context {
 
 let ctx = new Context();
 ctx.hypothetical(function* () {
-  yield 1;
+  yield new Message();
 });
