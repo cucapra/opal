@@ -1,0 +1,19 @@
+{
+	"version": "0.1.0",
+	"configurations": [
+		{
+			"name": "launch",
+			"type": "node",
+			"program": "opal.js",
+			"stopOnEntry": false,
+			"request": "launch",
+			"args": [],
+			"cwd": ".",
+			"runtimeExecutable": null,
+			"runtimeArgs": ["--nolazy"],
+			"env": { },
+			"sourceMaps": false,
+			"outDir": null
+		}
+	]
+}
