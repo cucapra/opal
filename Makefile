@@ -2,9 +2,7 @@ SRCDIR := src
 SOURCES := opal.ts
 DOCSDIR := docs
 DOCFILES := opal choices
-TSCARGS := --noImplicitAny
-
-SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
+TSCARGS := --noImplicitAny --target ES6
 OUT_JS := opal.js
 
 .PHONY: all
@@ -20,6 +18,7 @@ clean:
 TSC := node_modules/typescript/bin/tsc
 NODE_D := typings/node/node.d.ts
 
+SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
 TS_SRCS := $(SRC_FILES) $(NODE_D)
 $(OUT_JS): $(TSC) $(TS_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(TS_SRCS)
@@ -33,7 +32,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 TSD := node_modules/tsd/build/cli.js
 
 %.d.ts: $(TSD)
-	$(TSD) install $(firstword $(subst /, ,$*))
+	$(TSD) install $(lastword $(subst /, ,$*))
 	@touch $@
 
 
