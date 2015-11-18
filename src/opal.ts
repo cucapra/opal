@@ -1,9 +1,14 @@
 'use strict';
 
-function* foo() {
-  console.log(2);
-  yield 1;
+class Context {
+  worlds: Iterable<any>[];
+
+  hypothetical(f: GeneratorFunction) {
+    this.worlds.push(f());
+  }
 }
 
-let f = foo();
-console.log(f.next());
+let ctx = new Context();
+ctx.hypothetical(function* () {
+  yield 1;
+});
