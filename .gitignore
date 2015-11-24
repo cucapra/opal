@@ -1,4 +1,7 @@
 node_modules/
 typings/
 opal.js
+opal.js.map
 docs/build/
+.vs/
+.ntvs_analysis.dat
