@@ -1,5 +1,13 @@
 {
 	"files.exclude": {
-		"*.js": true
+		"*.js": true,
+		"*.js.map": true,
+		".vs": true,
+		"*.sln": true,
+		"*.njsproj": true,
+		".ntvs_analysis.dat": true,
+		"bin": true,
+		"obj": true,
+		"docs/build": true
 	}
 }
