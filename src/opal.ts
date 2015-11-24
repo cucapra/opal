@@ -19,20 +19,22 @@ class Weight<T> {
 
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
 type WorldCoroutine = IterableIterator<Message>;
-type WorldCoroutineFunc = () => WorldCoroutine;
+type WorldCoroutineFunc = (w: World) => WorldCoroutine;
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
 class World {
+  coroutine: WorldCoroutine;
   subworlds: Set<World>;
-  constructor(public parent: World,
-              public coroutine: WorldCoroutine) {
+  
+  constructor(public parent: World, func: WorldCoroutineFunc) {
     this.subworlds = new Set();
+    this.coroutine = func(this);
   }
   
   // Create a new child world of this one.
-  hypothetical(f: WorldCoroutineFunc) {
-    let world = new World(this, f());
+  hypothetical(func: WorldCoroutineFunc) {
+    let world = new World(this, func);
     this.subworlds.add(world);
   }
   
@@ -44,12 +46,12 @@ class World {
 
 // The topmost world has no parent and gets a special designation.
 class TopWorld extends World {
-  constructor(public coroutine: WorldCoroutine) {
-    super(null, coroutine);
+  constructor(public func: WorldCoroutineFunc) {
+    super(null, func);
   }
 }
 
 // A top-level entry point that constructs the initial, top-level world.
-function opal(f: WorldCoroutineFunc) {
-  let world = new TopWorld(f());
+function opal(func: WorldCoroutineFunc) {
+  let world = new TopWorld(func);
 }
