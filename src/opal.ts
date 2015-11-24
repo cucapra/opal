@@ -6,13 +6,13 @@ class Message {
 }
 
 class SetMessage <T> extends Message {
-  constructor(public weight: Weight<T>, value: T) {
+  constructor(public weight: Weight<T>, public value: T) {
     super();
   }
 }
 
 class GetMessage <T> extends Message {
-  constructor(public weight: Weight<T>, subworld: World) {
+  constructor(public weight: Weight<T>, public subworld: World) {
     super();
   }
 }
@@ -40,10 +40,36 @@ class World {
     this.coroutine = func(this);
   }
   
+  // Iterate the world to completion.
+  run() {
+    let res: any = null;
+    while (1) {
+      let n = this.coroutine.next(res);
+      if (n.done) {
+        break;
+      }
+      res = this.handle(n.value);
+    }
+  }
+  
+  // Execute a single message on behalf of the world.
+  handle(msg: Message): any {
+    if (msg instanceof SetMessage) {
+      msg.weight.values.set(this, msg.value);
+      
+    } else if (msg instanceof GetMessage) {
+      // TODO check that it's actually a subworld
+      // TODO wait for the value to be available
+      return msg.weight.values.get(msg.subworld);
+      
+    }
+  }
+  
   // Create a new child world of this one.
   hypothetical(func: WorldCoroutineFunc): World {
     let world = new World(this, func);
     this.subworlds.add(world);
+    world.run();  // TODO lazily
     return world;
   }
   
@@ -73,4 +99,5 @@ class TopWorld extends World {
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: WorldCoroutineFunc) {
   let world = new TopWorld(func);
+  world.run();
 }
