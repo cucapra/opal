@@ -1,6 +1,7 @@
 opal(function* (world) {
-  world.hypothetical(function* (world) {
-    yield new Message();
+  let w = world.weight();
+  let hyp = world.hypothetical(function* (world) {
+    yield world.set(w, 2);
   });
-  yield new Message();
+  yield world.get(w, hyp);
 });

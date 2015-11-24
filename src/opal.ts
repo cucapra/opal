@@ -5,15 +5,23 @@
 class Message {
 }
 
+class SetMessage <T> extends Message {
+  constructor(public weight: Weight<T>, value: T) {
+    super();
+  }
+}
+
+class GetMessage <T> extends Message {
+  constructor(public weight: Weight<T>, subworld: World) {
+    super();
+  }
+}
+
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
-  values: Map<number, T>;
+  values: Map<World, T>;
   constructor(public world: World) {
     this.values = new Map();
-  }
-  
-  set(value: T) {
-    // ...
   }
 }
 
@@ -33,14 +41,25 @@ class World {
   }
   
   // Create a new child world of this one.
-  hypothetical(func: WorldCoroutineFunc) {
+  hypothetical(func: WorldCoroutineFunc): World {
     let world = new World(this, func);
     this.subworlds.add(world);
+    return world;
   }
   
   // Create a new weight for communication between this world and a subworld.
   weight<T>(): Weight<T> {
     return new Weight<T>(this);
+  }
+  
+  // Set a weight.
+  set<T>(weight: Weight<T>, value: T): SetMessage<T> {
+    return new SetMessage(weight, value);
+  }
+  
+  // Get a weight.
+  get<T>(weight: Weight<T>, subworld: World): GetMessage<T> {
+    return new GetMessage(weight, subworld);
   }
 }
 
