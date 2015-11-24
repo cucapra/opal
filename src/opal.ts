@@ -27,7 +27,7 @@ class Weight<T> {
 
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
 type WorldCoroutine = IterableIterator<Message>;
-type WorldCoroutineFunc = (w: World) => WorldCoroutine;
+type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
@@ -37,7 +37,7 @@ class World {
   
   constructor(public parent: World, func: WorldCoroutineFunc) {
     this.subworlds = new Set();
-    this.coroutine = func(this);
+    this.coroutine = func(new Context(this));
   }
   
   // Iterate the world to completion.
@@ -64,18 +64,23 @@ class World {
       
     }
   }
+}
+
+// A container for functionality available within the context of a world.
+class Context {
+  constructor(public world: World) {}
   
   // Create a new child world of this one.
   hypothetical(func: WorldCoroutineFunc): World {
-    let world = new World(this, func);
-    this.subworlds.add(world);
+    let world = new World(this.world, func);
+    this.world.subworlds.add(world);
     world.run();  // TODO lazily
     return world;
   }
   
   // Create a new weight for communication between this world and a subworld.
   weight<T>(): Weight<T> {
-    return new Weight<T>(this);
+    return new Weight<T>(this.world);
   }
   
   // Set a weight.

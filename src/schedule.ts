@@ -1,8 +1,8 @@
-opal(function* (world) {
-  let w = world.weight();
-  let hyp = world.hypothetical(function* (world) {
-    yield world.set(w, 2);
+opal(function* (ctx) {
+  let w = ctx.weight();
+  let hyp = ctx.hypothetical(function* (ctx) {
+    yield ctx.set(w, 2);
   });
-  let v = yield world.get(w, hyp);
+  let v = yield ctx.get(w, hyp);
   console.log("got", v, "from subworld");
 });
