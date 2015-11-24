@@ -3,5 +3,9 @@ typings/
 opal.js
 opal.js.map
 docs/build/
+
+# Visual studio crud.
 .vs/
 .ntvs_analysis.dat
+bin/
+obj/

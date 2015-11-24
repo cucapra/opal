@@ -60,6 +60,7 @@
     <TypeScriptMapRoot />
     <TypeScriptSourceRoot />
     <TypeScriptModuleKind>None</TypeScriptModuleKind>
+    <TypeScriptSourceMap>False</TypeScriptSourceMap>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />
