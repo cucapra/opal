@@ -46,21 +46,37 @@ type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
 class World {
   coroutine: WorldCoroutine;
   subworlds: Set<World>;
+  
+  active: boolean;
+  next_value: any;
 
   constructor(public parent: World, func: WorldCoroutineFunc) {
     this.subworlds = new Set();
     this.coroutine = func(new Context(this));
+ 
+    this.active = true;
+    this.next_value = null;
   }
 
   // Iterate the world to completion.
   run() {
-    let res: any = null;
-    while (1) {
-      let n = this.coroutine.next(res);
-      if (n.done) {
-        break;
-      }
-      res = n.value.dispatch(this);
+    while (this.active) {
+      this.advance();
+    }
+  }
+  
+  // Execute the world for a single step. If the world emits a message (i.e.
+  // it's not finished yet), the message is executed. If the world is finished,
+  // set `active` to false. 
+  advance() {
+    console.assert(this.active, "world must be active to advance");
+
+    let n = this.coroutine.next(this.next_value);
+    if (n.done) {
+      this.active = false;
+      this.next_value = null;
+    } else {
+      this.next_value = n.value.dispatch(this);
     }
   }
 }
