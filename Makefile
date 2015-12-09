@@ -1,8 +1,7 @@
 SRCDIR := src
-SOURCES := opal.ts
+SOURCES := opal.ts schedule.ts
 DOCSDIR := docs
 DOCFILES := opal choices
-TSCARGS := --noImplicitAny --target ES6
 OUT_JS := opal.js
 
 .PHONY: all
@@ -21,7 +20,7 @@ NODE_D := typings/node/node.d.ts
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
 TS_SRCS := $(SRC_FILES) $(NODE_D)
 $(OUT_JS): $(TSC) $(TS_SRCS)
-	$(TSC) $(TSCARGS) --out $@ $(TS_SRCS)
+	$(TSC) --out $@ -p .
 
 
 # Typings from tsd.

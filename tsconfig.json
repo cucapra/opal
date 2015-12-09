@@ -3,5 +3,8 @@
     "noImplicitAny": true,
     "target": "ES6",
     "out": "opal.js"
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }
