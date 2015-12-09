@@ -38,4 +38,12 @@ class CollectionNode<T> {
 
     return out;
   }
+
+  add(value: T) {
+    this.operations.add(new CollectionAdd(value));
+  }
+
+  delete(value: T) {
+    this.operations.add(new CollectionDelete(value));
+  }
 }
