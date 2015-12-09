@@ -11,7 +11,7 @@ class SetMessage <T> extends Message {
   constructor(public weight: Weight<T>, public value: T) {
     super();
   }
-  
+
   dispatch(world: World) {
     this.weight.values.set(world, this.value);
   }
@@ -21,11 +21,11 @@ class GetMessage <T> extends Message {
   constructor(public weight: Weight<T>, public subworld: World) {
     super();
   }
-  
+
   dispatch(world: World) {
     // TODO check that it's actually a subworld
     // TODO wait for the value to be available
-    this.weight.values.get(this.subworld);
+    return this.weight.values.get(this.subworld);
   }
 }
 
@@ -46,14 +46,14 @@ type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
 class World {
   coroutine: WorldCoroutine;
   subworlds: Set<World>;
-  
+
   active: boolean;
   next_value: any;
 
   constructor(public parent: World, func: WorldCoroutineFunc) {
     this.subworlds = new Set();
     this.coroutine = func(new Context(this));
- 
+
     this.active = true;
     this.next_value = null;
   }
@@ -64,13 +64,12 @@ class World {
       this.advance();
     }
   }
-  
+
   // Execute the world for a single step. If the world emits a message (i.e.
   // it's not finished yet), the message is executed. If the world is finished,
-  // set `active` to false. 
+  // set `active` to false.
   advance() {
     console.assert(this.active, "world must be active to advance");
-
     let n = this.coroutine.next(this.next_value);
     if (n.done) {
       this.active = false;
