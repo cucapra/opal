@@ -23,9 +23,6 @@ TS_SRCS := $(SRC_FILES) $(NODE_D)
 $(OUT_JS): $(TSC) $(TS_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(TS_SRCS)
 
-parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
-	$(PEGJS) --cache < $(<) > $@
-
 
 # Typings from tsd.
 
