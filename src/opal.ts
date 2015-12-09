@@ -24,7 +24,14 @@ class GetMessage <T> extends Message {
 
   dispatch(world: World) {
     // TODO check that it's actually a subworld
-    // TODO wait for the value to be available
+
+    // Wait for the value to be available (or for the world to exit).
+    while (!this.weight.values.has(this.subworld) && this.subworld.active) {
+      this.subworld.advance();
+    }
+
+    console.assert(this.weight.values.has(this.subworld),
+        "world exited without setting value");
     return this.weight.values.get(this.subworld);
   }
 }
@@ -88,7 +95,6 @@ class Context {
   hypothetical(func: WorldCoroutineFunc): World {
     let world = new World(this.world, func);
     this.world.subworlds.add(world);
-    world.run();  // TODO lazily
     return world;
   }
 
