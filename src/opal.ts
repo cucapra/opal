@@ -2,18 +2,30 @@
 
 // The base class for events emitted inside hypothetical worlds to be consumed
 // by the OPAL runtime.
-class Message {
+abstract class Message {
+  // Execute the command in the context of a given world.
+  abstract dispatch(world: World): any;
 }
 
 class SetMessage <T> extends Message {
   constructor(public weight: Weight<T>, public value: T) {
     super();
   }
+  
+  dispatch(world: World) {
+    this.weight.values.set(world, this.value);
+  }
 }
 
 class GetMessage <T> extends Message {
   constructor(public weight: Weight<T>, public subworld: World) {
     super();
+  }
+  
+  dispatch(world: World) {
+    // TODO check that it's actually a subworld
+    // TODO wait for the value to be available
+    this.weight.values.get(this.subworld);
   }
 }
 
@@ -48,20 +60,7 @@ class World {
       if (n.done) {
         break;
       }
-      res = this.handle(n.value);
-    }
-  }
-
-  // Execute a single message on behalf of the world.
-  handle(msg: Message): any {
-    if (msg instanceof SetMessage) {
-      msg.weight.values.set(this, msg.value);
-
-    } else if (msg instanceof GetMessage) {
-      // TODO check that it's actually a subworld
-      // TODO wait for the value to be available
-      return msg.weight.values.get(msg.subworld);
-
+      res = n.value.dispatch(this);
     }
   }
 }
