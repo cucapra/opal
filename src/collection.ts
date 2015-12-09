@@ -12,10 +12,10 @@ class CollectionDelete<T> extends CollectionOperation<T> {
   };
 }
 
-class Collection<T> {
+class CollectionNode<T> {
   operations: Set<CollectionOperation<T>>;
 
-  constructor(public parent: Collection<T>) {
+  constructor(public parent: CollectionNode<T>) {
     this.operations = new Set();
   }
 
