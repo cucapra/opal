@@ -44,8 +44,11 @@ node_modules/%/package.json:
 
 # Tests.
 
+TAPE := node_modules/tape/package.json
+TAPE_D := typings/tape/tape.d.ts
+
 .PHONY: test
-test: $(TSC) $(NODE_D)
+test: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D)
 	$(TSC) -p test
 	node test.js
 

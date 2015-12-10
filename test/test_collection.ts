@@ -1,10 +1,12 @@
 /// <reference path="../src/collection.ts" />
 /// <reference path="../typings/node/node.d.ts" />
+/// <reference path="../typings/tape/tape.d.ts" />
 'use strict';
 
 let assert = require('assert');
+let test = require('tape');
 
-function assert_equal<T>(a: Iterable<T>, b: Iterable<T>) {
+function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
   let set: Set<T> = new Set();
   for (let bv of b) {
     set.add(bv);
@@ -12,14 +14,17 @@ function assert_equal<T>(a: Iterable<T>, b: Iterable<T>) {
 
   let count = 0;
   for (let av of a) {
-    assert(set.has(av));
+    if (!set.has(av)) {
+      return false;
+    }
     ++count;
   }
-  assert.equal(set.size, count);
+  return set.size === count;
 }
 
-(function () {
+test('add', function (t: any) {
   let c = Collection.collection<number>();
   c = Collection.add(c, 1);
-  assert_equal(c.view(), [1]);
-})();
+  t.assert(contents_equal(c.view(), [1]));
+  t.end();
+});
