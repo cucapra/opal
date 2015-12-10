@@ -51,7 +51,7 @@ $(FAUCET): node_modules/faucet/package.json
 
 TEST_SRC := $(wildcard test/*.ts)
 
-test.js: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D) $(TEST_SRC) test/tsconfig.json
+test.js: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D) $(TEST_SRC) $(SRC_FILES) test/tsconfig.json
 	$(TSC) -p test
 
 .PHONY: test

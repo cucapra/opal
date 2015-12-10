@@ -42,3 +42,12 @@ test('add and then remove', function (t: any) {
   t.assert(contents_equal(c.view(), []));
   t.end();
 });
+
+test('merge with addition on base', function (t: any) {
+  let c = Collection.collection<number>();
+  c = Collection.add(c, 1);
+  let d = Collection.add(c, 2);
+  let e = Collection.merge(d, c);
+  t.assert(contents_equal(e.view(), [1, 2]));
+  t.end();
+});

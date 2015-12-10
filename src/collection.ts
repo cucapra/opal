@@ -76,11 +76,11 @@ module Collection {
       // The first step is to accumulate the *entire* set of ancestors of the
       // base so we can check membership when traversing the overlay's ancestry.
       let base_ancestors: Set<Node<T>> = new Set();
-      let base_ancestor = this.base;
+      let base_ancestor = base;
       do {
         base_ancestors.add(base_ancestor);
         base_ancestor = base_ancestor.parent;
-      } while (base_ancestor !== null && base_ancestor !== this.parent);
+      } while (base_ancestor !== null && base_ancestor !== base);
 
       // Next, get the overlay's log *up to but not including* the closest
       // common ancestor.
