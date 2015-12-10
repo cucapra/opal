@@ -65,15 +65,7 @@ class EmptyNode<T> extends CollectionNode<T> {
   }
 }
 
-class MergeNode<T> extends CollectionNode<T> {
-  constructor(
-    parent: CollectionNode<T>,
-    public overlay: CollectionNode<T>
-  ) {
-    super(parent);
-  }
-
-  log(): CollectionOperation<T>[] {
+function merge<T>(base: CollectionNode<T>, overlay: CollectionNode<T>) {
     // Find the closest common ancestor.
     let ancestors: Set<CollectionNode<T>> = new Set();
     let overlay_ancestor = this.overlay;
@@ -90,6 +82,4 @@ class MergeNode<T> extends CollectionNode<T> {
     console.assert(parent_ancestor !== null, "parent and overlay are unrelated");
 
     // TODO
-    return null;
-  }
 }
