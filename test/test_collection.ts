@@ -15,7 +15,7 @@ function assert_equal<T>(a: Iterable<T>, b: Iterable<T>) {
     assert.assert(set.has(av));
     ++count;
   }
-  assert.equal(set.size(), count);
+  assert.equal(set.size, count);
 }
 
 (function () {

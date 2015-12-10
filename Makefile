@@ -46,8 +46,8 @@ node_modules/%/package.json:
 
 .PHONY: test
 test: $(TSC) $(NODE_D)
-	$(TSC) --target es6 test/test_collection.ts
-	node test/test_collection.js
+	$(TSC) -p test
+	node test/test.js
 
 
 # Documentation.

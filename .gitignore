@@ -3,6 +3,7 @@ typings/
 opal.js
 opal.js.map
 docs/build/
+test/test.js
 
 # Visual studio crud.
 .vs/
