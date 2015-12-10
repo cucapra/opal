@@ -70,7 +70,7 @@ module Collection {
     }
   }
 
-  function merge<T>(base: Node<T>, overlay: Node<T>) {
+  export function merge<T>(base: Node<T>, overlay: Node<T>) {
       // The first step is to accumulate the *entire* set of ancestors of the
       // base so we can check membership when traversing the overlay's ancestry.
       let base_ancestors: Set<Node<T>> = new Set();
@@ -93,6 +93,18 @@ module Collection {
         out = new OperationNode(out, op);
       }
       return out;
+  }
+
+  export function collection<T>() {
+    return new EmptyNode<T>();
+  }
+
+  export function add<T>(coll: Node<T>, value: T) {
+    return new OperationNode(coll, new Add(value));
+  }
+
+  export function del<T>(coll: Node<T>, value: T) {
+    return new OperationNode(coll, new Delete(value));
   }
 
 }
