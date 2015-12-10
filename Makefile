@@ -46,11 +46,13 @@ node_modules/%/package.json:
 
 TAPE := node_modules/tape/package.json
 TAPE_D := typings/tape/tape.d.ts
+TAP_DOT := node_modules/.bin/tap-dot
+$(TAP_DOT): node_modules/tap-dot/package.json
 
 .PHONY: test
-test: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D)
+test: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D) $(TAP_DOT)
 	$(TSC) -p test
-	node test.js
+	node test.js | $(TAP_DOT)
 
 
 # Documentation.
