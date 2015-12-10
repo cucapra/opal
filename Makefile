@@ -49,11 +49,14 @@ TAPE_D := typings/tape/tape.d.ts
 FAUCET := node_modules/.bin/faucet
 $(FAUCET): node_modules/faucet/package.json
 
-.PHONY: test
-test: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D) $(FAUCET)
-	$(TSC) -p test
-	node test.js | $(FAUCET)
+TEST_SRC := $(wildcard test/*.ts)
 
+test.js: $(TSC) $(NODE_D) $(TAPE) $(TAPE_D) $(TEST_SRC) test/tsconfig.json
+	$(TSC) -p test
+
+.PHONY: test
+test: test.js $(FAUCET)
+	node $< | $(FAUCET)
 
 # Documentation.
 
