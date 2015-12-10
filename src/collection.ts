@@ -66,20 +66,21 @@ class EmptyNode<T> extends CollectionNode<T> {
 }
 
 function merge<T>(base: CollectionNode<T>, overlay: CollectionNode<T>) {
-    // Find the closest common ancestor.
-    let ancestors: Set<CollectionNode<T>> = new Set();
-    let overlay_ancestor = this.overlay;
+    // The first step is to accumulate the *entire* set of ancestors of the
+    // base so we can check membership when traversing the overlay's ancestry.
+    let base_ancestors: Set<CollectionNode<T>> = new Set();
+    let base_ancestor = this.base;
     do {
-      ancestors.add(overlay_ancestor);
-      overlay_ancestor = overlay_ancestor.parent;
-    } while (overlay_ancestor !== null && overlay_ancestor !== this.parent);
+      base_ancestors.add(base_ancestor);
+      base_ancestor = base_ancestor.parent;
+    } while (base_ancestor !== null && base_ancestor !== this.parent);
 
-    let parent_ancestor = this.parent;
-    while (parent_ancestor !== null && !ancestors.has(parent_ancestor)) {
-      parent_ancestor = parent_ancestor.parent;
-    }
+    // Next, get the overlay's log *up to but not including* the closest
+    // common ancestor.
+    let log_suffix = overlay.log(base_ancestors);
 
-    console.assert(parent_ancestor !== null, "parent and overlay are unrelated");
+    // TODO Check safety: the two nodes need to be related (have some common
+    // ancestor). We also need to check for conflicting concurrent operations.
 
     // TODO
 }
