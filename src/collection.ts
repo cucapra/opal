@@ -1,3 +1,5 @@
+'use strict';
+
 module Collection {
 
   abstract class Node<T> {
@@ -52,8 +54,8 @@ module Collection {
       super(parent);
     }
 
-    log(until: Set<Node<T>> = null): Operation<T>[] {
-      if (until !== null && until.has(this)) {
+    log(until: Set<Node<T>>): Operation<T>[] {
+      if (until && until.has(this)) {
         return [];
       }
       return this.parent.log().concat(this.operation);
@@ -65,7 +67,7 @@ module Collection {
       super(null);
     }
 
-    log(until: Set<Node<T>> = null): Operation<T>[] {
+    log(until: Set<Node<T>>): Operation<T>[] {
       return [];
     }
   }

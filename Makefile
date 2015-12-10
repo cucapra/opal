@@ -47,7 +47,7 @@ node_modules/%/package.json:
 .PHONY: test
 test: $(TSC) $(NODE_D)
 	$(TSC) -p test
-	node test/test.js
+	node test.js
 
 
 # Documentation.
