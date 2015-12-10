@@ -22,9 +22,23 @@ function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
   return set.size === count;
 }
 
+test('empty collection', function (t: any) {
+  let c = Collection.collection<number>();
+  t.assert(contents_equal(c.view(), []));
+  t.end();
+});
+
 test('add', function (t: any) {
   let c = Collection.collection<number>();
   c = Collection.add(c, 1);
   t.assert(contents_equal(c.view(), [1]));
+  t.end();
+});
+
+test('add and then remove', function (t: any) {
+  let c = Collection.collection<number>();
+  c = Collection.add(c, 1);
+  c = Collection.del(c, 1);
+  t.assert(contents_equal(c.view(), []));
   t.end();
 });
