@@ -87,7 +87,12 @@ module Collection {
       // TODO Check safety: the two nodes need to be related (have some common
       // ancestor). We also need to check for conflicting concurrent operations.
 
-      // TODO
+      // Replay the partial log on top of the base.
+      let out = base;
+      for (let op of log_suffix) {
+        out = new OperationNode(out, op);
+      }
+      return out;
   }
 
 }
