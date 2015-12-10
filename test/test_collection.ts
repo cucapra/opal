@@ -12,7 +12,7 @@ function assert_equal<T>(a: Iterable<T>, b: Iterable<T>) {
 
   let count = 0;
   for (let av of a) {
-    assert.assert(set.has(av));
+    assert(set.has(av));
     ++count;
   }
   assert.equal(set.size, count);
