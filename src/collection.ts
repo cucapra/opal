@@ -5,7 +5,7 @@ module Collection {
       public parent: Node<T>
     ) {}
 
-    abstract log(): Operation<T>[];
+    abstract log(until?: Set<Node<T>>): Operation<T>[];
 
     view(): Set<T> {
       var out: Set<T> = new Set();
@@ -52,7 +52,10 @@ module Collection {
       super(parent);
     }
 
-    log(): Operation<T>[] {
+    log(until: Set<Node<T>> = null): Operation<T>[] {
+      if (until !== null && until.has(this)) {
+        return [];
+      }
       return this.parent.log().concat(this.operation);
     }
   }
@@ -62,7 +65,7 @@ module Collection {
       super(null);
     }
 
-    log(): Operation<T>[] {
+    log(until: Set<Node<T>> = null): Operation<T>[] {
       return [];
     }
   }
