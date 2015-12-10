@@ -20,7 +20,7 @@ NODE_D := typings/node/node.d.ts
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
 TS_SRCS := $(SRC_FILES) $(NODE_D)
 $(OUT_JS): $(TSC) $(TS_SRCS)
-	$(TSC) --out $@ -p .
+	$(TSC) -p .
 
 
 # Typings from tsd.
@@ -40,6 +40,14 @@ $(TSD): node_modules/tsd/package.json
 node_modules/%/package.json:
 	npm install $*
 	@touch $@
+
+
+# Tests.
+
+.PHONY: test
+test: $(TSC) $(NODE_D)
+	$(TSC) --target es6 test/test_collection.ts
+	node test/test_collection.js
 
 
 # Documentation.
