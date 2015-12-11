@@ -2,18 +2,26 @@
 	"version": "0.1.0",
 	"configurations": [
 		{
-			"name": "Run opal.js",
+			"name": "example",
 			"type": "node",
 			"program": "opal.js",
 			"stopOnEntry": false,
 			"request": "launch",
 			"args": [],
-			"cwd": ".",
 			"runtimeExecutable": null,
 			"runtimeArgs": ["--nolazy"],
-			"env": { },
-			"sourceMaps": false,
-			"outDir": null
+			"sourceMaps": false
+		},
+		{
+			"name": "tests",
+			"type": "node",
+			"program": "test.js",
+			"stopOnEntry": false,
+			"request": "launch",
+			"args": [],
+			"runtimeExecutable": null,
+			"runtimeArgs": ["--nolazy"],
+			"sourceMaps": false
 		}
 	]
 }
