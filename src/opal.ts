@@ -50,9 +50,28 @@ class Weight<T> {
 // it is used. Each world's PSet is updated in-place, imperatively.
 class Collection<T> {
   sets: Map<World, PSet.Node<T>>;
+
   constructor(public owner: World) {
     this.sets = new Map();
     this.sets.set(owner, PSet.set<T>());
+  }
+
+  // Get the underlying PSet for a given World. If it does not exist yet,
+  // create it (as a snapshot of its parent world's set).
+  lookup(world: World): PSet.Node<T> {
+    if (this.sets.has(world)) {
+      return this.sets.get(world);
+    } else {
+      console.assert(world.parent != null, "collection not defined in any ancestor");
+      let parent_set = this.lookup(world.parent);
+      this.sets.set(world, parent_set);
+      return parent_set;
+    }
+  }
+
+  update(world: World, set: PSet.Node<T>) {
+    console.assert(this.sets.has(world), "updating set that does not exist");
+    this.sets.set(world, set);
   }
 }
 
@@ -138,19 +157,19 @@ class Context {
 
   // Add to a collection.
   add<T>(collection: Collection<T>, value: T) {
-    let s = PSet.add(collection.sets.get(this.world), value);
-    collection.sets.set(this.world, s);
+    let s = PSet.add(collection.lookup(this.world), value);
+    collection.update(this.world, s);
   }
 
   // Remove from a collection.
   del<T>(collection: Collection<T>, value: T) {
-    let s = PSet.del(collection.sets.get(this.world), value);
-    collection.sets.set(this.world, s);
+    let s = PSet.del(collection.lookup(this.world), value);
+    collection.update(this.world, s);
   }
 
   // Get the contents of a collection.
   view<T>(collection: Collection<T>) {
-    return collection.sets.get(this.world).view();
+    return collection.lookup(this.world).view();
   }
 }
 
