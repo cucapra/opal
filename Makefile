@@ -1,5 +1,5 @@
 SRCDIR := src
-SOURCES := opal.ts schedule.ts collection.ts
+SOURCES := opal.ts schedule.ts pset.ts
 DOCSDIR := docs
 DOCFILES := opal choices
 OUT_JS := opal.js
