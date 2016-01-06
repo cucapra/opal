@@ -17,7 +17,7 @@ opal(function* (ctx) {
 
   // Create a collection and try adding and removing values.
   let c = ctx.collection<number>();
-  ctx.add(c, 2);
+  ctx.add(c, 2);  // ideal syntax: c.add(2)
   ctx.add(c, 3);
   ctx.del(c, 3);
   console.log("collection contents:", Array.from(c.set.view()));

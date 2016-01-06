@@ -36,6 +36,7 @@ class GetMessage <T> extends Message {
   }
 }
 
+
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
   values: Map<World, T>;
@@ -43,6 +44,7 @@ class Weight<T> {
     this.values = new Map();
   }
 }
+
 
 // A fundamental world-aware data structure. This wraps a PSet, which is
 // updated in-place imperatively.
@@ -53,9 +55,11 @@ class Collection<T> {
   }
 }
 
+
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
 type WorldCoroutine = IterableIterator<Message>;
 type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
+
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
@@ -95,6 +99,7 @@ class World {
     }
   }
 }
+
 
 // A container for functionality available within the context of a world.
 class Context {
@@ -138,12 +143,14 @@ class Context {
   }
 }
 
+
 // The topmost world has no parent and gets a special designation.
 class TopWorld extends World {
   constructor(public func: WorldCoroutineFunc) {
     super(null, func);
   }
 }
+
 
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: WorldCoroutineFunc) {
