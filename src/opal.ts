@@ -99,6 +99,7 @@ class World {
 
     this.active = true;
     this.next_value = null;
+    this.collections = new Set();
   }
 
   // Iterate the world to completion.
@@ -152,19 +153,23 @@ class Context {
 
   // Create a new collection.
   collection<T>(): Collection<T> {
-    return new Collection<T>(this.world);
+    let c = new Collection<T>(this.world);
+    this.world.collections.add(c);
+    return c;
   }
 
   // Add to a collection.
   add<T>(collection: Collection<T>, value: T) {
     let s = PSet.add(collection.lookup(this.world), value);
     collection.update(this.world, s);
+    this.world.collections.add(collection);
   }
 
   // Remove from a collection.
   del<T>(collection: Collection<T>, value: T) {
     let s = PSet.del(collection.lookup(this.world), value);
     collection.update(this.world, s);
+    this.world.collections.add(collection);
   }
 
   // Get the contents of a collection.
