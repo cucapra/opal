@@ -46,12 +46,13 @@ class Weight<T> {
 }
 
 
-// A fundamental world-aware data structure. This wraps a PSet, which is
-// updated in-place imperatively.
+// A fundamental world-aware data structure. This wraps a PSet per world where
+// it is used. Each world's PSet is updated in-place, imperatively.
 class Collection<T> {
-  set: PSet.Node<T>;
+  sets: Map<World, PSet.Node<T>>;
   constructor(public owner: World) {
-    this.set = PSet.set<T>();
+    this.sets = new Map();
+    this.sets.set(owner, PSet.set<T>());
   }
 }
 
@@ -69,6 +70,9 @@ class World {
 
   active: boolean;
   next_value: any;
+
+  // Collections used (or created) in this world.
+  collections: Set<Collection<any>>;
 
   constructor(public parent: World, func: WorldCoroutineFunc) {
     this.subworlds = new Set();
@@ -134,12 +138,19 @@ class Context {
 
   // Add to a collection.
   add<T>(collection: Collection<T>, value: T) {
-    collection.set = PSet.add(collection.set, value);
+    let s = PSet.add(collection.sets.get(this.world), value);
+    collection.sets.set(this.world, s);
   }
 
   // Remove from a collection.
   del<T>(collection: Collection<T>, value: T) {
-    collection.set = PSet.del(collection.set, value);
+    let s = PSet.del(collection.sets.get(this.world), value);
+    collection.sets.set(this.world, s);
+  }
+
+  // Get the contents of a collection.
+  view<T>(collection: Collection<T>) {
+    return collection.sets.get(this.world).view();
   }
 }
 

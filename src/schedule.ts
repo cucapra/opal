@@ -20,5 +20,5 @@ opal(function* (ctx) {
   ctx.add(c, 2);  // ideal syntax: c.add(2)
   ctx.add(c, 3);
   ctx.del(c, 3);
-  console.log("collection contents:", Array.from(c.set.view()));
+  console.log("collection contents:", Array.from(ctx.view(c)));
 });
