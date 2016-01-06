@@ -21,4 +21,14 @@ opal(function* (ctx) {
   ctx.add(c, 3);
   ctx.del(c, 3);
   console.log("collection contents:", Array.from(ctx.view(c)));
+
+  // Try modifying the collection in a hypothetical world.
+  let hyp3 = ctx.hypothetical(function* (ctx): IterableIterator<Message> {
+    ctx.add(c, 4);
+  });
+  console.log("collection contents:", Array.from(ctx.view(c)));
+
+  // Merge the hypothetical world to see its changes.
+  yield ctx.commit(hyp3);
+  console.log("collection contents:", Array.from(ctx.view(c)));
 });

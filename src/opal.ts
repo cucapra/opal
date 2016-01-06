@@ -36,6 +36,22 @@ class GetMessage <T> extends Message {
   }
 }
 
+class CommitMessage extends Message {
+  constructor(public subworld: World) {
+    super();
+  }
+
+  dispatch(world: World) {
+    // Run the world to completion.
+    this.subworld.run();
+
+    // Merge all of its modified Collections.
+    for (let coll of this.subworld.collections) {
+      coll.merge(this.subworld);
+    }
+  }
+}
+
 
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
@@ -72,6 +88,16 @@ class Collection<T> {
   update(world: World, set: PSet.Node<T>) {
     console.assert(this.sets.has(world), "updating set that does not exist");
     this.sets.set(world, set);
+  }
+
+  // If the collection has any updates for this world, merge them into the
+  // parent's collection.
+  merge(world: World) {
+    if (this.sets.has(world)) {
+      let child_set = this.sets.get(world);
+      let parent_set = this.lookup(world.parent);
+      this.update(world.parent, PSet.merge(parent_set, child_set));
+    }
   }
 }
 
@@ -175,6 +201,11 @@ class Context {
   // Get the contents of a collection.
   view<T>(collection: Collection<T>) {
     return collection.lookup(this.world).view();
+  }
+
+  // Commit the collection modifications of a sub-world.
+  commit(subworld: World): CommitMessage {
+    return new CommitMessage(subworld);
   }
 }
 
