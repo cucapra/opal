@@ -44,6 +44,15 @@ class Weight<T> {
   }
 }
 
+// A fundamental world-aware data structure. This wraps a PSet, which is
+// updated in-place imperatively.
+class Collection<T> {
+  set: PSet.Node<T>;
+  constructor(public owner: World) {
+    this.set = PSet.set<T>();
+  }
+}
+
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
 type WorldCoroutine = IterableIterator<Message>;
 type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
@@ -111,6 +120,21 @@ class Context {
   // Get a weight.
   get<T>(weight: Weight<T>, subworld: World): GetMessage<T> {
     return new GetMessage(weight, subworld);
+  }
+
+  // Create a new collection.
+  collection<T>(): Collection<T> {
+    return new Collection<T>(this.world);
+  }
+
+  // Add to a collection.
+  add<T>(collection: Collection<T>, value: T) {
+    collection.set = PSet.add(collection.set, value);
+  }
+
+  // Remove from a collection.
+  del<T>(collection: Collection<T>, value: T) {
+    collection.set = PSet.del(collection.set, value);
   }
 }
 

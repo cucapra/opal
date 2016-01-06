@@ -6,7 +6,7 @@ module PSet {
   // Each Node points to its parent (except the root EmptyNode, below). The
   // log of operations on a data structure can be found by tracing the chain of
   // parents.
-  abstract class Node<T> {
+  export abstract class Node<T> {
     constructor(
       public parent: Node<T>
     ) {}

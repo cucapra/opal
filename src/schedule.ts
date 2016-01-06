@@ -14,4 +14,11 @@ opal(function* (ctx) {
   let v1 = yield ctx.get(w, hyp1);  // ideal syntax: w[hyp1]
   let v2 = yield ctx.get(w, hyp2);
   console.log("values from subworlds:", v1, v2);
+
+  // Create a collection and try adding and removing values.
+  let c = ctx.collection<number>();
+  ctx.add(c, 2);
+  ctx.add(c, 3);
+  ctx.del(c, 3);
+  console.log("collection contents:", Array.from(c.set.view()));
 });
