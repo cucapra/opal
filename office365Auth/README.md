@@ -11,7 +11,7 @@ node getOfficeAuthToken.js
 
 This should open a new web browser window/tab.
 Click on the sign in link, and enter your credentials.
-The code will get a token and save it to `$HOME/.opal.token.txt`, and also store your email address in `$HOME/.opal.email.txt'.
+The code will get a token and save it to `$HOME/.opal.token.txt`, and also store your email address in `$HOME/.opal.email.txt`.
 This is not very secure, but is convenient.
 
 ## using the token
