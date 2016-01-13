@@ -1,0 +1,19 @@
+{
+    "name": "office365Auth",
+    "version": "0.0.0",
+    "description": "office365Auth",
+    "main": "app.js",
+    "author": {
+        "name": "chris quirk",
+        "email": "chrisq@microsoft.com"
+    },
+    "dependencies": {
+        "fs": "*",
+        "http" : "*",
+        "node-outlook": "*",
+        "opener" : "*",
+        "path": "*",
+        "simple-oauth2" : "*",
+        "url": "*"
+    }
+}

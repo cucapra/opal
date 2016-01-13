@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "opal", "opal.njsproj", "{5D4524C2-EF25-442F-A82A-D6259EFC358F}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "office365Auth", "office365Auth\office365Auth.njsproj", "{B14A8FD0-EA20-426C-B706-3A5E2C604FAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{5D4524C2-EF25-442F-A82A-D6259EFC358F}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{5D4524C2-EF25-442F-A82A-D6259EFC358F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D4524C2-EF25-442F-A82A-D6259EFC358F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B14A8FD0-EA20-426C-B706-3A5E2C604FAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B14A8FD0-EA20-426C-B706-3A5E2C604FAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B14A8FD0-EA20-426C-B706-3A5E2C604FAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B14A8FD0-EA20-426C-B706-3A5E2C604FAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
