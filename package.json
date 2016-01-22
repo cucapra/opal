@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc",
     "smoketest": "node opal.js",
+    "tsd": "tsd install",
 
     "pretest": "node test/tsconfig.json",
     "test": "node test.js | faucet"
