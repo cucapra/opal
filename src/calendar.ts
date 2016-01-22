@@ -28,8 +28,8 @@ module Calendar {
     outlook.base.setPreferredTimeZone('Pacific Standard Time');
 
     outlook.calendar.getEvents(
-        {token: token, odataParams: queryParams},
-        cbk
+      {token: token, odataParams: queryParams},
+      cbk
     );
   }
 
