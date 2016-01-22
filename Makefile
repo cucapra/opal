@@ -1,5 +1,4 @@
 SRCDIR := src
-SOURCES := opal.ts schedule.ts pset.ts
 DOCSDIR := docs
 DOCFILES := opal choices
 OUT_JS := opal.js
@@ -17,10 +16,10 @@ clean:
 TSC := node_modules/typescript/bin/tsc
 NODE_D := typings/node/node.d.ts
 
-SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
+SRC_FILES := $(wildcard $(SRCDIR)/*.ts)
 TS_SRCS := $(SRC_FILES) $(NODE_D)
 $(OUT_JS): $(TSC) $(TS_SRCS)
-	$(TSC) -p .
+	$(TSC)
 
 
 # Typings from tsd.
