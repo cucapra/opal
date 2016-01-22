@@ -10,7 +10,7 @@ module Calendar {
       return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
   }
 
-  function getSomeEvents(cbk: (error: any, result: any) => void) {
+  export function getSomeEvents(cbk: (error: any, result: any) => void) {
     let home = getUserHome();
     let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
     let token = fs.readFileSync(path.join(home, ".opal.token.txt"));

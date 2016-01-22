@@ -31,4 +31,11 @@ opal(function* (ctx) {
   // Merge the hypothetical world to see its changes.
   yield ctx.commit(hyp3);
   console.log("collection contents:", Array.from(ctx.view(c)));
+
+  // TODO: Experimenting with the calendar API.
+  Calendar.getSomeEvents(function (error: any, result: any) {
+    for (let item of result.value) {
+      console.log(item.Subject);
+    }
+  });
 });
