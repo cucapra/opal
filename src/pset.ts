@@ -78,7 +78,7 @@ module PSet {
     }
   }
 
-  // An EmptyNode is the first link in the chain for a PSet.
+  // An EmptyNode is a root node with no contents.
   class EmptyNode<T> extends Node<T> {
     constructor() {
       super(null);
@@ -86,6 +86,21 @@ module PSet {
 
     log(until: Set<Node<T>>): Operation<T>[] {
       return [];
+    }
+  }
+
+  // A FlatNode is a root node with a concrete list representing its contents.
+  class FlatNode<T> extends Node<T> {
+    constructor(public contents: T[]) {
+      super(null);
+    }
+
+    log(until: Set<Node<T>>): Operation<T>[] {
+      let out: Operation<T>[] = [];
+      for (let v of this.contents) {
+        out.push(new Add(v));
+      }
+      return out;
     }
   }
 

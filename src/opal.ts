@@ -67,9 +67,13 @@ class Weight<T> {
 class Collection<T> {
   sets: Map<World, PSet.Node<T>>;
 
-  constructor(public owner: World) {
+  constructor(public owner: World, init?: PSet.Node<T>) {
+    if (!init) {
+      init = PSet.set<T>();
+    }
+
     this.sets = new Map();
-    this.sets.set(owner, PSet.set<T>());
+    this.sets.set(owner, init);
   }
 
   // Get the underlying PSet for a given World. If it does not exist yet,
