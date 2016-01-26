@@ -144,9 +144,13 @@ module PSet {
       return out;
   }
 
-  // Create a new, empty set.
-  export function set<T>() {
-    return new EmptyNode<T>();
+  // Create a new set.
+  export function set<T>(values?: T[]) {
+    if (values) {
+      return new FlatNode<T>(values);
+    } else {
+      return new EmptyNode<T>();
+    }
   }
 
   // Add a new value to a set.

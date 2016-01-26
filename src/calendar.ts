@@ -10,7 +10,7 @@ module Calendar {
       return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
   }
 
-  export function getSomeEvents(cbk: (error: any, result: any) => void) {
+  function getSomeEvents(cbk: (error: any, result: any) => void) {
     let home = getUserHome();
     let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
     let token = fs.readFileSync(path.join(home, ".opal.token.txt"));
@@ -31,6 +31,17 @@ module Calendar {
       {token: token, odataParams: queryParams},
       cbk
     );
+  }
+
+  export function events(ctx: Context, cbk: (events: Collection<any>) => void) {
+    getSomeEvents(function (error, result) {
+      if (error) {
+        throw error;
+      }
+
+      let objs = result.values;
+      let coll = new Collection(ctx.world, PSet.set(objs));
+    });
   }
 
 }
