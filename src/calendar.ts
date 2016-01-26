@@ -34,6 +34,14 @@ module Calendar {
     );
   }
 
+  export class Event {
+    constructor(
+      public subject: string,
+      public start: string,
+      public end: string
+    ) {};
+  }
+
   class EventsMessage extends Message {
     dispatch(world: World, then: (res: any) => void) {
       getSomeEvents(function (error, result) {
@@ -41,8 +49,11 @@ module Calendar {
           throw error;
         }
 
-        let objs = result.value;
-        let coll = new Collection(world, PSet.set(objs));
+        let events: Event[] = [];
+        for (let obj of result.value) {
+          events.push(new Event(obj.Subject, obj.Start.DateTime, obj.End.DateTime));
+        }
+        let coll = new Collection(world, PSet.set(events));
         then(coll);
       });
     }
