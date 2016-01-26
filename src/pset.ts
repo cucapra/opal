@@ -74,7 +74,7 @@ module PSet {
       if (until && until.has(this)) {
         return [];
       }
-      return this.parent.log().concat(this.operation);
+      return this.parent.log(until).concat(this.operation);
     }
   }
 
@@ -96,6 +96,9 @@ module PSet {
     }
 
     log(until: Set<Node<T>>): Operation<T>[] {
+      if (until && until.has(this)) {
+        return [];
+      }
       let out: Operation<T>[] = [];
       for (let v of this.contents) {
         out.push(new Add(v));
@@ -106,7 +109,7 @@ module PSet {
 
   // Given two related sets, find the new operations on `overlay` that need to
   // be applied to `base` to merge them.
-  export function merge_log<T>(base: Node<T>, overlay: Node<T>):
+  function merge_log<T>(base: Node<T>, overlay: Node<T>):
     Operation<T>[]
   {
     // The first step is to accumulate the *entire* set of ancestors of the

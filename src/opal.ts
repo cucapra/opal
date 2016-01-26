@@ -118,8 +118,10 @@ abstract class ExternalCollection<T> extends Collection<T> {
 
   update(world: World, set: PSet.Node<T>) {
     if (world instanceof TopWorld) {
+      // Assume for now that the new set is a *child* of the old set, so we
+      // just need to replay the operations "in between" the old and new sets.
       let old = this.lookup(world);
-      let log = PSet.merge_log(old, set);
+      let log = set.log(new Set([old]));
       this.send(log);
     } else {
       super.update(world, set);
