@@ -42,11 +42,27 @@ module Calendar {
     ) {};
   }
 
+  function array_remove<T>(a: T[], x: T) {
+    let i = a.indexOf(x);
+    if (i !== -1) {
+      a.splice(i, 1);
+    }
+  }
+
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
     send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
-      console.log("sending...", ops);
-      return old;
+      let events: Event[] = Array.from(old.view());
+      for (let op of ops) {
+        if (op instanceof PSet.Add) {
+          console.log("TODO: add", op.value);
+          events.push(op.value);
+        } else if (op instanceof PSet.Delete) {
+          console.log("TODO: delete", op.value);
+          array_remove(events, op.value);
+        }
+      }
+      return PSet.set(events);
     }
   }
 
