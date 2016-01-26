@@ -33,15 +33,22 @@ module Calendar {
     );
   }
 
-  export function events(ctx: Context, cbk: (events: Collection<any>) => void) {
-    getSomeEvents(function (error, result) {
-      if (error) {
-        throw error;
-      }
+  class EventsMessage extends Message {
+    dispatch(world: World, then: (res: any) => void) {
+      getSomeEvents(function (error, result) {
+        if (error) {
+          throw error;
+        }
 
-      let objs = result.values;
-      let coll = new Collection(ctx.world, PSet.set(objs));
-    });
+        let objs = result.values;
+        let coll = new Collection(world, PSet.set(objs));
+        then(coll);
+      });
+    }
+  }
+
+  export function events(): EventsMessage {
+    return new EventsMessage();
   }
 
 }

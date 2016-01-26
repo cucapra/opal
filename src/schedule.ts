@@ -33,7 +33,6 @@ opal(function* (ctx) {
   console.log("collection contents:", Array.from(ctx.view(c)));
 
   // TODO: Experimenting with the calendar API.
-  Calendar.events(ctx, function (events: Collection<any>) {
-    console.log(events);
-  });
+  let events = yield Calendar.events();
+  console.log(events);
 });
