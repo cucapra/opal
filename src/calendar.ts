@@ -45,7 +45,8 @@ module Calendar {
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
     send(oldset: PSet.Node<Event>, newset: PSet.Node<Event>) {
-      console.log("sending...");
+      let ops = PSet.merge_log(oldset, newset);
+      console.log("sending...", ops);
     }
   }
 

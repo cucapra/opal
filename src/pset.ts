@@ -104,6 +104,29 @@ module PSet {
     }
   }
 
+  // Given two related sets, find the new operations on `overlay` that need to
+  // be applied to `base` to merge them.
+  export function merge_log<T>(base: Node<T>, overlay: Node<T>):
+    Operation<T>[]
+  {
+    // The first step is to accumulate the *entire* set of ancestors of the
+    // base so we can check membership when traversing the overlay's ancestry.
+    let base_ancestors: Set<Node<T>> = new Set();
+    let base_ancestor = base;
+    do {
+      base_ancestors.add(base_ancestor);
+      base_ancestor = base_ancestor.parent;
+    } while (base_ancestor !== null && base_ancestor !== base);
+
+    // Next, get the overlay's log *up to but not including* the closest
+    // common ancestor.
+    let log_suffix = overlay.log(base_ancestors);
+
+    // TODO Check safety: the two nodes need to be related (have some common
+    // ancestor). We also need to check for conflicting concurrent operations.
+    return log_suffix;
+  }
+
   // The `export`ed functions below are the module's external interface. The
   // interface is uses a functional, immutable style, so to add a value to a
   // set, you do something like this:
@@ -120,28 +143,15 @@ module PSet {
   // - Merge two sets with conflicting updates (e.g., where both
   //   branches remove the same item from the set).
   export function merge<T>(base: Node<T>, overlay: Node<T>) {
-      // The first step is to accumulate the *entire* set of ancestors of the
-      // base so we can check membership when traversing the overlay's ancestry.
-      let base_ancestors: Set<Node<T>> = new Set();
-      let base_ancestor = base;
-      do {
-        base_ancestors.add(base_ancestor);
-        base_ancestor = base_ancestor.parent;
-      } while (base_ancestor !== null && base_ancestor !== base);
+    // Get the operations to replay.
+    let log = merge_log(base, overlay);
 
-      // Next, get the overlay's log *up to but not including* the closest
-      // common ancestor.
-      let log_suffix = overlay.log(base_ancestors);
-
-      // TODO Check safety: the two nodes need to be related (have some common
-      // ancestor). We also need to check for conflicting concurrent operations.
-
-      // Replay the partial log on top of the base.
-      let out = base;
-      for (let op of log_suffix) {
-        out = new OperationNode(out, op);
-      }
-      return out;
+    // Replay the partial log on top of the base.
+    let out = base;
+    for (let op of log) {
+      out = new OperationNode(out, op);
+    }
+    return out;
   }
 
   // Create a new set.
