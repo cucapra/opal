@@ -114,15 +114,17 @@ class Collection<T> {
 abstract class ExternalCollection<T> extends Collection<T> {
   // Subclasses should implement `send`, which defines what happens when
   // modifications need to affect the outside world.
-  abstract send(ops: PSet.Operation<T>[]): void;
+  abstract send(old: PSet.Node<T>, ops: PSet.Operation<T>[]): PSet.Node<T>;
 
   update(world: World, set: PSet.Node<T>) {
     if (world instanceof TopWorld) {
-      // Assume for now that the new set is a *child* of the old set, so we
-      // just need to replay the operations "in between" the old and new sets.
+      // Assume for now that the new set is a *descendant* of the old set, so
+      // we just need to replay the operations "in between" the old and new
+      // sets.
       let old = this.lookup(world);
       let log = set.log(new Set([old]));
-      this.send(log);
+      let newset = this.send(old, log);
+      super.update(world, newset);
     } else {
       super.update(world, set);
     }

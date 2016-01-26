@@ -44,8 +44,9 @@ module Calendar {
 
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
-    send(ops: PSet.Operation<Event>[]) {
+    send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
       console.log("sending...", ops);
+      return old;
     }
   }
 
