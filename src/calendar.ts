@@ -1,3 +1,4 @@
+ /// <reference path="opal.ts" />
 'use strict';
 
 let outlook = require("node-outlook");
