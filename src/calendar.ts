@@ -1,4 +1,4 @@
- /// <reference path="opal.ts" />
+/// <reference path="opal.ts" />
 'use strict';
 
 let outlook = require("node-outlook");
@@ -41,7 +41,7 @@ module Calendar {
           throw error;
         }
 
-        let objs = result.values;
+        let objs = result.value;
         let coll = new Collection(world, PSet.set(objs));
         then(coll);
       });

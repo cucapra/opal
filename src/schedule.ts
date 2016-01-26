@@ -32,7 +32,7 @@ opal(function* (ctx) {
   yield ctx.commit(hyp3);
   console.log("collection contents:", Array.from(ctx.view(c)));
 
-  // TODO: Experimenting with the calendar API.
+  // Experimenting with the calendar API.
   let events = yield Calendar.events();
-  console.log(events);
+  console.log("events: ", Array.from(ctx.view(events)));
 });
