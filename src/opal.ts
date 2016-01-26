@@ -4,7 +4,7 @@
 // by the OPAL runtime.
 abstract class Message {
   // Execute the command in the context of a given world.
-  abstract dispatch(world: World): any;
+  abstract dispatch(world: World, then: (res: any) => void): any;
 }
 
 class SetMessage <T> extends Message {
@@ -12,8 +12,9 @@ class SetMessage <T> extends Message {
     super();
   }
 
-  dispatch(world: World) {
+  dispatch(world: World, then: (res: any) => void) {
     this.weight.values.set(world, this.value);
+    then(null);
   }
 }
 
@@ -22,17 +23,16 @@ class GetMessage <T> extends Message {
     super();
   }
 
-  dispatch(world: World) {
+  dispatch(world: World, then: (res: any) => void) {
     // TODO check that it's actually a subworld
 
     // Wait for the value to be available (or for the world to exit).
-    while (!this.weight.values.has(this.subworld) && this.subworld.active) {
-      this.subworld.advance();
-    }
+    this.subworld.run(() => !this.weight.values.has(this.subworld));
 
     console.assert(this.weight.values.has(this.subworld),
         "world exited without setting value");
-    return this.weight.values.get(this.subworld);
+
+    then(this.weight.values.get(this.subworld));
   }
 }
 
@@ -41,14 +41,15 @@ class CommitMessage extends Message {
     super();
   }
 
-  dispatch(world: World) {
+  dispatch(world: World, then: (res: any) => void) {
     // Run the world to completion.
-    this.subworld.run();
-
-    // Merge all of its modified Collections.
-    for (let coll of this.subworld.collections) {
-      coll.merge(this.subworld);
-    }
+    this.subworld.run(() => {
+      // Merge all of its modified Collections.
+      for (let coll of this.subworld.collections) {
+        coll.merge(this.subworld);
+      }
+      then(null);
+    });
   }
 }
 
@@ -132,24 +133,41 @@ class World {
     this.collections = new Set();
   }
 
-  // Iterate the world to completion.
-  run() {
-    while (this.active) {
-      this.advance();
-    }
+  // Iterate the world to completion (asynchronously) while an optional
+  // condition remains true.
+  run_while(cond: () => boolean, then: () => void) {
+    this.advance(() => {
+      if (!this.active || (cond && !cond())) {
+        // Finished.
+        then();
+        return;
+      }
+
+      // Keep going.
+      this.run_while(cond, then);
+    });
   }
 
-  // Execute the world for a single step. If the world emits a message (i.e.
-  // it's not finished yet), the message is executed. If the world is finished,
-  // set `active` to false.
-  advance() {
+  // As above but with no condition.
+  run(then: () => void) {
+    this.run_while(() => true, then);
+  }
+
+  // Execute the world for a single step and then invoke a callback. If the
+  // world emits a message (i.e. it's not finished yet), the message is
+  // executed. If the world is finished, set `active` to false.
+  advance(then: () => void) {
     console.assert(this.active, "world must be active to advance");
     let n = this.coroutine.next(this.next_value);
     if (n.done) {
       this.active = false;
       this.next_value = null;
+      then();
     } else {
-      this.next_value = n.value.dispatch(this);
+      n.value.dispatch(this, (res: any) => {
+        this.next_value = res;
+        then();
+      });
     }
   }
 }
@@ -225,5 +243,5 @@ class TopWorld extends World {
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: WorldCoroutineFunc) {
   let world = new TopWorld(func);
-  world.run();
+  world.run(() => {});
 }
