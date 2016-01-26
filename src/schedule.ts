@@ -34,5 +34,7 @@ opal(function* (ctx) {
 
   // Experimenting with the calendar API.
   let events = yield Calendar.events();
-  console.log("events: ", Array.from(ctx.view(events)));
+  for (let e of ctx.view(events)) {
+    console.log((e as any).Subject);
+  }
 });
