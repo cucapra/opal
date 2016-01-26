@@ -83,13 +83,16 @@ class Collection<T> {
     if (this.sets.has(world)) {
       return this.sets.get(world);
     } else {
-      console.assert(world.parent != null, "collection not defined in any ancestor");
+      console.assert(world.parent != null,
+                     "collection not defined in any ancestor");
       let parent_set = this.lookup(world.parent);
       this.sets.set(world, parent_set);
       return parent_set;
     }
   }
 
+  // Replace the current set for a given world. The world must have an old
+  // set associated with it.
   update(world: World, set: PSet.Node<T>) {
     console.assert(this.sets.has(world), "updating set that does not exist");
     this.sets.set(world, set);
@@ -102,6 +105,22 @@ class Collection<T> {
       let child_set = this.sets.get(world);
       let parent_set = this.lookup(world.parent);
       this.update(world.parent, PSet.merge(parent_set, child_set));
+    }
+  }
+}
+
+// An *external* collection is one where updates affect the world outside of
+// OPAL.
+abstract class ExternalCollection<T> extends Collection<T> {
+  // Subclasses should implement `send`, which defines what happens when
+  // modifications need to affect the outside world.
+  abstract send(oldset: PSet.Node<T>, newset: PSet.Node<T>): void;
+
+  update(world: World, set: PSet.Node<T>) {
+    if (world instanceof TopWorld) {
+      this.send(this.lookup(world), set);
+    } else {
+      super.update(world, set);
     }
   }
 }

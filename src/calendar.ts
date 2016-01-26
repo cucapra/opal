@@ -42,6 +42,13 @@ module Calendar {
     ) {};
   }
 
+  // A Calendar looks like a collection of events.
+  export class Calendar extends ExternalCollection<Event> {
+    send(oldset: PSet.Node<Event>, newset: PSet.Node<Event>) {
+      console.log("sending...");
+    }
+  }
+
   class EventsMessage extends Message {
     dispatch(world: World, then: (res: any) => void) {
       getSomeEvents(function (error, result) {
@@ -51,9 +58,11 @@ module Calendar {
 
         let events: Event[] = [];
         for (let obj of result.value) {
-          events.push(new Event(obj.Subject, obj.Start.DateTime, obj.End.DateTime));
+          events.push(
+            new Event(obj.Subject, obj.Start.DateTime, obj.End.DateTime)
+          );
         }
-        let coll = new Collection(world, PSet.set(events));
+        let coll = new Calendar(world, PSet.set(events));
         then(coll);
       });
     }
