@@ -28,12 +28,12 @@ module PSet {
   }
 
   // An Operation represents an update to the data structure.
-  abstract class Operation<T> {
+  export abstract class Operation<T> {
     abstract apply(set: Set<T>): void;
   }
 
   // An operation that adds a value to the set.
-  class Add<T> extends Operation<T> {
+  export class Add<T> extends Operation<T> {
     constructor(
       public value: T
     ) {
@@ -46,7 +46,7 @@ module PSet {
   }
 
   // An operation that removes a value from the set.
-  class Delete<T> extends Operation<T> {
+  export class Delete<T> extends Operation<T> {
     constructor(
       public value: T
     ) {

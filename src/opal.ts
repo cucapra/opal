@@ -114,11 +114,13 @@ class Collection<T> {
 abstract class ExternalCollection<T> extends Collection<T> {
   // Subclasses should implement `send`, which defines what happens when
   // modifications need to affect the outside world.
-  abstract send(oldset: PSet.Node<T>, newset: PSet.Node<T>): void;
+  abstract send(ops: PSet.Operation<T>[]): void;
 
   update(world: World, set: PSet.Node<T>) {
     if (world instanceof TopWorld) {
-      this.send(this.lookup(world), set);
+      let old = this.lookup(world);
+      let log = PSet.merge_log(old, set);
+      this.send(log);
     } else {
       super.update(world, set);
     }
