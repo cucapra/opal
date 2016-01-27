@@ -1,5 +1,9 @@
 title: OPAL Language
 
+pre, code {
+  language: JavaScript;
+}
+
 <style>
 .madoko p, .madoko li {
   -webkit-hyphens: auto;
