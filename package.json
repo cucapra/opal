@@ -18,7 +18,7 @@
     "smoketest": "node opal.js",
     "typings": "typings install",
 
-    "pretest": "node test/tsconfig.json",
+    "pretest": "tsc -p test",
     "test": "node test.js | faucet"
   }
 }

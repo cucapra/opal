@@ -1,6 +1,5 @@
 /// <reference path="../src/pset.ts" />
-/// <reference path="../typings/node/node.d.ts" />
-/// <reference path="../typings/tape/tape.d.ts" />
+/// <reference path="../typings/main.d.ts" />
 'use strict';
 
 let assert = require('assert');
