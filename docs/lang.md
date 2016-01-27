@@ -1,7 +1,7 @@
 title: OPAL Language
 
 pre, code {
-  language: JavaScript;
+  language: TypeScript;
 }
 
 <style>
