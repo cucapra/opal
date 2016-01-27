@@ -1,6 +1,6 @@
 SRCDIR := src
 DOCSDIR := docs
-DOCFILES := opal choices
+DOCFILES := opal choices lang
 OUT_JS := opal.js
 
 .PHONY: all
