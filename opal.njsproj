@@ -20,6 +20,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
+    <Content Include="package.json" />
     <Content Include="tsconfig.json" />
     <Content Include="README.md" />
     <Compile Include="opal.js" />
@@ -29,7 +30,6 @@
     <TypeScriptCompile Include="src\opal.ts" />
     <TypeScriptCompile Include="src\pset.ts" />
     <TypeScriptCompile Include="src\schedule.ts" />
-    <TypeScriptCompile Include="typings\node\node.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="docs" />

@@ -14,7 +14,12 @@ Building
 
 ### Command Line
 
-TK
+Provided you have Node.js and npm:
+
+* Install the dependencies: `npm install`
+* Install the type definitinos: `npm run typings`
+* Build the example: `npm build`
+* Run it: `node opal.js`
 
 ### Visual Studio
 
@@ -23,6 +28,7 @@ Here's how:
 
 * Open the solution file.
 * Right-click the `npm` item under the `opal` project and choose "Install Missing npm Packages." This gets the project's dependencies.
+* This step is a little annoying at the moment, but we need to install the TypeScript definitions for those dependencies. Right-click the `opal` project and choose "Open Command Prompt Here." Then type the command `npm run typings`. You can close the command prompt.
 * Hit F5 to build and run the example program.
 
 [njstools]: https://www.visualstudio.com/en-us/features/node-js-vs.aspx
