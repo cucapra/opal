@@ -35,4 +35,6 @@ Here's how:
 
 ### Visual Studio Code
 
-TK
+[Visual Studio Code][vscode] has great IDE support for TypeScript, but the build system is kind of broken. So you're probably best off using the command-line route to build and run the project.
+
+[vscode]: https://code.visualstudio.com/
