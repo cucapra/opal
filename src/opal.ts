@@ -161,14 +161,14 @@ class World {
   // Iterate the world to completion (asynchronously) while an optional
   // condition remains true.
   run_while(cond: () => boolean, then: () => void) {
-    this.advance(() => {
-      if (!this.active || (cond && !cond())) {
-        // Finished.
-        then();
-        return;
-      }
+    // Check whether we're finished.
+    if (!this.active || (cond && !cond())) {
+      then();
+      return;
+    }
 
-      // Keep going.
+    // Recurse.
+    this.advance(() => {
       this.run_while(cond, then);
     });
   }
