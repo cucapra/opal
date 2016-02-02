@@ -57,7 +57,7 @@ test('explore and rank', function (t: any) {
 
     // Explore several "options" in a domain.
     let domain = [1, 2, 3, 4, 5];
-    let worlds = ctx.explore(domain, (value) => function* (ctx) {
+    let worlds = ctx.explore(domain, value => function* (ctx) {
       ctx.add(c, value);
 
       let dist_from_pi = Math.abs(Math.PI - value);

@@ -126,6 +126,25 @@ Call `yield ctx.commit` to finish executing a child world and merge its changes 
 After this commit, `ctx.view(coll)` will now show the addition of 1337 performed in the hypothetical world.
 
 
+# Exploring and Ranking
+
+OPAL provides some convenient utilities that use its basic machinery to do more sophisticated things. The `explore` and `minimize` functions together let you search a space of possibilities and choose the best one.
+
+First, call `ctx.explore` to fork $n$ different worlds, each with a different "candidate value":
+
+    let worlds = ctx.explore(domain, candidate => function* (ctx) {
+      // ... do something with `candidate` ...
+    });
+
+Pass the set of possibilities to search as the `domain` parameter. The `explore` function returns a set of worlds, one for each candidate.
+
+Next, you'll want to choose the best world according to some criterion. This is where weights come in: in the hypothetical code, set a weight indicating the "quality" of the candidate. You can call `yield *ctx.minimize` to choose the world that minimizes that weight:
+
+    let selected: World = yield* ctx.minimize(worlds, weight[, limit]);
+
+Pass the set of worlds from an `explore` call, a weight, and (optionally) a maximum number of worlds to try before giving up. The function returns the best world, which you then might want to `commit`.
+
+
 # External Collections
 
 OPAL lets you interact with external services by representing their data as collections.
