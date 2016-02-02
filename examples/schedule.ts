@@ -1,4 +1,5 @@
 /// <reference path="../src/opal.ts" />
+/// <reference path="../src/calendar.ts" />
 'use strict';
 
 opal(function* (ctx) {
