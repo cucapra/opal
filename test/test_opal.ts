@@ -65,7 +65,7 @@ test('explore and rank', function (t: any) {
     });
 
     // Choose the best world and commit it.
-    let selected = yield* ctx.minimize(worlds, w);
+    let selected: World = yield* ctx.minimize(worlds, w);
     yield ctx.commit(selected);
 
     // Check that the right value is now in the collection.
