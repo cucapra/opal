@@ -3,7 +3,7 @@
 
 test('weight updated in two worlds', function (t: any) {
   opal(function* (ctx) {
-    // A communication channel between us an subworlds.
+    // A communication channel between us and subworlds.
     let w = ctx.weight();
 
     // Spawn some hypothetical worlds.
