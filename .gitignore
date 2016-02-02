@@ -11,3 +11,11 @@ test.js
 .ntvs_analysis.dat.tmp
 bin/
 obj/
+
+# I can't figure out how to make Visual Studio stop generating per-file .js
+# outputs on save, even though I've instructed it to combine all TypeScript
+# into a single file.
+src/calendar.js
+src/opal.js
+src/pset.js
+examples/schedule.js
