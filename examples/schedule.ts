@@ -1,3 +1,6 @@
+/// <reference path="../src/opal.ts" />
+'use strict';
+
 opal(function* (ctx) {
   // Experimenting with the calendar API.
   let events: Calendar.Calendar = yield Calendar.events();
