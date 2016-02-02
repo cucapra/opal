@@ -126,7 +126,7 @@ Call `yield ctx.commit` to finish executing a child world and merge its changes 
 After this commit, `ctx.view(coll)` will now show the addition of 1337 performed in the hypothetical world.
 
 
-# Exploring and Ranking
+# Exploring and Ranking { #explore }
 
 OPAL provides some convenient utilities that use its basic machinery to do more sophisticated things. The `explore` and `minimize` functions together let you search a space of possibilities and choose the best one.
 
