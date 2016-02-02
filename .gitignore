@@ -8,5 +8,6 @@ test.js
 # Visual studio crud.
 .vs/
 .ntvs_analysis.dat
+.ntvs_analysis.dat.tmp
 bin/
 obj/

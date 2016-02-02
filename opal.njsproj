@@ -26,16 +26,17 @@
     <Compile Include="opal.js" />
     <Content Include="docs\choices.md" />
     <Content Include="docs\opal.md" />
+    <TypeScriptCompile Include="examples\schedule.ts" />
     <TypeScriptCompile Include="src\calendar.ts" />
     <TypeScriptCompile Include="src\opal.ts" />
     <TypeScriptCompile Include="src\pset.ts" />
-    <TypeScriptCompile Include="src\schedule.ts" />
+    <TypeScriptCompile Include="typings\main.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="docs" />
+    <Folder Include="examples\" />
     <Folder Include="src" />
     <Folder Include="typings\" />
-    <Folder Include="typings\node\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->
