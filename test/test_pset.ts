@@ -1,9 +1,5 @@
+/// <reference path="common.ts" />
 /// <reference path="../src/pset.ts" />
-/// <reference path="../typings/main.d.ts" />
-'use strict';
-
-let assert = require('assert');
-let test = require('tape');
 
 function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
   let set: Set<T> = new Set();

@@ -1,8 +1,5 @@
+/// <reference path="common.ts" />
 /// <reference path="../src/opal.ts" />
-/// <reference path="../typings/main.d.ts" />
-
-let assert = require('assert');
-let test = require('tape');
 
 test('weights', function (t: any) {
   opal(function* (ctx) {
