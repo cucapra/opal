@@ -53,18 +53,23 @@ test('explore and rank', function (t: any) {
   opal(function* (ctx) {
     // Create a collection and a weight.
     let c = ctx.collection<number>();
-    let w = ctx.weight();
+    let w = ctx.weight<number>();
 
     // Explore several "options" in a domain.
     let domain = [1, 2, 3, 4, 5];
     let worlds = ctx.explore(domain, (value) => function* (ctx) {
       ctx.add(c, value);
-      yield ctx.set(w, value);
+
+      let dist_from_pi = Math.abs(Math.PI - value);
+      yield ctx.set(w, dist_from_pi);
     });
 
-    for (let world of worlds) {
-      yield ctx.get(w, world);
-    }
+    // Choose the best world and commit it.
+    let selected = yield* ctx.minimize(worlds, w);
+    yield ctx.commit(selected);
+
+    // Check that the right value is now in the collection.
+    t.assert(contents_equal(ctx.view(c), [3]));
 
     t.end();
   });
