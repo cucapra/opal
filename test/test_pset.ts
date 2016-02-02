@@ -1,22 +1,6 @@
 /// <reference path="common.ts" />
 /// <reference path="../src/pset.ts" />
 
-function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
-  let set: Set<T> = new Set();
-  for (let bv of b) {
-    set.add(bv);
-  }
-
-  let count = 0;
-  for (let av of a) {
-    if (!set.has(av)) {
-      return false;
-    }
-    ++count;
-  }
-  return set.size === count;
-}
-
 test('empty set', function (t: any) {
   let c = PSet.set<number>();
   t.assert(contents_equal(c.view(), []));
