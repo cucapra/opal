@@ -215,12 +215,12 @@ class Context {
   }
 
   // Set a weight.
-  set<T>(weight: Weight<T>, value: T): SetMessage<T> {
+  set<T>(weight: Weight<T>, value: T): Message {
     return new SetMessage(weight, value);
   }
 
   // Get a weight.
-  get<T>(weight: Weight<T>, subworld: World): GetMessage<T> {
+  get<T>(weight: Weight<T>, subworld: World): Message {
     return new GetMessage(weight, subworld);
   }
 
@@ -251,7 +251,7 @@ class Context {
   }
 
   // Commit the collection modifications of a sub-world.
-  commit(subworld: World): CommitMessage {
+  commit(subworld: World): Message {
     return new CommitMessage(subworld);
   }
 }
