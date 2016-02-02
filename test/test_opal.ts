@@ -74,3 +74,37 @@ test('explore and rank', function (t: any) {
     t.end();
   });
 });
+
+test('explore an infinite sequence', function(t: any) {
+  // An infinite sequence of numbers.
+  function* exponential(factor: number) {
+    let i = 1;
+    while (true) {
+      yield i;
+      i *= factor;
+    }
+  }
+
+  opal(function* (ctx) {
+    // Look for numbers that start with the digit 7 (for some reason).
+    let w = ctx.weight<number>();
+    let c = ctx.collection<number>();
+    let worlds = ctx.explore(exponential(2), value => function* (ctx) {
+      if (value.toString()[0] === '7') {
+        yield ctx.set(w, 0);
+      } else {
+        yield ctx.set(w, 1);
+      }
+      ctx.add(c, value);
+    });
+
+    // Limit the search to 100 worlds.
+    let selected: World = yield* ctx.minimize(worlds, w, 100);
+    yield ctx.commit(selected);
+
+    // The first power of 2 that starts with a 7 is 2^46.
+    console.log(Array.from(ctx.view(c)));
+    t.assert(contents_equal(ctx.view(c), [Math.pow(2, 46)]));
+    t.end();
+  });
+});

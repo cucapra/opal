@@ -256,16 +256,12 @@ class Context {
   }
 
   // Explore many hypothetical worlds.
-  explore<T>(domain: Iterable<T>,
-      func: (choice: T) => WorldCoroutineFunc): World[]
+  *explore<T>(domain: Iterable<T>,
+      func: (choice: T) => WorldCoroutineFunc): Iterable<World>
   {
-    // TODO Support infinite domains by spawning lazily and returning an
-    // Iterable<World>?
-    let worlds: World[] = [];
     for (let value of domain) {
-      worlds.push(this.hypothetical(func(value)));
+      yield this.hypothetical(func(value));
     }
-    return worlds;
   }
 
   // Find the world that minimizes a given weight.
