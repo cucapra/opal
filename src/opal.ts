@@ -254,6 +254,19 @@ class Context {
   commit(subworld: World): Message {
     return new CommitMessage(subworld);
   }
+
+  // Explore many hypothetical worlds.
+  explore<T>(domain: Iterable<T>,
+      func: (choice: T) => WorldCoroutineFunc): World[]
+  {
+    // TODO Support infinite domains by spawning lazily and returning an
+    // Iterable<World>?
+    let worlds: World[] = [];
+    for (let value of domain) {
+      worlds.push(this.hypothetical(func(value)));
+    }
+    return worlds;
+  }
 }
 
 

@@ -47,3 +47,25 @@ test('collection manipulation', function (t: any) {
     t.end();
   });
 });
+
+
+test('explore and rank', function (t: any) {
+  opal(function* (ctx) {
+    // Create a collection and a weight.
+    let c = ctx.collection<number>();
+    let w = ctx.weight();
+
+    // Explore several "options" in a domain.
+    let domain = [1, 2, 3, 4, 5];
+    let worlds = ctx.explore(domain, (value) => function* (ctx) {
+      ctx.add(c, value);
+      yield ctx.set(w, value);
+    });
+
+    for (let world of worlds) {
+      yield ctx.get(w, world);
+    }
+
+    t.end();
+  });
+});
