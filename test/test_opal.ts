@@ -32,17 +32,17 @@ test('collection manipulation', function (t: any) {
     ctx.add(c, 2);  // ideal syntax: c.add(2)
     ctx.add(c, 3);
     ctx.del(c, 3);
-    t.assert(contents_equal(ctx.view(c), [2]));
+    assert_set_equal(t, ctx.view(c), [2]);
 
     // Try modifying the collection in a hypothetical world.
     let hyp3 = ctx.hypothetical(function* (ctx): IterableIterator<Message> {
       ctx.add(c, 4);
     });
-    t.assert(contents_equal(ctx.view(c), [2]));
+    assert_set_equal(t, ctx.view(c), [2]);
 
     // Merge the hypothetical world to see its changes.
     yield ctx.commit(hyp3);
-    t.assert(contents_equal(ctx.view(c), [2, 4]));
+    assert_set_equal(t, ctx.view(c), [2, 4]);
 
     t.end();
   });
@@ -69,7 +69,7 @@ test('explore and rank', function (t: any) {
     yield ctx.commit(selected);
 
     // Check that the right value is now in the collection.
-    t.assert(contents_equal(ctx.view(c), [3]));
+    assert_set_equal(t, ctx.view(c), [3]);
 
     t.end();
   });
@@ -103,8 +103,7 @@ test('explore an infinite sequence', function(t: any) {
     yield ctx.commit(selected);
 
     // The first power of 2 that starts with a 7 is 2^46.
-    console.log(Array.from(ctx.view(c)));
-    t.assert(contents_equal(ctx.view(c), [Math.pow(2, 46)]));
+    assert_set_equal(t, ctx.view(c), [Math.pow(2, 46)]);
     t.end();
   });
 });

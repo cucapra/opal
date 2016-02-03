@@ -4,6 +4,7 @@
 let assert = require('assert');
 let test = require('tape');
 
+// Set-equality for iterables.
 function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
   let set: Set<T> = new Set();
   for (let bv of b) {
@@ -18,4 +19,9 @@ function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
     ++count;
   }
   return set.size === count;
+}
+
+// Tape assertion for set equality.
+function assert_set_equal<T>(tape: any, a: Iterable<T>, b: Iterable<T>) {
+  tape.assert(contents_equal(a, b));
 }
