@@ -1,6 +1,5 @@
 SRCDIR := src
 DOCSDIR := docs
-DOCFILES := opal choices lang
 OUT_JS := opal.js
 
 .PHONY: all
@@ -63,7 +62,9 @@ MADOKO := node_modules/.bin/madoko
 $(MADOKO): node_modules/madoko/package.json
 
 .PHONY: docs
-docs: $(DOCFILES:%=$(DOCSDIR)/build/%.html)
+DOCS_SRC := $(wildcard $(DOCSDIR)/*.md)
+DOCS_NAMES := $(notdir $(basename $(DOCS_SRC)))
+docs: $(DOCS_NAMES:%=$(DOCSDIR)/build/%.html)
 
 $(DOCSDIR)/build/%.html: docs/%.md $(MADOKO)
 	$(MADOKO) --odir=docs/build $<
