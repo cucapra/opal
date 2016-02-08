@@ -8,29 +8,13 @@ class Weight<T> {
     this.values = new Map();
   }
 
-  async set(world: World, value: T) {
+  set(world: World, value: T) {
     this.values.set(world, value);
-    if (this.waiting.has(world)) {
-      for (let cbk of this.waiting.get(world)) {
-        cbk(value);
-      }
-    }
   }
 
-  get(world: World): Promise<T> {
-    return new Promise(function(resolve, reject) {
-      if (this.values.has(world)) {
-        // Value available; resolve immediately.
-        resolve(this.values.get(world));
-      } else {
-        // Not yet; add ourselves to the waiting list for the given world.
-        if (this.waiting.get(world)) {
-          this.waiting.set(world, [resolve]);
-        } else {
-          this.waiting.get(world).push(resolve);
-        }
-      }
-    });
+  get(world: World): T {
+    console.assert(this.values.has(world));
+    return this.values.get(world);
   }
 }
 
@@ -111,22 +95,45 @@ type WorldFunc = (ctx: Context) => Promise<void>;
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
 class World {
-  promise: Promise<Set<Collection<any>>>;
-
   subworlds: Set<World>;
 
   // Collections used (or created) in this world.
   collections: Set<Collection<any>>;
+  
+  private next: () => void;
 
-  constructor(public parent: World, public func: WorldFunc) {
+  constructor(public parent: World, func: WorldFunc) {
     this.subworlds = new Set();
     this.collections = new Set();
-    this.promise = this.run();
+    this.next = null;
+    
+    func(new Context(this));
   }
   
-  private async run() {
-    await this.func(new Context(this));
-    return this.collections;
+  suspend(): Promise<void> {
+    console.assert(!this.next);
+    return new Promise<void>((resolve, reject) => {
+      this.next = resolve;
+    });
+  }
+  
+  resume() {
+    console.assert(!!this.next);
+    let next = this.next;
+    this.next = null;
+    next();
+  }
+  
+  finish() {
+    while (this.next) {
+      this.resume();
+    }
+  }
+  
+  advance_while(p: () => boolean) {
+    while (this.next && p()) {
+      this.resume();
+    }
   }
 }
 
@@ -149,12 +156,12 @@ class Context {
 
   // Set a weight.
   async set<T>(weight: Weight<T>, value: T) {
-    await weight.set(this.world, value);
+    weight.set(this.world, value);
   }
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
-    return await weight.get(subworld);
+    return weight.get(subworld);
   }
 
   // Create a new collection.
@@ -185,11 +192,11 @@ class Context {
 
   // Commit the collection modifications of a sub-world.
   async commit(subworld: World) {
-    // TODO
-    let collections = await subworld.promise;
+    // TODO????
+    subworld.finish();
 
     // Merge all of its modified Collections.
-    for (let coll of collections) {
+    for (let coll of subworld.collections) {
       coll.merge(subworld);
     }
   }
@@ -235,5 +242,6 @@ class TopWorld extends World {
 
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: WorldFunc) {
-  new TopWorld(func);
+  let world = new TopWorld(func);
+  world.finish();
 }
