@@ -211,7 +211,7 @@ class Context {
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
-    await weight.get(subworld);
+    return await weight.get(subworld);
   }
 
   // Create a new collection.
