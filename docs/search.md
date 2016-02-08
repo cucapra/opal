@@ -1,5 +1,7 @@
 title: Search Algorithms in OPAL
 
+[TITLE]
+
 # Local vs. Global Search Coordination
 
 One important loose end in OPAL's design is whether it can easily express search algorithms both *local* and *global* coordination.
