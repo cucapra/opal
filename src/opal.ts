@@ -110,28 +110,26 @@ class World {
     func(new Context(this));
   }
   
+  suspended(): boolean {
+    return !!this.next;
+  }
+  
   suspend(): Promise<void> {
-    console.assert(!this.next);
+    console.assert(!this.suspended());
     return new Promise<void>((resolve, reject) => {
       this.next = resolve;
     });
   }
   
   resume() {
-    console.assert(!!this.next);
+    console.assert(this.suspended());
     let next = this.next;
     this.next = null;
     next();
   }
   
   finish() {
-    while (this.next) {
-      this.resume();
-    }
-  }
-  
-  advance_while(p: () => boolean) {
-    while (this.next && p()) {
+    while (this.suspended()) {
       this.resume();
     }
   }
@@ -156,11 +154,16 @@ class Context {
 
   // Set a weight.
   async set<T>(weight: Weight<T>, value: T) {
+    await this.world.suspend();
     weight.set(this.world, value);
   }
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
+    while (!weight.values.has(subworld) && subworld.suspended()) {
+      await this.world.suspend();
+      subworld.resume();
+    }
     return weight.get(subworld);
   }
 
@@ -192,7 +195,8 @@ class Context {
 
   // Commit the collection modifications of a sub-world.
   async commit(subworld: World) {
-    // TODO????
+    // Complete executing the world in question.
+    // TODO Should we suspend in this loop?
     subworld.finish();
 
     // Merge all of its modified Collections.
