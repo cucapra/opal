@@ -169,21 +169,22 @@ type WorldFunc = (ctx: Context) => Promise<void>;
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
 class World {
-  func: WorldFunc;
+  promise: Promise<Set<Collection<any>>>;
 
   subworlds: Set<World>;
 
   // Collections used (or created) in this world.
   collections: Set<Collection<any>>;
 
-  constructor(public parent: World, func: WorldFunc) {
+  constructor(public parent: World, public func: WorldFunc) {
     this.subworlds = new Set();
     this.collections = new Set();
-    this.func = func;
+    this.promise = this.run();
   }
-
-  run() {
-    return this.func(new Context(this));
+  
+  private async run() {
+    await this.func(new Context(this));
+    return this.collections;
   }
 }
 
@@ -243,10 +244,10 @@ class Context {
   // Commit the collection modifications of a sub-world.
   async commit(subworld: World) {
     // TODO
-    // await subworld.promise;
+    let collections = await subworld.promise;
 
     // Merge all of its modified Collections.
-    for (let coll of subworld.collections) {
+    for (let coll of collections) {
       coll.merge(subworld);
     }
   }
@@ -292,6 +293,5 @@ class TopWorld extends World {
 
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: WorldFunc) {
-  let world = new TopWorld(func);
-  world.run();
+  new TopWorld(func);
 }
