@@ -99,35 +99,35 @@ class World {
 
   // Collections used (or created) in this world.
   collections: Set<Collection<any>>;
-  
+
   private next: () => void;
 
   constructor(public parent: World, func: WorldFunc) {
     this.subworlds = new Set();
     this.collections = new Set();
-    this.next = null;
-    
-    func(new Context(this));
+    this.next = () => {
+      func(new Context(this));
+    };
   }
-  
+
   suspended(): boolean {
     return !!this.next;
   }
-  
+
   suspend(): Promise<void> {
     console.assert(!this.suspended());
     return new Promise<void>((resolve, reject) => {
       this.next = resolve;
     });
   }
-  
+
   resume() {
     console.assert(this.suspended());
     let next = this.next;
     this.next = null;
     next();
   }
-  
+
   finish() {
     while (this.suspended()) {
       this.resume();
