@@ -2,21 +2,21 @@
 /// <reference path="../src/opal.ts" />
 
 test('weight updated in two worlds', function (t: any) {
-  opal(function* (ctx) {
+  opal(async function (ctx) {
     // A communication channel between us and subworlds.
     let w = ctx.weight();
 
     // Spawn some hypothetical worlds.
-    let hyp1 = ctx.hypothetical(function* (ctx) {
-      yield ctx.set(w, 2);  // ideal syntax: `w = 2`
+    let hyp1 = ctx.hypothetical(async function (ctx) {
+      await ctx.set(w, 2);  // ideal syntax: `w = 2`
     });
-    let hyp2 = ctx.hypothetical(function* (ctx) {
-      yield ctx.set(w, 8);
+    let hyp2 = ctx.hypothetical(async function (ctx) {
+      await ctx.set(w, 8);
     });
 
     // Collect the weights from the subworlds.
-    let v1 = yield ctx.get(w, hyp1);  // ideal syntax: w[hyp1]
-    let v2 = yield ctx.get(w, hyp2);
+    let v1 = await ctx.get(w, hyp1);  // ideal syntax: w[hyp1]
+    let v2 = await ctx.get(w, hyp2);
 
     t.equal(v1, 2);
     t.equal(v2, 8);

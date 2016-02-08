@@ -1,5 +1,7 @@
 'use strict';
 
+/*
+
 // The base class for events emitted inside hypothetical worlds to be consumed
 // by the OPAL runtime.
 abstract class Message {
@@ -53,12 +55,40 @@ class CommitMessage extends Message {
   }
 }
 
+*/
+
 
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
   values: Map<World, T>;
+  waiting: Map<World, ((v: T) => void)[]>; // TODO
   constructor(public world: World) {
     this.values = new Map();
+  }
+
+  async set(world: World, value: T) {
+    this.values.set(world, value);
+    if (this.waiting.has(world)) {
+      for (let cbk of this.waiting.get(world)) {
+        cbk(value);
+      }
+    }
+  }
+
+  get(world: World): Promise<T> {
+    return new Promise(function(resolve, reject) {
+      if (this.values.has(world)) {
+        // Value available; resolve immediately.
+        resolve(this.values.get(world));
+      } else {
+        // Not yet; add ourselves to the waiting list for the given world.
+        if (this.waiting.get(world)) {
+          this.waiting.set(world, [resolve]);
+        } else {
+          this.waiting.get(world).push(resolve);
+        }
+      }
+    });
   }
 }
 
@@ -133,67 +163,27 @@ abstract class ExternalCollection<T> extends Collection<T> {
 
 
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
-type WorldCoroutine = IterableIterator<Message>;
-type WorldCoroutineFunc = (ctx: Context) => WorldCoroutine;
+type WorldFunc = (ctx: Context) => Promise<void>;
 
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
 class World {
-  coroutine: WorldCoroutine;
-  subworlds: Set<World>;
+  func: WorldFunc;
 
-  active: boolean;
-  next_value: any;
+  subworlds: Set<World>;
 
   // Collections used (or created) in this world.
   collections: Set<Collection<any>>;
 
-  constructor(public parent: World, func: WorldCoroutineFunc) {
+  constructor(public parent: World, func: WorldFunc) {
     this.subworlds = new Set();
-    this.coroutine = func(new Context(this));
-
-    this.active = true;
-    this.next_value = null;
     this.collections = new Set();
+    this.func = func;
   }
 
-  // Iterate the world to completion (asynchronously) while an optional
-  // condition remains true.
-  run_while(cond: () => boolean, then: () => void) {
-    // Check whether we're finished.
-    if (!this.active || (cond && !cond())) {
-      then();
-      return;
-    }
-
-    // Recurse.
-    this.advance(() => {
-      this.run_while(cond, then);
-    });
-  }
-
-  // As above but with no condition.
-  run(then: () => void) {
-    this.run_while(() => true, then);
-  }
-
-  // Execute the world for a single step and then invoke a callback. If the
-  // world emits a message (i.e. it's not finished yet), the message is
-  // executed. If the world is finished, set `active` to false.
-  advance(then: () => void) {
-    console.assert(this.active, "world must be active to advance");
-    let n = this.coroutine.next(this.next_value);
-    if (n.done) {
-      this.active = false;
-      this.next_value = null;
-      then();
-    } else {
-      n.value.dispatch(this, (res: any) => {
-        this.next_value = res;
-        then();
-      });
-    }
+  run() {
+    return this.func(new Context(this));
   }
 }
 
@@ -203,7 +193,7 @@ class Context {
   constructor(public world: World) {}
 
   // Create a new child world of this one.
-  hypothetical(func: WorldCoroutineFunc): World {
+  hypothetical(func: WorldFunc): World {
     let world = new World(this.world, func);
     this.world.subworlds.add(world);
     return world;
@@ -215,13 +205,13 @@ class Context {
   }
 
   // Set a weight.
-  set<T>(weight: Weight<T>, value: T): Message {
-    return new SetMessage(weight, value);
+  async set<T>(weight: Weight<T>, value: T) {
+    await weight.set(this.world, value);
   }
 
   // Get a weight.
-  get<T>(weight: Weight<T>, subworld: World): Message {
-    return new GetMessage(weight, subworld);
+  async get<T>(weight: Weight<T>, subworld: World) {
+    await weight.get(subworld);
   }
 
   // Create a new collection.
@@ -251,26 +241,31 @@ class Context {
   }
 
   // Commit the collection modifications of a sub-world.
-  commit(subworld: World): Message {
-    return new CommitMessage(subworld);
+  async commit(subworld: World) {
+    // TODO
+    // await subworld.promise;
+
+    // Merge all of its modified Collections.
+    for (let coll of subworld.collections) {
+      coll.merge(subworld);
+    }
   }
 
   // Explore many hypothetical worlds.
-  *explore<T>(domain: Iterable<T>,
-      func: (choice: T) => WorldCoroutineFunc): Iterable<World>
+  async explore<T>(domain: Iterable<T>, func: (choice: T) => WorldFunc)
   {
     for (let value of domain) {
-      yield this.hypothetical(func(value));
+      this.hypothetical(func(value));
     }
   }
 
   // Find the world that minimizes a given weight.
-  *minimize(worlds: Iterable<World>, weight: Weight<number>, limit?: number) {
+  async minimize(worlds: Iterable<World>, weight: Weight<number>, limit?: number) {
     let count = 0;
     let min_weight: number = null;
     let min_world: World = null;
     for (let world of worlds) {
-      let w = yield this.get(weight, world);
+      let w = await this.get(weight, world);
       if (min_weight === null || w < min_weight) {
         min_weight = w;
         min_world = world;
@@ -289,14 +284,14 @@ class Context {
 
 // The topmost world has no parent and gets a special designation.
 class TopWorld extends World {
-  constructor(public func: WorldCoroutineFunc) {
+  constructor(public func: WorldFunc) {
     super(null, func);
   }
 }
 
 
 // A top-level entry point that constructs the initial, top-level world.
-function opal(func: WorldCoroutineFunc) {
+function opal(func: WorldFunc) {
   let world = new TopWorld(func);
-  world.run(() => {});
+  world.run();
 }
