@@ -15,6 +15,7 @@ class Weight<T> {
       for (let cbk of this.waiting.get(world)) {
         cbk(value);
       }
+      this.waiting.delete(world);
     }
   }
 
@@ -26,9 +27,9 @@ class Weight<T> {
       } else {
         // No value; defer until we have one.
         if (this.waiting.get(world)) {
-          this.waiting.set(world, [resolve]);
-        } else {
           this.waiting.get(world).push(resolve);
+        } else {
+          this.waiting.set(world, [resolve]);
         }
       }
     });
@@ -202,11 +203,12 @@ class Context {
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
-    let promise = weight.get(subworld);
+    let promise = weight.get(subworld).then((result) => {
+      subworld.release();
+      return result;
+    });
     subworld.acquire();
-    let result = await promise;
-    subworld.release();
-    return result;
+    return await promise;
   }
 
   // Create a new collection.
