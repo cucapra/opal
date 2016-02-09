@@ -250,10 +250,11 @@ class Context {
   }
 
   // Explore many hypothetical worlds.
-  async explore<T>(domain: Iterable<T>, func: (choice: T) => AsyncFunc)
+  *explore<T>(domain: Iterable<T>,
+      func: (choice: T) => AsyncFunc): Iterable<World>
   {
     for (let value of domain) {
-      this.hypothetical(func(value));
+      yield this.hypothetical(func(value));
     }
   }
 

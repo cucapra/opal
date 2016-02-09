@@ -26,7 +26,7 @@ test('weight updated in two worlds', function (t: any) {
 });
 
 test('collection manipulation', function (t: any) {
-  opal(function* (ctx) {
+  opal(async function (ctx) {
     // Create a collection and try adding and removing values.
     let c = ctx.collection<number>();
     ctx.add(c, 2);  // ideal syntax: c.add(2)
@@ -35,13 +35,13 @@ test('collection manipulation', function (t: any) {
     assert_set_equal(t, ctx.view(c), [2]);
 
     // Try modifying the collection in a hypothetical world.
-    let hyp3 = ctx.hypothetical(function* (ctx): IterableIterator<Message> {
+    let hyp3 = ctx.hypothetical(async function (ctx) {
       ctx.add(c, 4);
     });
     assert_set_equal(t, ctx.view(c), [2]);
 
     // Merge the hypothetical world to see its changes.
-    yield ctx.commit(hyp3);
+    await ctx.commit(hyp3);
     assert_set_equal(t, ctx.view(c), [2, 4]);
 
     t.end();
@@ -50,23 +50,23 @@ test('collection manipulation', function (t: any) {
 
 
 test('explore and rank', function (t: any) {
-  opal(function* (ctx) {
+  opal(async function (ctx) {
     // Create a collection and a weight.
     let c = ctx.collection<number>();
     let w = ctx.weight<number>();
 
     // Explore several "options" in a domain.
     let domain = [1, 2, 3, 4, 5];
-    let worlds = ctx.explore(domain, value => function* (ctx) {
+    let worlds = ctx.explore(domain, value => async function (ctx) {
       ctx.add(c, value);
 
       let dist_from_pi = Math.abs(Math.PI - value);
-      yield ctx.set(w, dist_from_pi);
+      await ctx.set(w, dist_from_pi);
     });
 
     // Choose the best world and commit it.
-    let selected: World = yield* ctx.minimize(worlds, w);
-    yield ctx.commit(selected);
+    let selected: World = await ctx.minimize(worlds, w);
+    await ctx.commit(selected);
 
     // Check that the right value is now in the collection.
     assert_set_equal(t, ctx.view(c), [3]);
@@ -85,22 +85,22 @@ test('explore an infinite sequence', function(t: any) {
     }
   }
 
-  opal(function* (ctx) {
+  opal(async function (ctx) {
     // Look for numbers that start with the digit 7 (for some reason).
     let w = ctx.weight<number>();
     let c = ctx.collection<number>();
-    let worlds = ctx.explore(exponential(2), value => function* (ctx) {
+    let worlds = ctx.explore(exponential(2), value => async function (ctx) {
       if (value.toString()[0] === '7') {
-        yield ctx.set(w, 0);
+        await ctx.set(w, 0);
       } else {
-        yield ctx.set(w, 1);
+        await ctx.set(w, 1);
       }
       ctx.add(c, value);
     });
 
     // Limit the search to 100 worlds.
-    let selected: World = yield* ctx.minimize(worlds, w, 100);
-    yield ctx.commit(selected);
+    let selected: World = await ctx.minimize(worlds, w, 100);
+    await ctx.commit(selected);
 
     // The first power of 2 that starts with a 7 is 2^46.
     assert_set_equal(t, ctx.view(c), [Math.pow(2, 46)]);
