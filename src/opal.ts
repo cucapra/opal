@@ -195,17 +195,17 @@ class Context {
 
   // Set a weight.
   async set<T>(weight: Weight<T>, value: T) {
-    await this.world.suspend();
     weight.set(this.world, value);
+    await this.world.suspend();
   }
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
-    while (!weight.values.has(subworld) && subworld.suspended()) {
-      await this.world.suspend();
-      subworld.resume();
-    }
-    return weight.get(subworld);
+    let promise = weight.get(subworld);
+    subworld.acquire();
+    let result = await promise;
+    subworld.release();
+    return result;
   }
 
   // Create a new collection.
@@ -237,8 +237,8 @@ class Context {
   // Commit the collection modifications of a sub-world.
   async commit(subworld: World) {
     // Complete executing the world in question.
-    // TODO Should we suspend in this loop?
-    subworld.finish();
+    subworld.acquire();
+    // TODO Await its completion.
 
     // Merge all of its modified Collections.
     for (let coll of subworld.collections) {
