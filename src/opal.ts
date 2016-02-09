@@ -6,6 +6,7 @@ class Weight<T> {
   waiting: Map<World, ((v: T) => void)[]>;
   constructor(public world: World) {
     this.values = new Map();
+    this.waiting = new Map();
   }
 
   set(world: World, value: T) {
