@@ -3,18 +3,34 @@
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
   values: Map<World, T>;
-  waiting: Map<World, ((v: T) => void)[]>; // TODO
+  waiting: Map<World, ((v: T) => void)[]>;
   constructor(public world: World) {
     this.values = new Map();
   }
 
   set(world: World, value: T) {
     this.values.set(world, value);
+    if (this.waiting.has(world)) {
+      for (let cbk of this.waiting.get(world)) {
+        cbk(value);
+      }
+    }
   }
 
-  get(world: World): T {
-    console.assert(this.values.has(world));
-    return this.values.get(world);
+  get(world: World): Promise<T> {
+    return new Promise((resolve, reject) => {
+      if (this.values.has(world)) {
+        // We have a value already; provide it.
+        resolve(this.values.get(world));
+      } else {
+        // No value; defer until we have one.
+        if (this.waiting.get(world)) {
+          this.waiting.set(world, [resolve]);
+        } else {
+          this.waiting.get(world).push(resolve);
+        }
+      }
+    });
   }
 }
 
@@ -88,10 +104,6 @@ abstract class ExternalCollection<T> extends Collection<T> {
 }
 
 
-// Type aliases for the coroutines that form the basis of hypothetical worlds.
-type AsyncFunc = (ctx: Context) => Promise<void>;
-
-
 // The World components concerned with lazy evaluation. This lets worlds
 // suspend themselves (voluntarily) and *only* run when demanded to.
 class Lazy {
@@ -102,7 +114,6 @@ class Lazy {
   private waiters: number;
 
   constructor() {
-    this.next = null;
     this.waiters = 0;
     this.next = null;
   }
@@ -145,46 +156,23 @@ class Lazy {
 }
 
 
+// Type aliases for the coroutines that form the basis of hypothetical worlds.
+type AsyncFunc = (ctx: Context) => Promise<void>;
+
+
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
-class World {
+class World extends Lazy {
   subworlds: Set<World>;
 
   // Collections used (or created) in this world.
   collections: Set<Collection<any>>;
 
-  private next: () => void;
-
   constructor(public parent: World, func: AsyncFunc) {
+    super();
     this.subworlds = new Set();
     this.collections = new Set();
-    this.next = () => {
-      func(new Context(this));
-    };
-  }
-
-  suspended(): boolean {
-    return !!this.next;
-  }
-
-  suspend(): Promise<void> {
-    console.assert(!this.suspended());
-    return new Promise<void>((resolve, reject) => {
-      this.next = resolve;
-    });
-  }
-
-  resume() {
-    console.assert(this.suspended());
-    let next = this.next;
-    this.next = null;
-    next();
-  }
-
-  finish() {
-    while (this.suspended()) {
-      this.resume();
-    }
+    this.run(() => func(new Context(this)));
   }
 }
 
@@ -300,5 +288,5 @@ class TopWorld extends World {
 // A top-level entry point that constructs the initial, top-level world.
 function opal(func: AsyncFunc) {
   let world = new TopWorld(func);
-  world.finish();
+  world.acquire();  // Run to completion.
 }
