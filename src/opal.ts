@@ -89,7 +89,60 @@ abstract class ExternalCollection<T> extends Collection<T> {
 
 
 // Type aliases for the coroutines that form the basis of hypothetical worlds.
-type WorldFunc = (ctx: Context) => Promise<void>;
+type AsyncFunc = (ctx: Context) => Promise<void>;
+
+
+// The World components concerned with lazy evaluation. This lets worlds
+// suspend themselves (voluntarily) and *only* run when demanded to.
+class Lazy {
+  // The next step to take, when this thread is suspended.
+  private next: () => void;
+
+  // The number of times this thread has been acquired.
+  private waiters: number;
+
+  constructor() {
+    this.next = null;
+    this.waiters = 0;
+    this.next = null;
+  }
+
+  run(func: () => void) {
+    this.next = () => func();  // Start suspended.
+  }
+
+  acquire() {
+    this.waiters++;
+    if (this.next) {
+      console.assert(this.waiters === 1);
+      let next = this.next;
+      this.next = null;
+      next();
+    }
+  }
+
+  release() {
+    this.waiters--;
+    console.assert(this.waiters >= 0);
+    console.assert(this.next === null);
+  }
+
+  active() {
+    return this.waiters > 0;
+  }
+
+  suspend(): Promise<void> {
+    if (this.active()) {
+      // We're active, so just continue executing.
+      return Promise.resolve(null);
+    } else {
+      // Inactive, so actually suspend operation by saving the continuation.
+      return new Promise<void>((resolve, reject) => {
+        this.next = resolve;
+      });
+    }
+  }
+}
 
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
@@ -102,7 +155,7 @@ class World {
 
   private next: () => void;
 
-  constructor(public parent: World, func: WorldFunc) {
+  constructor(public parent: World, func: AsyncFunc) {
     this.subworlds = new Set();
     this.collections = new Set();
     this.next = () => {
@@ -141,7 +194,7 @@ class Context {
   constructor(public world: World) {}
 
   // Create a new child world of this one.
-  hypothetical(func: WorldFunc): World {
+  hypothetical(func: AsyncFunc): World {
     let world = new World(this.world, func);
     this.world.subworlds.add(world);
     return world;
@@ -206,7 +259,7 @@ class Context {
   }
 
   // Explore many hypothetical worlds.
-  async explore<T>(domain: Iterable<T>, func: (choice: T) => WorldFunc)
+  async explore<T>(domain: Iterable<T>, func: (choice: T) => AsyncFunc)
   {
     for (let value of domain) {
       this.hypothetical(func(value));
@@ -238,14 +291,14 @@ class Context {
 
 // The topmost world has no parent and gets a special designation.
 class TopWorld extends World {
-  constructor(public func: WorldFunc) {
+  constructor(public func: AsyncFunc) {
     super(null, func);
   }
 }
 
 
 // A top-level entry point that constructs the initial, top-level world.
-function opal(func: WorldFunc) {
+function opal(func: AsyncFunc) {
   let world = new TopWorld(func);
   world.finish();
 }
