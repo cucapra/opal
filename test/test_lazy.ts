@@ -53,3 +53,62 @@ test('force entirely, in which suspend becomes a no-op', function (t: any) {
   thread.acquire();  // Start running.
   log.push(4);
 });
+
+// A simple synchronization mechanism.
+class Signal {
+  fired: boolean;
+  waiters: (() => void)[];
+
+  constructor() {
+    this.fired = false;
+    this.waiters = [];
+  }
+
+  wait(f: () => void) {
+    if (this.fired) {
+      f();
+    } else {
+      this.waiters.push(f);
+    }
+  }
+
+  notify() {
+    this.fired = true;
+    for (let f of this.waiters) {
+      f();
+    }
+    this.waiters = null;
+  }
+}
+
+test('combine suspension with other sync on the side', function (t: any) {
+  let log: number[] = [];
+
+  let signal = new Signal();
+  let thread = new Lazy();
+  log.push(0);
+  thread.run(async function () {
+    log.push(1);
+    signal.notify();
+    log.push(2);
+    await thread.suspend();
+    t.fail("code after suspension should never execute");
+  });
+
+  log.push(3);
+  signal.wait(() => {
+    log.push(4);
+    thread.release();  // Balance the acquire below and stop at the suspension.
+  });
+  log.push(5);
+  thread.acquire();
+  log.push(6);
+
+  t.deepEqual(log, [0, 3, 5, 1, 4, 2, 6]);
+  t.end();
+});
+
+/*
+test('combine suspension with ordinary async operations', function (t: any) {
+});
+*/
