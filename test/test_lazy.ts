@@ -108,7 +108,31 @@ test('combine suspension with other sync on the side', function (t: any) {
   t.end();
 });
 
-/*
+// A simple asynchronous utility.
+function sleep(time: number): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    setTimeout(resolve, time);
+  });
+}
+
 test('combine suspension with ordinary async operations', function (t: any) {
+  let log: number[] = [];
+  log.push(0);
+  let thread = new Lazy();
+  thread.run(async function () {
+    log.push(1);
+    await thread.suspend();  // Fall through.
+    log.push(2);
+
+    await sleep(1);
+    await thread.suspend();  // Fall through again.
+    log.push(3);
+
+    // Because the `await` above resolves asynchronously, this is the last
+    // chunk of code to execute.
+    t.deepEqual(log, [0, 4, 1, 2, 3]);
+    t.end();
+  });
+  log.push(4);
+  thread.acquire();
 });
-*/
