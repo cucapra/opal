@@ -153,3 +153,21 @@ test('use finish() to wait on the completion of a lazy thread', function (t: any
   thread.acquire();
   log.push(4);
 });
+
+test('use finish() after the target thread has already completed', function (t: any) {
+  let log: number[] = [];
+  let thread = new Lazy();
+  log.push(0);
+  thread.run(async function () {
+    log.push(1);
+  });
+  log.push(2);
+  thread.acquire();
+  log.push(3);
+  thread.finish().then(function () {
+    log.push(4);
+    t.deepEqual(log, [0, 2, 1, 3, 5, 4]);
+    t.end();
+  });
+  log.push(5);
+});
