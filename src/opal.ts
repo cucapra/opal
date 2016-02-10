@@ -292,7 +292,7 @@ class Context {
   async commit(subworld: World) {
     // Complete executing the world in question.
     subworld.acquire();
-    // TODO Await its completion.
+    await subworld.finish();
 
     // Merge all of its modified Collections.
     for (let coll of subworld.collections) {
