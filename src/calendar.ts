@@ -67,11 +67,11 @@ module Calendar {
     }
   }
 
-  class EventsMessage extends Message {
-    dispatch(world: World, then: (res: any) => void) {
+  export async function events(ctx: Context) {
+    return new Promise<Calendar>((resolve, reject) => {
       getSomeEvents(function (error, result) {
         if (error) {
-          throw error;
+          reject(error);
         }
 
         let events: Event[] = [];
@@ -80,14 +80,10 @@ module Calendar {
             new Event(obj.Subject, obj.Start.DateTime, obj.End.DateTime)
           );
         }
-        let coll = new Calendar(world, PSet.set(events));
-        then(coll);
+        let coll = new Calendar(ctx.world, PSet.set(events));
+        resolve(coll);
       });
-    }
-  }
-
-  export function events(): EventsMessage {
-    return new EventsMessage();
+    });
   }
 
 }
