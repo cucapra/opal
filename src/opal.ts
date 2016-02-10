@@ -3,35 +3,31 @@
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
   values: Map<World, T>;
-  waiting: Map<World, ((v: T) => void)[]>;
+  spools: Map<World, PromiseSpool<T>>;
+
   constructor(public world: World) {
     this.values = new Map();
-    this.waiting = new Map();
+    this.spools = new Map();
+  }
+
+  private spool(world: World): PromiseSpool<T> {
+    if (this.spools.has(world)) {
+      return this.spools.get(world);
+    } else {
+      let s = new PromiseSpool<T>();
+      this.spools.set(world, s);
+      return s;
+    }
   }
 
   set(world: World, value: T) {
     this.values.set(world, value);
-    if (this.waiting.has(world)) {
-      for (let cbk of this.waiting.get(world)) {
-        cbk(value);
-      }
-      this.waiting.delete(world);
-    }
+    this.spool(world).fill(Promise.resolve(value));
   }
 
   get(world: World): Promise<T> {
-    return new Promise((resolve, reject) => {
-      if (this.values.has(world)) {
-        // We have a value already; provide it.
-        resolve(this.values.get(world));
-      } else {
-        // No value; defer until we have one.
-        if (this.waiting.get(world)) {
-          this.waiting.get(world).push(resolve);
-        } else {
-          this.waiting.set(world, [resolve]);
-        }
-      }
+    return new Promise<T>((resolve, reject) => {
+      this.spool(world).then(resolve, reject);
     });
   }
 }
