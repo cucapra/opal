@@ -72,6 +72,7 @@ module Calendar {
       getSomeEvents(function (error, result) {
         if (error) {
           reject(error);
+          return;
         }
 
         let events: Event[] = [];
