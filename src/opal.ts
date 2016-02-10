@@ -109,17 +109,16 @@ abstract class ExternalCollection<T> extends Collection<T> {
 // A simple utility for queueing up actions to take after a promise. You can
 // `then` this object before you know exactly which promise you want to
 // `then`.
-type Thunk = () => void;
-class PromiseSpool {
-  private promise: Promise<void>;
-  private spool: [Thunk, Thunk][];
+class PromiseSpool<T> {
+  private promise: Promise<T>;
+  private spool: [(v: T) => void, (r: any) => void][];
 
   constructor () {
     this.promise = null;
     this.spool = [];
   }
 
-  then(resolve: Thunk, reject: Thunk) {
+  then(resolve: (v: T) => void, reject: (r: any) => void) {
     if (this.promise !== null) {
       this.promise.then(resolve, reject);
     } else {
@@ -127,7 +126,7 @@ class PromiseSpool {
     }
   }
 
-  fill(p: Promise<void>) {
+  fill(p: Promise<T>) {
     console.assert(this.promise === null);
     this.promise = p;
 
@@ -149,12 +148,12 @@ class Lazy {
   // The number of times this thread has been acquired.
   private waiters: number;
 
-  private finish_spool: PromiseSpool;
+  private finish_spool: PromiseSpool<void>;
 
   constructor() {
     this.waiters = 0;
     this.next = null;
-    this.finish_spool = new PromiseSpool();
+    this.finish_spool = new PromiseSpool<void>();
   }
 
   // Load the function to execute. Threads start in a suspended state, so you
