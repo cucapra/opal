@@ -255,10 +255,11 @@ class Context {
 
   // Get a weight.
   async get<T>(weight: Weight<T>, subworld: World) {
-    let promise = weight.get(subworld).then((result) => {
+    let promise = (async function () {
+      let result = await weight.get(subworld);
       subworld.release();
       return result;
-    });
+    })();
     subworld.acquire();
     return await promise;
   }
