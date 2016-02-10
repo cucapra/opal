@@ -156,6 +156,15 @@ class Lazy {
     this.next = () => {
       let p = func();
       this.finish_spool.fill(p);
+
+      // Handle and log errors in user code.
+      p.catch((err) => {
+        if (err.stack) {
+          console.error(err.stack);
+        } else {
+          console.error(err);
+        }
+      });
     };
   }
 
