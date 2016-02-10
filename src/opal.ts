@@ -1,31 +1,48 @@
 'use strict';
 
+// A simple "holder" for a promise that keeps its callbacks for later use.
+// This is useful when you want to call `then` on a promise but you don't know
+// where the "upstream" part of the chain will come from yet. Later, when you
+// want to complete the chain, you can call `resolve()` or `reject()` or even
+// connect up another promise with `.then(jar.resolve, jar.reject)`.
+class PromiseJar<T> {
+  promise: Promise<T>;
+  resolve: (v: T) => void;
+  reject: (e: any) => void;
+
+  constructor() {
+    this.promise = new Promise<T>((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+  }
+}
+
+
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
-  spools: Map<World, PromiseSpool<T>>;
+  jars: Map<World, PromiseJar<T>>;
 
   constructor(public world: World) {
-    this.spools = new Map();
+    this.jars = new Map();
   }
 
-  private spool(world: World): PromiseSpool<T> {
-    if (this.spools.has(world)) {
-      return this.spools.get(world);
+  private jar(world: World): PromiseJar<T> {
+    if (this.jars.has(world)) {
+      return this.jars.get(world);
     } else {
-      let s = new PromiseSpool<T>();
-      this.spools.set(world, s);
+      let s = new PromiseJar<T>();
+      this.jars.set(world, s);
       return s;
     }
   }
 
   set(world: World, value: T) {
-    this.spool(world).fill(Promise.resolve(value));
+    this.jar(world).resolve(value);
   }
 
   get(world: World): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      this.spool(world).then(resolve, reject);
-    });
+    return this.jar(world).promise;
   }
 }
 
