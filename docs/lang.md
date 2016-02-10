@@ -25,19 +25,19 @@ This document explains the OPAL language and APIs. They are currently implemente
 An OPAL program is a TypeScript program.
 To use OPAL, wrap your code in a top-level call to the `opal` entry-point function:
 
-    opal(function* (ctx) {
+    opal(async function (ctx) {
       // Your code here...
     });
 
-Your code appears inside an [ES6 generator function][generator] that gets a context object as an argument.
-To invoke OPAL's magic, you'll typically make calls through the context and that need to emit values from the generator.
+Your code appears inside an [async function][async] that gets a context object as an argument.
+To invoke OPAL's magic, you'll typically make asynchronous calls through the context using JavaScript's `await` operator.
 So OPAL-specific operations will usually look like:
 
-    yield ctx.something_or_other();
+    await ctx.something_or_other();
 
 Eventually, we'd like to provide syntactic sugar to make these calls less verbose.
 
-[generator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*
+[async]: https://tc39.github.io/ecmascript-asyncawait/
 
 
 # Hypothetical Worlds
@@ -45,11 +45,11 @@ Eventually, we'd like to provide syntactic sugar to make these calls less verbos
 OPAL lets you enter *hypothetical worlds* to make tentative changes without immediately committing to them.
 Use the `ctx.hypothetical` function to enter one:
 
-    let world = ctx.hypothetical(function* (ctx) {
+    let world = ctx.hypothetical(async function (ctx) {
       // More code here...
     });
 
-The code inside, which is also wrapped in a [generator][], doesn't run immediately.
+The code inside, which is also wrapped in an [async function][], doesn't run immediately.
 And when it does run, its changes are isolated from the rest of the system.
 So it's free to explore possibilities that we'll later abandon and to generally mess up global state with impunity.
 The function returns a *world object*, which we'll use later to access weights and commit data-structure updates.
@@ -63,17 +63,17 @@ First, create a weight by calling `ctx.weight()`:
 
     let weight = ctx.weight();
 
-Then, in a hypothetical world, you can assign the weight's value using `yield ctx.set`:
+Then, in a hypothetical world, you can assign the weight's value using `await ctx.set`:
 
     let world = ctx.hypothetical(function* (ctx) {
       // ...
-      yield ctx.set(weight, 42);
+      await ctx.set(weight, 42);
       // ...
     });
 
-Finally, back in the parent (non-hypothetical) world, you can retrieve this value using `yield ctx.get`:
+Finally, back in the parent (non-hypothetical) world, you can retrieve this value using `await ctx.get`:
 
-    console.log(yield ctx.get(weight, world));
+    console.log(await ctx.get(weight, world));
 
 You have to tell the `get` function *which world* you want to read a value from.
 This reveals the real magic of weights that separates them from garden-variety variables: different worlds can `set` different values for the same weight without interfering.
@@ -107,7 +107,7 @@ To get the contents of a collection, use `ctx.view`:
 
 The magic comes in when you make updates in hypothetical code:
 
-    let world = ctx.hypothetical(function* (ctx) {
+    let world = ctx.hypothetical(async function (ctx) {
       // ...
       ctx.add(coll, 1337);
       // ...
@@ -119,9 +119,9 @@ This isn't just because of OPAL's lazy evaluation: OPAL also *isolates* updates 
 (That's why they're called hypothetical.)
 
 The parent can also decide that a hypothetical world's updates are worthy of applying to the *real* world.
-Call `yield ctx.commit` to finish executing a child world and merge its changes into the current world:
+Call `await ctx.commit` to finish executing a child world and merge its changes into the current world:
 
-    yield ctx.commit(world);
+    await ctx.commit(world);
 
 After this commit, `ctx.view(coll)` will now show the addition of 1337 performed in the hypothetical world.
 
@@ -132,15 +132,15 @@ OPAL provides some convenient utilities that use its basic machinery to do more 
 
 First, call `ctx.explore` to fork many different worlds, each with a different "candidate value":
 
-    let worlds = ctx.explore(domain, candidate => function* (ctx) {
+    let worlds = ctx.explore(domain, candidate => async function (ctx) {
       // ... do something with `candidate` ...
     });
 
 Pass the set of possibilities to search as the `domain` parameter. (The domain may be infinite, as long as you don't plan on exploring it exhaustively!) The `explore` function returns a set of worlds, one for each candidate.
 
-Next, you'll want to choose the best world according to some criterion. This is where weights come in: in the hypothetical code, set a weight indicating the "quality" of the candidate. You can call `yield *ctx.minimize` to choose the world that minimizes that weight:
+Next, you'll want to choose the best world according to some criterion. This is where weights come in: in the hypothetical code, set a weight indicating the "quality" of the candidate. You can call `await ctx.minimize` to choose the world that minimizes that weight:
 
-    let selected: World = yield* ctx.minimize(worlds, weight[, limit]);
+    let selected: World = await ctx.minimize(worlds, weight[, limit]);
 
 Pass the set of worlds from an `explore` call, a weight, and (optionally) a maximum number of worlds to try before giving up. (You'll definitely want to use `limit` if your domain is infinite.) The function returns the world in which `weight` is smallest. You then might want to `commit` that "winning" world.
 

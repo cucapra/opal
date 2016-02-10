@@ -23,11 +23,11 @@ As a refresher, here's how you currently write a simple, single-level exploratio
 
     let domain = /* ... the set of possibilities ... */;
     let weight = ctx.weight();  // Initialize a communication channel.
-    let worlds = ctx.explore(domain, candidate => function* (ctx) {
+    let worlds = ctx.explore(domain, candidate => async function (ctx) {
       // ... act on `candidate` to build up the hypothetical world ...
-      yield ctx.set(weight, fitness());  // Use some scoring mechanism.
+      await ctx.set(weight, fitness());  // Use some scoring mechanism.
     });
-    let selected: World = yield* ctx.minimize(worlds, weight);
+    let selected: World = await ctx.minimize(worlds, weight);
     ctx.commit(world);  // Apply the changes from the winning world.
 
 For example, here's a simplistic version of our favorite application:
@@ -36,7 +36,7 @@ For example, here's a simplistic version of our favorite application:
       let domain = generateTimes(...);
       let conflicts = ctx.weight();
 
-      let worlds = ctx.explore(domain, startTime => function* (ctx) {
+      let worlds = ctx.explore(domain, startTime => async function (ctx) {
         // Add the rescheduled event to the calendar and remove the old version.
         let newEvent = new Event(startTime, ...);
         ctx.add(calendar, newEvent);
@@ -48,14 +48,14 @@ For example, here's a simplistic version of our favorite application:
 
 
       // Choose the world with the fewest conflicts.
-      ctx.commit(yield* ctx.minimize(worlds, conflicts));
+      ctx.commit(await ctx.minimize(worlds, conflicts));
     }
 
 Of course, a complete version of the algorithm should be recursive. Let's give it the power to reschedule the conflicts it discovers:
 
     function reschedule(calendar: Calendar, appointment: Event) {
       // ...
-      let worlds = ctx.explore(domain, startTime => function* (ctx) {
+      let worlds = ctx.explore(domain, startTime => async function (ctx) {
         let newEvent = new Event(startTime, ...);
         ctx.add(calendar, newEvent);
         ctx.del(calendar, appointment);
