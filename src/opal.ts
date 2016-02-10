@@ -160,6 +160,7 @@ class Lazy {
     return this.finish_jar.promise;
   }
 
+  // Instruct the thread to start executing eagerly.
   acquire() {
     this.waiters++;
     if (this.next) {
@@ -170,16 +171,21 @@ class Lazy {
     }
   }
 
+  // Tell the thread that you no longer need it to execute eagerly, balancing
+  // an earlier `acquire` call.
   release() {
     this.waiters--;
     console.assert(this.waiters >= 0);
     console.assert(this.next === null);
   }
 
+  // Check whether anyone has called `acquire` but not `release`; i.e., anyone
+  // wants us to execute eagerly at the moment.
   active() {
     return this.waiters > 0;
   }
 
+  // Stop executing unless we're in an eager state (i.e., `active()` is true).
   suspend(): Promise<void> {
     if (this.active()) {
       // We're active, so just continue executing.
