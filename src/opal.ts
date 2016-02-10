@@ -116,39 +116,6 @@ abstract class ExternalCollection<T> extends Collection<T> {
 }
 
 
-// A simple utility for queueing up actions to take after a promise. You can
-// `then` this object before you know exactly which promise you want to
-// `then`.
-class PromiseSpool<T> {
-  private promise: Promise<T>;
-  private spool: [(v: T) => void, (r: any) => void][];
-
-  constructor () {
-    this.promise = null;
-    this.spool = [];
-  }
-
-  then(resolve: (v: T) => void, reject: (r: any) => void) {
-    if (this.promise !== null) {
-      this.promise.then(resolve, reject);
-    } else {
-      this.spool.push([resolve, reject]);
-    }
-  }
-
-  fill(p: Promise<T>) {
-    console.assert(this.promise === null);
-    this.promise = p;
-
-    // Unspool.
-    for (let pair of this.spool) {
-      this.promise.then(pair[0], pair[1]);
-    }
-    this.spool = null;
-  }
-}
-
-
 // The World components concerned with lazy evaluation. This lets worlds
 // suspend themselves (voluntarily) and *only* run when demanded to.
 class Lazy {
@@ -158,12 +125,12 @@ class Lazy {
   // The number of times this thread has been acquired.
   private waiters: number;
 
-  private finish_spool: PromiseSpool<void>;
+  private finish_jar: PromiseJar<void>;
 
   constructor() {
     this.waiters = 0;
     this.next = null;
-    this.finish_spool = new PromiseSpool<void>();
+    this.finish_jar = new PromiseJar<void>();
   }
 
   // Load the function to execute. Threads start in a suspended state, so you
@@ -172,7 +139,9 @@ class Lazy {
   run(func: () => Promise<void>) {
     this.next = () => {
       let p = func();
-      this.finish_spool.fill(p);
+
+      // When the function succeeds, notify anyone who called `finish()`.
+      p.then(this.finish_jar.resolve);
 
       // Handle and log errors in user code.
       p.catch((err) => {
@@ -188,9 +157,7 @@ class Lazy {
   // A promise you can await to know when this function has finished
   // executing.
   finish(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      this.finish_spool.then(resolve, reject);
-    });
+    return this.finish_jar.promise;
   }
 
   acquire() {
