@@ -136,3 +136,20 @@ test('combine suspension with ordinary async operations', function (t: any) {
   log.push(4);
   thread.acquire();
 });
+
+test('use finish() to wait on the completion of a lazy thread', function (t: any) {
+  let log: number[] = [];
+  let thread = new Lazy();
+  log.push(0);
+  thread.run(async function () {
+    log.push(1);
+  });
+  thread.finish().then(function () {
+    log.push(2);
+    t.deepEqual(log, [0, 3, 1, 4, 2]);
+    t.end();
+  });
+  log.push(3);
+  thread.acquire();
+  log.push(4);
+});

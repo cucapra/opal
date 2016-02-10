@@ -106,6 +106,40 @@ abstract class ExternalCollection<T> extends Collection<T> {
 }
 
 
+// A simple utility for queueing up actions to take after a promise. You can
+// `then` this object before you know exactly which promise you want to
+// `then`.
+type Thunk = () => void;
+class PromiseSpool {
+  private promise: Promise<void>;
+  private spool: [Thunk, Thunk][];
+
+  constructor () {
+    this.promise = null;
+    this.spool = [];
+  }
+
+  then(resolve: Thunk, reject: Thunk) {
+    if (this.promise !== null) {
+      this.promise.then(resolve, reject);
+    } else {
+      this.spool.push([resolve, reject]);
+    }
+  }
+
+  fill(p: Promise<void>) {
+    console.assert(this.promise === null);
+    this.promise = p;
+
+    // Unspool.
+    for (let pair of this.spool) {
+      this.promise.then(pair[0], pair[1]);
+    }
+    this.spool = null;
+  }
+}
+
+
 // The World components concerned with lazy evaluation. This lets worlds
 // suspend themselves (voluntarily) and *only* run when demanded to.
 class Lazy {
@@ -115,13 +149,30 @@ class Lazy {
   // The number of times this thread has been acquired.
   private waiters: number;
 
+  private finish_spool: PromiseSpool;
+
   constructor() {
     this.waiters = 0;
     this.next = null;
+    this.finish_spool = new PromiseSpool();
   }
 
-  run(func: () => void) {
-    this.next = () => func();  // Start suspended.
+  // Load the function to execute. Threads start in a suspended state, so you
+  // have to call `acquire` after this to get the thread to actually start
+  // executing.
+  run(func: () => Promise<void>) {
+    this.next = () => {
+      let p = func();
+      this.finish_spool.fill(p);
+    };
+  }
+
+  // A promise you can await to know when this function has finished
+  // executing.
+  finish(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.finish_spool.then(resolve, reject);
+    });
   }
 
   acquire() {
