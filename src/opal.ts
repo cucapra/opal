@@ -2,11 +2,9 @@
 
 // A communication channel between hypothetical worlds and their parents.
 class Weight<T> {
-  values: Map<World, T>;
   spools: Map<World, PromiseSpool<T>>;
 
   constructor(public world: World) {
-    this.values = new Map();
     this.spools = new Map();
   }
 
@@ -21,7 +19,6 @@ class Weight<T> {
   }
 
   set(world: World, value: T) {
-    this.values.set(world, value);
     this.spool(world).fill(Promise.resolve(value));
   }
 
