@@ -13,7 +13,7 @@ var redirectUri = "http://localhost:8191/authorize";
 var scopes = [
     "openid",
     "https://outlook.office.com/mail.read",
-    "https://outlook.office.com/calendars.read",
+    "https://outlook.office.com/calendars.readwrite",
 ];
 
 function getAuthUrl() {
