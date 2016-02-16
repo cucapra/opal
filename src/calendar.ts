@@ -35,12 +35,23 @@ module Calendar {
     );
   }
 
+  function toDate(d: string | Date): Date {
+    if (d instanceof Date) {
+      return d;
+    } else {
+      return new Date(d as string);
+    }
+  }
+
   export class Event {
     constructor(
       public subject: string,
-      public start: string,
-      public end: string
-    ) {};
+      public start: Date,
+      public end: Date
+    ) {
+      this.start = toDate(start);
+      this.end = toDate(end);
+    };
   }
 
   function array_remove<T>(a: T[], x: T) {
@@ -78,7 +89,7 @@ module Calendar {
         let events: Event[] = [];
         for (let obj of result.value) {
           events.push(
-            new Event(obj.Subject, obj.Start.DateTime, obj.End.DateTime)
+            new Event(obj.Subject, toDate(obj.Start.DateTime), toDate(obj.End.DateTime))
           );
         }
         let coll = new Calendar(ctx.world, PSet.set(events));
