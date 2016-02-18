@@ -120,6 +120,28 @@ module Calendar {
     }
   }
 
+  // Copy an object.
+  function clone<T>(obj: T): T {
+    return Object.assign({}, obj);
+  }
+
+  // An operation that updates events in place.
+  class Modify extends PSet.Operation<Event> {
+    constructor(
+      public old: Event,
+      public changes: { [key: string]: string }
+    ) {
+      super();
+    }
+
+    apply(set: Set<Event>) {
+      let modified = clone(this.old);
+      Object.assign(modified, this.changes);
+      set.delete(this.old);
+      set.add(modified);
+    }
+  }
+
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
     // The `send` method implements the "real" operations that affect the
@@ -143,6 +165,10 @@ module Calendar {
         // Delete an event.
         } else if (op instanceof PSet.Delete) {
           console.log("TODO: delete", op.value);
+
+        // Modify an event.
+        } else if (op instanceof Modify) {
+          console.log("TODO: modify", op.old, op.changes);
         }
 
         // Apply the operation to the local event set.
