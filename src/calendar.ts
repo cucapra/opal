@@ -83,13 +83,24 @@ module Calendar {
 
   // Represents a single calendar event.
   export class Event {
+    id: string;
+
     constructor(
       public subject: string,
       public start: Date,
-      public end: Date
+      public end: Date,
+      id?: string
     ) {
       this.start = toDate(start);
       this.end = toDate(end);
+
+      // An ID is not required. This lets us construct Event objects before
+      // they are sent to the server.
+      if (id) {
+        this.id = id;
+      } else {
+        this.id = null;
+      }
     };
 
     // Convert to the Office API's JSON representation.
@@ -116,7 +127,8 @@ module Calendar {
     static fromOffice(obj: any): Event {
       return new Event(obj.Subject,
                        toDate(obj.Start.DateTime),
-                       toDate(obj.End.DateTime))
+                       toDate(obj.End.DateTime),
+                       obj.Id);
     }
   }
 
@@ -134,6 +146,10 @@ module Calendar {
       super();
     }
 
+    // Applying works by deleting the old object and inserting an updated
+    // one. This keeps the data structure functional (i.e., other aliases tot
+    // he event are unaffected), but it is likely to break when there are
+    // multiple modifications.
     apply(set: Set<Event>) {
       let modified = clone(this.old);
       Object.assign(modified, this.changes);
@@ -159,6 +175,10 @@ module Calendar {
           Office.addEvent(op.value.toOffice(), (error, result) => {
             if (error) {
               console.log("error adding event:", error);
+            } else {
+              // TODO Await the completion of the request before returning.
+              // (This requires `send` to be an async call.)
+              op.value.id = result.Id;
             }
           });
 

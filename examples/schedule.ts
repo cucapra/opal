@@ -12,7 +12,11 @@ opal(async function (ctx) {
 
   // Add an event.
   let hyp4 = ctx.hypothetical(async function (ctx) {
-    let e = new Calendar.Event("Exciting Meeting!", new Date("February 3, 2014 12:00:00"), new Date("February 3, 2014 13:00:00"));
+    let e = new Calendar.Event(
+      "Exciting Meeting!",
+      new Date("February 3, 2014 12:00:00"),
+      new Date("February 3, 2014 13:00:00")
+    );
     ctx.add(events, e);
   });
   await ctx.commit(hyp4);
