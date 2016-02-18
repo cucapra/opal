@@ -120,15 +120,6 @@ module Calendar {
     }
   }
 
-  // A utility to remove an element from array (if it exists). Only removes
-  // the first occurrence.
-  function array_remove<T>(a: T[], x: T) {
-    let i = a.indexOf(x);
-    if (i !== -1) {
-      a.splice(i, 1);
-    }
-  }
-
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
     // The `send` method implements the "real" operations that affect the
@@ -136,7 +127,7 @@ module Calendar {
     send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
       // Get the *old* set of events. We'll update this local copy according
       // to all the operations in the log.
-      let events: Event[] = Array.from(old.view());
+      let events: Set<Event> = old.view();
 
       // Apply each operation both by issuing an API call and modifying our
       // local `events` set.
@@ -148,13 +139,14 @@ module Calendar {
               console.log("error adding event:", error);
             }
           });
-          events.push(op.value);
 
         // Delete an event.
         } else if (op instanceof PSet.Delete) {
           console.log("TODO: delete", op.value);
-          array_remove(events, op.value);
         }
+
+        // Apply the operation to the local event set.
+        op.apply(events);
       }
 
       // Return a flattened set of events reflecting the current state.

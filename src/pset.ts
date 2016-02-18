@@ -158,9 +158,9 @@ module PSet {
   }
 
   // Create a new set.
-  export function set<T>(values?: T[]) {
+  export function set<T>(values?: Iterable<T>) {
     if (values) {
-      return new FlatNode<T>(values);
+      return new FlatNode<T>(Array.from(values));
     } else {
       return new EmptyNode<T>();
     }
