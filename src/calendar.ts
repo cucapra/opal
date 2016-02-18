@@ -243,4 +243,13 @@ module Calendar {
     });
   }
 
+  // An OPAL API function to *modify* a Calendar collection (which is not
+  // part of the ordinary collection API).
+  export function modify(ctx: Context, collection: Calendar,
+                         event: Event, changes: any) {
+    let op = new Modify(event.id, changes);
+    let s = PSet.op(collection.lookup(ctx.world), op);
+    collection.update(this.world, s);
+    this.world.collections.add(collection);
+  }
 }

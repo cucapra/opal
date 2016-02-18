@@ -166,14 +166,19 @@ module PSet {
     }
   }
 
+  // Apply any operation to a collection.
+  export function op<T>(coll: Node<T>, op: Operation<T>) {
+    return new OperationNode(coll, op);
+  }
+
   // Add a new value to a set.
   export function add<T>(coll: Node<T>, value: T) {
-    return new OperationNode(coll, new Add(value));
+    return op(coll, new Add(value));
   }
 
   // Remove a value from a set.
   export function del<T>(coll: Node<T>, value: T) {
-    return new OperationNode(coll, new Delete(value));
+    return op(coll, new Delete(value));
   }
 
 }
