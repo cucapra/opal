@@ -120,6 +120,8 @@ module Calendar {
     }
   }
 
+  // A utility to remove an element from array (if it exists). Only removes
+  // the first occurrence.
   function array_remove<T>(a: T[], x: T) {
     let i = a.indexOf(x);
     if (i !== -1) {
@@ -129,9 +131,17 @@ module Calendar {
 
   // A Calendar looks like a collection of events.
   export class Calendar extends ExternalCollection<Event> {
+    // The `send` method implements the "real" operations that affect the
+    // outside world.
     send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
+      // Get the *old* set of events. We'll update this local copy according
+      // to all the operations in the log.
       let events: Event[] = Array.from(old.view());
+
+      // Apply each operation both by issuing an API call and modifying our
+      // local `events` set.
       for (let op of ops) {
+        // Add an event.
         if (op instanceof PSet.Add) {
           Office.addEvent(op.value.toOffice(), (error, result) => {
             if (error) {
@@ -139,15 +149,20 @@ module Calendar {
             }
           });
           events.push(op.value);
+
+        // Delete an event.
         } else if (op instanceof PSet.Delete) {
           console.log("TODO: delete", op.value);
           array_remove(events, op.value);
         }
       }
+
+      // Return a flattened set of events reflecting the current state.
       return PSet.set(events);
     }
   }
 
+  // An OPAL API function to get a few events from the user's calendar.
   export async function events(ctx: Context) {
     return new Promise<Calendar>((resolve, reject) => {
       Office.getSomeEvents(function (error, result) {
