@@ -10,7 +10,7 @@ let path = require("path");
 outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
 // Simple wrappers for the `node-outlook` library.
-module Office {
+namespace Office {
   function getUserHome(): string {
       return process.env[(process.platform == 'win32') ?
         'USERPROFILE' : 'HOME'];
@@ -66,7 +66,7 @@ module Office {
   }
 }
 
-module Calendar {
+namespace Calendar {
   function toDate(d: string | Date): Date {
     if (d instanceof Date) {
       return d;

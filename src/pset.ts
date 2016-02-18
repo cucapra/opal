@@ -1,6 +1,6 @@
 'use strict';
 
-module PSet {
+namespace PSet {
 
   // A PSet.Node is an immutable, atomic unit in a persistent set structure.
   // Each Node points to its parent (except the root EmptyNode, below). The
