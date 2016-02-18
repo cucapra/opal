@@ -142,6 +142,34 @@ module Calendar {
     }
   }
 
+  // A structure for holding *updates* to an event object.
+  interface EventChange {
+    subject?: string;
+    start?: Date;
+    end?: Date;
+  }
+
+  // Convert an EventChange to JSON for the Office API.
+  function changeToOffice(change: EventChange): { [key: string]: any } {
+    let out: { [key: string]: any } = {};
+    if (change.subject) {
+      out['Subject'] = change.subject;
+    }
+    if (change.start) {
+      out['Start'] = {
+        'DateTime': dateToOffice(change.start),
+        'TimeZone': 'Pacific Standard Time', // TODO
+      };
+    }
+    if (change.end) {
+      out['End'] = {
+        'DateTime': dateToOffice(change.end),
+        'TimeZone': 'Pacific Standard Time', // TODO
+      };
+    }
+    return out;
+  }
+
   // Copy an object.
   function clone<T>(obj: T): T {
     return Object.assign({}, obj);
@@ -151,7 +179,7 @@ module Calendar {
   class Modify extends PSet.Operation<Event> {
     constructor(
       public id: string,
-      public changes: { [key: string]: string }
+      public changes: EventChange
     ) {
       super();
     }
@@ -208,7 +236,7 @@ module Calendar {
 
         // Modify an event.
         } else if (op instanceof Modify) {
-          Office.modifyEvent(op.id, op.changes, (error, result) => {
+          Office.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
             if (error) {
               console.log("error modifying event:", error);
             }
@@ -246,7 +274,7 @@ module Calendar {
   // An OPAL API function to *modify* a Calendar collection (which is not
   // part of the ordinary collection API).
   export function modify(ctx: Context, collection: Calendar,
-                         event: Event, changes: any) {
+                         event: Event, changes: EventChange) {
     let op = new Modify(event.id, changes);
     let s = PSet.op(collection.lookup(ctx.world), op);
     collection.update(ctx.world, s);
