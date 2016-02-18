@@ -9,6 +9,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// Async interface to Node's console input.
 function input(prompt: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     rl.question(prompt, resolve);
@@ -16,15 +17,22 @@ function input(prompt: string): Promise<string> {
 }
 
 opal(async function (ctx) {
-  let events: Calendar.Calendar = await Calendar.events(ctx);
+  let cal: Calendar.Calendar = await Calendar.events(ctx);
 
-  let allEvents = Array.from(ctx.view(events));
+  let allEvents = Array.from(ctx.view(cal));
   let i = 0;
   for (let e of allEvents) {
     console.log(i, e.subject);
     i++;
   }
 
+  // Chose an event to change.
   let response = await input('Edit which event? ');
-  console.log(response);
+  let index = parseInt(response);
+  let event = allEvents[index];
+
+  // Modify the event.
+  Calendar.modify(ctx, cal, event,
+    { subject: event.subject + " (modified by OPAL)" }
+  );
 });
