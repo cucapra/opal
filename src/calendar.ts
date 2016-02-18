@@ -6,56 +6,57 @@ let outlook = require("node-outlook");
 let fs = require("fs");
 let path = require("path");
 
-module Calendar {
+// Use the 2.0 version of the Office 365 API.
+outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
+// Simple wrappers for the `node-outlook` library.
+module Office {
   function getUserHome(): string {
-      return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+      return process.env[(process.platform == 'win32') ?
+        'USERPROFILE' : 'HOME'];
   }
 
-  function getSomeEvents(cbk: (error: any, result: any) => void) {
+  // Load the user object and token string to pass to the Outlook library.
+  function getConfig() {
     let home = getUserHome();
     let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
     let token = fs.readFileSync(path.join(home, ".opal.token.txt"));
 
+    return {
+      user: {
+        email: email,
+        timezone: 'Pacific Standard Time',
+      },
+      token: token,
+    };
+  }
+
+  export function getSomeEvents(cbk: (error: any, result: any) => void) {
     let queryParams = {
       '$select': 'Subject,Start,end',
       '$orderby': 'Start/DateTime desc',
       '$top': 10
     };
 
-    // Set the API endpoint to use the v2.0 endpoint
-    outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-    // Set the anchor mailbox to the user's SMTP address
-    outlook.base.setAnchorMailbox(email);
-    outlook.base.setPreferredTimeZone('Pacific Standard Time');
-
+    let config = getConfig();
     outlook.calendar.getEvents(
-      {token: token, odataParams: queryParams},
+      {token: config.token, user: config.user, odataParams: queryParams},
       cbk
     );
   }
 
-  function addEvent(event: Event, cbk: (error: any, result: any) => void) {
-    // TODO: Remove copypasta.
-    let home = getUserHome();
-    let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
-    let token = fs.readFileSync(path.join(home, ".opal.token.txt"));
-
-    // Set the API endpoint to use the v2.0 endpoint
-    outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-    // Set the anchor mailbox to the user's SMTP address
-    outlook.base.setAnchorMailbox(email);
-    outlook.base.setPreferredTimeZone('Pacific Standard Time');
-
-    // TODO: Is this redundancy necessary?
-    var user = {
-      email: email,
-      timezone: 'Pacific Standard Time',
-    };
-
-    outlook.calendar.createEvent({token: token, user: user, event: event.toOffice()}, cbk);
+  export function addEvent(event: any,
+                           cbk: (error: any, result: any) => void)
+  {
+    let config = getConfig();
+    outlook.calendar.createEvent(
+      {token: config.token, user: config.user, event: event},
+      cbk
+    );
   }
+}
 
+module Calendar {
   function toDate(d: string | Date): Date {
     if (d instanceof Date) {
       return d;
@@ -125,7 +126,7 @@ module Calendar {
       let events: Event[] = Array.from(old.view());
       for (let op of ops) {
         if (op instanceof PSet.Add) {
-          addEvent(op.value, (error, result) => {
+          Office.addEvent(op.value.toOffice(), (error, result) => {
             if (error) {
               console.log("error adding event:", error);
             }
@@ -142,7 +143,7 @@ module Calendar {
 
   export async function events(ctx: Context) {
     return new Promise<Calendar>((resolve, reject) => {
-      getSomeEvents(function (error, result) {
+      Office.getSomeEvents(function (error, result) {
         if (error) {
           reject(error);
           return;
