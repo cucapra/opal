@@ -54,6 +54,16 @@ module Office {
       cbk
     );
   }
+  export function modifyEvent(id: string, changes: any,
+                              cbk: (error: any, result: any) => void)
+  {
+    let config = getConfig();
+    outlook.calendar.updateEvent(
+      {token: config.token, user: config.user, eventId: event,
+        update: changes},
+      cbk
+    );
+  }
 }
 
 module Calendar {
@@ -198,7 +208,11 @@ module Calendar {
 
         // Modify an event.
         } else if (op instanceof Modify) {
-          console.log("TODO: modify", op.id, op.changes);
+          Office.modifyEvent(op.id, op.changes, (error, result) => {
+            if (error) {
+              console.log("error modifying event:", error);
+            }
+          });
         }
 
         // Apply the operation to the local event set.
