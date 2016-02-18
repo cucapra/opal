@@ -59,7 +59,7 @@ module Office {
   {
     let config = getConfig();
     outlook.calendar.updateEvent(
-      {token: config.token, user: config.user, eventId: event,
+      {token: config.token, user: config.user, eventId: id,
         update: changes},
       cbk
     );
@@ -249,7 +249,7 @@ module Calendar {
                          event: Event, changes: any) {
     let op = new Modify(event.id, changes);
     let s = PSet.op(collection.lookup(ctx.world), op);
-    collection.update(this.world, s);
-    this.world.collections.add(collection);
+    collection.update(ctx.world, s);
+    ctx.world.collections.add(collection);
   }
 }

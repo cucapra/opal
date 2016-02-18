@@ -78,7 +78,8 @@ class Collection<T> {
   // Replace the current set for a given world. The world must have an old
   // set associated with it.
   update(world: World, set: PSet.Node<T>) {
-    console.assert(this.sets.has(world), "updating set that does not exist");
+    console.assert(this.sets.has(world),
+        "updating set that does not exist: %j not in %j", world, this.sets);
     this.sets.set(world, set);
   }
 

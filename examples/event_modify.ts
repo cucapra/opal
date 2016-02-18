@@ -32,7 +32,10 @@ opal(async function (ctx) {
   let event = allEvents[index];
 
   // Modify the event.
-  Calendar.modify(ctx, cal, event,
-    { subject: event.subject + " (modified by OPAL)" }
-  );
+  let hyp = ctx.hypothetical(async function (ctx) {
+    Calendar.modify(ctx, cal, event,
+      { Subject: event.subject + " (modified by OPAL)" }
+    );
+  });
+  await ctx.commit(hyp);
 });
