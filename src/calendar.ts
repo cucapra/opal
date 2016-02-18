@@ -111,6 +111,13 @@ module Calendar {
         'Attendees': [] as any[],
       };
     }
+
+    // Load an Event from the Office API's JSON representation.
+    static fromOffice(obj: any): Event {
+      return new Event(obj.Subject,
+                       toDate(obj.Start.DateTime),
+                       toDate(obj.End.DateTime))
+    }
   }
 
   function array_remove<T>(a: T[], x: T) {
@@ -151,9 +158,7 @@ module Calendar {
 
         let events: Event[] = [];
         for (let obj of result.value) {
-          events.push(
-            new Event(obj.Subject, toDate(obj.Start.DateTime), toDate(obj.End.DateTime))
-          );
+          events.push(Event.fromOffice(obj));
         }
         let coll = new Calendar(ctx.world, PSet.set(events));
         resolve(coll);
