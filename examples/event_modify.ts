@@ -38,4 +38,7 @@ opal(async function (ctx) {
     );
   });
   await ctx.commit(hyp);
+
+  // Close stdin. (Otherwise, the script hangs on exit.)
+  rl.close();
 });
