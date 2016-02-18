@@ -140,7 +140,7 @@ module Calendar {
   // An operation that updates events in place.
   class Modify extends PSet.Operation<Event> {
     constructor(
-      public old: Event,
+      public id: string,
       public changes: { [key: string]: string }
     ) {
       super();
@@ -148,12 +148,22 @@ module Calendar {
 
     // Applying works by deleting the old object and inserting an updated
     // one. This keeps the data structure functional (i.e., other aliases tot
-    // he event are unaffected), but it is likely to break when there are
-    // multiple modifications.
+    // he event are unaffected).
     apply(set: Set<Event>) {
-      let modified = clone(this.old);
+      // Look for the old event.
+      let old: Event = null;
+      for (let obj of set) {
+        if (obj.id === this.id) {
+          old = obj;
+          break;
+        }
+      }
+      console.assert(old !== null, "event not found by id");
+
+      // Update and replace the object.
+      let modified = clone(old);
       Object.assign(modified, this.changes);
-      set.delete(this.old);
+      set.delete(old);
       set.add(modified);
     }
   }
@@ -188,7 +198,7 @@ module Calendar {
 
         // Modify an event.
         } else if (op instanceof Modify) {
-          console.log("TODO: modify", op.old, op.changes);
+          console.log("TODO: modify", op.id, op.changes);
         }
 
         // Apply the operation to the local event set.
