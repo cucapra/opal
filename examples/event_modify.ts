@@ -2,6 +2,9 @@
 /// <reference path="../src/calendar.ts" />
 'use strict';
 
+import {opal} from '../src/opal';
+import {Calendar} from '../src/calendar';
+
 const readline = require('readline');
 
 const rl = readline.createInterface({

@@ -8,6 +8,7 @@
     "src/opal.ts",
     "src/calendar.ts",
     "examples/schedule.ts",
+    "examples/event_modify.ts",
     "typings/main.d.ts"
   ]
 }
