@@ -1,6 +1,7 @@
-/// <reference path="opal.ts" />
-/// <reference path="pset.ts" />
 'use strict';
+
+import * as PSet from './pset';
+import {ExternalCollection, Context} from './opal';
 
 let outlook = require("node-outlook");
 let fs = require("fs");
@@ -66,7 +67,7 @@ namespace Office {
   }
 }
 
-namespace Calendar {
+export namespace Calendar {
   function toDate(d: string | Date): Date {
     if (d instanceof Date) {
       return d;

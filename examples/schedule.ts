@@ -1,6 +1,7 @@
-/// <reference path="../src/opal.ts" />
-/// <reference path="../src/calendar.ts" />
 'use strict';
+
+import {opal} from '../src/opal';
+import {Calendar} from '../src/calendar';
 
 opal(async function (ctx) {
   // Experimenting with the calendar API.

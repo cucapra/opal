@@ -2,9 +2,11 @@
   "compilerOptions": {
     "noImplicitAny": true,
     "target": "ES6",
-    "out": "opal.js"
+    "module": "commonjs"
   },
   "files": [
+    "src/opal.ts",
+    "src/calendar.ts",
     "examples/schedule.ts",
     "typings/main.d.ts"
   ]

@@ -15,7 +15,7 @@
 
   "scripts": {
     "build": "tsc",
-    "smoketest": "node opal.js",
+    "smoketest": "node examples/schedule.js",
     "typings": "typings install",
 
     "pretest": "tsc -p test",
