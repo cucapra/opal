@@ -16,3 +16,7 @@ src/opal.js
 src/pset.js
 examples/schedule.js
 examples/event_modify.js
+test/common.js
+test/test_lazy.js
+test/test_opal.js
+test/test_pset.js
