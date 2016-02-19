@@ -1,5 +1,8 @@
-/// <reference path="common.ts" />
-/// <reference path="../src/opal.ts" />
+'use strict';
+
+import {Lazy} from '../src/opal';
+
+let test = require('tape');
 
 test('force one lazy thread', function (t: any) {
   let log: number[] = [];

@@ -121,7 +121,7 @@ export abstract class ExternalCollection<T> extends Collection<T> {
 
 // The World components concerned with lazy evaluation. This lets worlds
 // suspend themselves (voluntarily) and *only* run when demanded to.
-class Lazy {
+export class Lazy {
   // The next step to take, when this thread is suspended.
   private next: () => void;
 

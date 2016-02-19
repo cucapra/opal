@@ -1,5 +1,9 @@
-/// <reference path="common.ts" />
-/// <reference path="../src/pset.ts" />
+'use strict';
+
+import {assert_set_equal} from './common';
+import * as PSet from '../src/pset';
+
+let test = require('tape');
 
 test('empty set', function (t: any) {
   let c = PSet.set<number>();

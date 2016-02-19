@@ -1,5 +1,3 @@
-/// <reference path="../src/opal.ts" />
-/// <reference path="../src/calendar.ts" />
 'use strict';
 
 import {opal} from '../src/opal';
