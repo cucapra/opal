@@ -19,6 +19,6 @@
     "typings": "typings install",
 
     "pretest": "tsc -p test",
-    "test": "node test.js | faucet"
+    "test": "tape test/test_*.js | faucet"
   }
 }
