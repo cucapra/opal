@@ -3,7 +3,7 @@
 'use strict';
 
 import {opal} from '../src/opal';
-import {Calendar} from '../src/calendar';
+import {Event, Calendar, getEvents, modifyEvent} from '../src/calendar';
 
 const readline = require('readline');
 
@@ -20,7 +20,7 @@ function input(prompt: string): Promise<string> {
 }
 
 opal(async function (ctx) {
-  let cal: Calendar.Calendar = await Calendar.events(ctx);
+  let cal: Calendar = await getEvents(ctx);
 
   let allEvents = Array.from(ctx.view(cal));
   let i = 0;
@@ -36,7 +36,7 @@ opal(async function (ctx) {
 
   // Modify the event.
   let hyp = ctx.hypothetical(async function (ctx) {
-    Calendar.modify(ctx, cal, event,
+    modifyEvent(ctx, cal, event,
       { subject: event.subject + " (modified by OPAL)" }
     );
   });

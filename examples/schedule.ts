@@ -1,11 +1,11 @@
 'use strict';
 
 import {opal} from '../src/opal';
-import {Calendar} from '../src/calendar';
+import {Event, Calendar, getEvents} from '../src/calendar';
 
 opal(async function (ctx) {
   // Experimenting with the calendar API.
-  let events: Calendar.Calendar = await Calendar.events(ctx);
+  let events: Calendar = await getEvents(ctx);
   console.log("calendar events:");
   for (let e of ctx.view(events)) {
     console.log(e.subject);
@@ -13,7 +13,7 @@ opal(async function (ctx) {
 
   // Add an event.
   let hyp4 = ctx.hypothetical(async function (ctx) {
-    let e = new Calendar.Event(
+    let e = new Event(
       "Exciting Meeting!",
       new Date("February 3, 2014 12:00:00"),
       new Date("February 3, 2014 13:00:00")
