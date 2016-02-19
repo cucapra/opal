@@ -4,7 +4,7 @@
   "private": true,
 
   "dependencies": {
-    "node-outlook": "1.1.5"
+    "node-outlook": "^1.1.5"
   },
   "devDependencies": {
     "tape": "^4.2.2",
@@ -15,10 +15,10 @@
 
   "scripts": {
     "build": "tsc",
-    "smoketest": "node opal.js",
+    "smoketest": "node build/examples/schedule.js",
     "typings": "typings install",
 
     "pretest": "tsc -p test",
-    "test": "node test.js | faucet"
+    "test": "tape build/test/test_*.js | faucet"
   }
 }

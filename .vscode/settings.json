@@ -8,7 +8,10 @@
 		".ntvs_analysis.dat": true,
 		"bin": true,
 		"obj": true,
-		"docs/build": true
+		"docs/build": true,
+        "build": true,
+        "typings": true,
+        "node_modules": true
 	},
 	"editor.wrappingColumn": 80
 }
