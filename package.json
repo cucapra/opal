@@ -15,10 +15,10 @@
 
   "scripts": {
     "build": "tsc",
-    "smoketest": "node examples/schedule.js",
+    "smoketest": "node build/examples/schedule.js",
     "typings": "typings install",
 
     "pretest": "tsc -p test",
-    "test": "tape test/test_*.js | faucet"
+    "test": "tape build/test/test_*.js | faucet"
   }
 }

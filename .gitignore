@@ -1,7 +1,7 @@
 node_modules/
 typings/
 docs/build/
-test.js
+build/
 
 # Visual studio crud.
 .vs/
@@ -9,14 +9,3 @@ test.js
 .ntvs_analysis.dat.tmp
 bin/
 obj/
-
-# Generated JavaScript for TypeScript sources.
-src/calendar.js
-src/opal.js
-src/pset.js
-examples/schedule.js
-examples/event_modify.js
-test/common.js
-test/test_lazy.js
-test/test_opal.js
-test/test_pset.js
