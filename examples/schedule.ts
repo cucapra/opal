@@ -3,26 +3,61 @@
 import {opal} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
 
+// http://stackoverflow.com/a/1090817
+function copyDate(d: Date) {
+  return new Date(d.getTime());
+}
+
+// Generate candidate times from a range.
+function* slots(start: Date, end: Date, incrementMinutes: number) {
+  // Clone the start date for our iterator.
+  let current = copyDate(start);
+  
+  // Increment the date repeatedly.
+  while (current < end) {
+    yield current;
+    current.setMinutes(current.getMinutes() + incrementMinutes);
+  }
+}
+
 opal(async function (ctx) {
-  // Experimenting with the calendar API.
-  let events: Calendar = await getEvents(ctx);
-  console.log("calendar events:");
-  for (let e of ctx.view(events)) {
-    console.log(e.subject);
+  // The search: find a meeting slot.
+  async function schedule(cal: Calendar, range: Iterable<Date>,
+                          title: string, minutes: number)
+  {
+    let conflicts = ctx.weight<number>();
+    
+    let worlds = ctx.explore(range, start => async function (ctx) {
+      // Try adding the event to the calendar.
+      let end = copyDate(start);
+      end.setMinutes(start.getMinutes() + minutes);
+      let evt = new Event(title, start, end);
+      ctx.add(events, evt);
+      
+      // Check for conflicts.
+      ctx.set(conflicts, 1);  // TODO
+    });
+    
+    // Find the best time.
+    return await ctx.minimize(worlds, conflicts, 100);
   }
 
-  // Add an event.
-  let hyp4 = ctx.hypothetical(async function (ctx) {
-    let e = new Event(
-      "Exciting Meeting!",
-      new Date("February 3, 2014 12:00:00"),
-      new Date("February 3, 2014 13:00:00")
-    );
-    ctx.add(events, e);
-  });
-  await ctx.commit(hyp4);
-  console.log("events now:");
-  for (let e of ctx.view(events)) {
-    console.log(e.subject, e.start, e.end);
-  }
+  // Get my calendar.
+  let events: Calendar = await getEvents(ctx);
+  
+  // Schedule a meeting.
+  let startRange = slots(
+    new Date("February 3, 2014 08:00:00"),
+    new Date("February 3, 2014 17:00:00"),
+    30
+  );
+  let world = await schedule(
+    events,
+    startRange,
+    "Exciting Meeting!",
+    60
+  );
+  
+  // Affect the real world.
+  await ctx.commit(world);
 });
