@@ -40,7 +40,6 @@ namespace Office {
     };
 
     let config = getConfig();
-    console.log({token: config.token, user: config.user, odataParams: queryParams});
     outlook.calendar.getEvents(
       {token: config.token, user: config.user, odataParams: queryParams},
       cbk
