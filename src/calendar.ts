@@ -20,8 +20,8 @@ namespace Office {
   // Load the user object and token string to pass to the Outlook library.
   function getConfig() {
     let home = getUserHome();
-    let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
-    let token = fs.readFileSync(path.join(home, ".opal.token.txt"));
+    let email = fs.readFileSync(path.join(home, ".opal.email.txt")).toString();
+    let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
 
     return {
       user: {
@@ -40,6 +40,7 @@ namespace Office {
     };
 
     let config = getConfig();
+    console.log({token: config.token, user: config.user, odataParams: queryParams});
     outlook.calendar.getEvents(
       {token: config.token, user: config.user, odataParams: queryParams},
       cbk
