@@ -88,7 +88,8 @@ function dateToOffice(d: Date): string {
     '-' + pad0(d.getMonth() + 1) +
     '-' + pad0(d.getDate()) +
     'T' + pad0(d.getHours()) +
-    ':' + pad0(d.getMinutes());
+    ':' + pad0(d.getMinutes()) +
+    ':' + pad0(d.getSeconds());
 }
 
 // Represents a single calendar event.
