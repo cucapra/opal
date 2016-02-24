@@ -34,7 +34,7 @@ namespace Office {
 
   export function getSomeEvents(cbk: (error: any, result: any) => void) {
     let queryParams = {
-      '$select': 'Subject,Start,end',
+      '$select': 'Subject,Start,End,Attendees',
       '$orderby': 'Start/DateTime desc',
       '$top': 10
     };
@@ -99,11 +99,12 @@ export class Event {
     public subject: string,
     public start: Date,
     public end: Date,
+    public attendees: string[],
     id?: string
   ) {
     this.start = toDate(start);
     this.end = toDate(end);
-
+    this.attendees = attendees;
     // An ID is not required. This lets us construct Event objects before
     // they are sent to the server.
     if (id) {
@@ -129,12 +130,18 @@ export class Event {
         'DateTime': dateToOffice(this.end),
         'TimeZone': 'Pacific Standard Time', // TODO
       },
-      'Attendees': [] as any[],
+      // i am a bad person -- should distinguish required from optional attendees
+      'Attendees': this.attendees
     };
   }
 
   // Load an Event from the Office API's JSON representation.
   static fromOffice(obj: any): Event {
+    console.log(obj.Attendees);
+    let attendees: string[] = [];
+    for (let attendee of obj.Attendees) {
+      attendees.push(attendee.EmailAddress.Address);
+    }
     return new Event(obj.Subject,
                      toDate(obj.Start.DateTime),
                      toDate(obj.End.DateTime),
