@@ -9,6 +9,7 @@ opal(async function (ctx) {
   for (let e of ctx.view(events)) {
     console.log(e.subject);
   }
+    /*
 
   // Add an event.
   let hyp4 = ctx.hypothetical(async function (ctx) {
@@ -23,5 +24,5 @@ opal(async function (ctx) {
   console.log("events now:");
   for (let e of ctx.view(events)) {
     console.log(e.subject, e.start, e.end);
-  }
+  }*/
 });
