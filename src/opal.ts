@@ -1,5 +1,7 @@
 'use strict';
 
+import * as PSet from './pset';
+
 // A simple "holder" for a promise that keeps its callbacks for later use.
 // This is useful when you want to call `then` on a promise but you don't know
 // where the "upstream" part of the chain will come from yet. Later, when you
@@ -49,7 +51,7 @@ class Weight<T> {
 
 // A fundamental world-aware data structure. This wraps a PSet per world where
 // it is used. Each world's PSet is updated in-place, imperatively.
-class Collection<T> {
+export class Collection<T> {
   sets: Map<World, PSet.Node<T>>;
 
   constructor(public owner: World, init?: PSet.Node<T>) {
@@ -78,7 +80,8 @@ class Collection<T> {
   // Replace the current set for a given world. The world must have an old
   // set associated with it.
   update(world: World, set: PSet.Node<T>) {
-    console.assert(this.sets.has(world), "updating set that does not exist");
+    console.assert(this.sets.has(world),
+        "updating set that does not exist: %j not in %j", world, this.sets);
     this.sets.set(world, set);
   }
 
@@ -95,7 +98,7 @@ class Collection<T> {
 
 // An *external* collection is one where updates affect the world outside of
 // OPAL.
-abstract class ExternalCollection<T> extends Collection<T> {
+export abstract class ExternalCollection<T> extends Collection<T> {
   // Subclasses should implement `send`, which defines what happens when
   // modifications need to affect the outside world.
   abstract send(old: PSet.Node<T>, ops: PSet.Operation<T>[]): PSet.Node<T>;
@@ -118,7 +121,7 @@ abstract class ExternalCollection<T> extends Collection<T> {
 
 // The World components concerned with lazy evaluation. This lets worlds
 // suspend themselves (voluntarily) and *only* run when demanded to.
-class Lazy {
+export class Lazy {
   // The next step to take, when this thread is suspended.
   private next: () => void;
 
@@ -206,7 +209,7 @@ type AsyncFunc = (ctx: Context) => Promise<void>;
 
 // A World is a dynamic instance of a hypothetical block. It wraps a coroutine
 // with additional state and utilities for managing the world's context.
-class World extends Lazy {
+export class World extends Lazy {
   subworlds: Set<World>;
 
   // Collections used (or created) in this world.
@@ -222,7 +225,7 @@ class World extends Lazy {
 
 
 // A container for functionality available within the context of a world.
-class Context {
+export class Context {
   constructor(public world: World) {}
 
   // Create a new child world of this one.
@@ -333,7 +336,7 @@ class TopWorld extends World {
 
 
 // A top-level entry point that constructs the initial, top-level world.
-function opal(func: AsyncFunc) {
+export function opal(func: AsyncFunc) {
   let world = new TopWorld(func);
   world.acquire();  // Run to completion.
 }

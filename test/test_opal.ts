@@ -1,5 +1,9 @@
-/// <reference path="common.ts" />
-/// <reference path="../src/opal.ts" />
+'use strict';
+
+import {assert_set_equal} from './common';
+import {opal, World} from '../src/opal';
+
+let test = require('tape');
 
 test('weight updated in two worlds', function (t: any) {
   opal(async function (ctx) {
