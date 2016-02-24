@@ -85,7 +85,7 @@ function pad0(n: number): string {
 
 function dateToOffice(d: Date): string {
   return d.getFullYear() +
-    '-' + pad0(d.getMonth() + 1)
+    '-' + pad0(d.getMonth() + 1) +
     '-' + pad0(d.getDate()) +
     'T' + pad0(d.getHours()) +
     ':' + pad0(d.getMinutes());
@@ -220,7 +220,8 @@ export class Calendar extends ExternalCollection<Event> {
     for (let op of ops) {
       // Add an event.
       if (op instanceof PSet.Add) {
-        Office.addEvent(op.value.toOffice(), (error, result) => {
+        let data = op.value.toOffice();
+        Office.addEvent(data, (error, result) => {
           if (error) {
             console.log("error adding event:", error);
           } else {
