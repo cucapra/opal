@@ -11,11 +11,15 @@ function copyDate(d: Date) {
 // Generate candidate times from a range.
 function* slots(start: Date, end: Date, incrementMinutes: number) {
   // Clone the start date for our iterator.
-  let current = copyDate(start);
 
-  // Increment the date repeatedly.
+  // Increment the start date repeatedly.
+  let current = start;
   while (current < end) {
+    // Clone the date and produce it.
+    current = copyDate(current);
     yield current;
+
+    // Move to the next slot.
     current.setMinutes(current.getMinutes() + incrementMinutes);
   }
 }
