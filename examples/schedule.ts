@@ -85,6 +85,12 @@ opal(async function (ctx) {
     60
   );
 
+  // TODO Here would be a great place to be able to say, "This is what I want
+  // to add to your calendar!" But since we just have a flat view of the
+  // *current state* of the calendar, this requires some kind of a "diff." We
+  // could do this either using the information available in the branchable
+  // set data structure or just by getting a difference "from scratch."
+
   // Affect the real world.
   await ctx.commit(world);
 });
