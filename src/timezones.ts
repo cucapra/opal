@@ -1,4 +1,4 @@
-{
+export default {
 "Dateline Standard Time": "-12:00",
 "UTC-11": "-11:00",
 "Hawaiian Standard Time": "-10:00",

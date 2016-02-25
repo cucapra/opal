@@ -3,6 +3,9 @@
 import * as PSet from './pset';
 import {ExternalCollection, Context} from './opal';
 
+// The Windows time zone names.
+import timezones from './timezones';
+
 let outlook = require("node-outlook");
 let fs = require("fs");
 let path = require("path");
