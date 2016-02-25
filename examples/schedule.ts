@@ -13,13 +13,13 @@ function* slots(start: Date, end: Date, incrementMinutes: number) {
   // Clone the start date for our iterator.
 
   // Increment the start date repeatedly.
-  let current = start;
+  let current = copyDate(start);
   while (current < end) {
-    // Clone the date and produce it.
-    current = copyDate(current);
+    // Produce the current slot.
     yield current;
 
-    // Move to the next slot.
+    // Move to the next slot by copying the current one.
+    current = copyDate(current);
     current.setMinutes(current.getMinutes() + incrementMinutes);
   }
 }
