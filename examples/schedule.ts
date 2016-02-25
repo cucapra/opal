@@ -26,8 +26,8 @@ function* slots(start: Date, end: Date, incrementMinutes: number) {
 
 // Check whether two events overlap in time.
 function eventsConflict(e1: Event, e2: Event): boolean {
-  return (e1.start >= e2.start && e1.start <= e2.end) ||
-    (e1.end <= e2.end && e1.end >= e2.start);
+  return (e1.start >= e2.start && e1.start < e2.end) ||
+    (e1.end <= e2.end && e1.end > e2.start);
 }
 
 // Find events in `oldEvents` that overlap with `newEvent`.
