@@ -1,7 +1,7 @@
 'use strict';
 
 import {opal} from '../src/opal';
-import {Event, Calendar, getEvents} from '../src/calendar';
+import {Event, Calendar, MeetingTimeSlot, getEvents, getFreeTimes} from '../src/calendar';
 
 opal(async function (ctx) {
   // Experimenting with the calendar API.
@@ -10,6 +10,12 @@ opal(async function (ctx) {
   for (let e of ctx.view(events)) {
     console.log(e.subject);
   }
+
+  let mts: MeetingTimeSlot[] = await getFreeTimes(ctx, "slbird@microsoft.com", new Date("2016-02-01 09:00:00"), new Date("2016-02-01 17:00:00"));
+  for (let slot of mts) {
+    console.log(slot.start + " -> " + slot.end);
+  }
+
     /*
 
   // Add an event.

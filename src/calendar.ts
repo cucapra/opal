@@ -46,6 +46,36 @@ namespace Office {
     );
   }
 
+  export function getFreeTimes(email: string, start: Date, end: Date, cbk: (error: any, result: any) => void) {
+    let config = getConfig();
+    var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
+    var apiOptions = {
+        url: requestUrl,
+        token: config.token,
+        email: config.user,
+        payload: {
+            "Attendees": [ 
+                { "Type": "Required", "EmailAddress": { "Address": email } },
+            ],  
+            "LocationConstraint": {
+                "IsRequired": "false",  
+                "SuggestLocation": "false",  
+                "Locations": [{ "DisplayName": "unspecified" }]
+            },
+            "TimeConstraint": {
+                "Timeslots" : [{
+                  "Start" : { "DateTime" : dateToOffice(start), "TimeZone" : "Pacific Standard Time" },
+                  "End" : { "DateTime" : dateToOffice(end), "TimeZone" : "Pacific Standard Time" },
+                } ] 
+          },  
+            "MeetingDuration": "PT30M" ,
+            "MaxCandidates" : 50
+        },
+        method: 'POST'
+    };
+    outlook.base.makeApiCall(apiOptions, cbk);
+  }
+
   export function addEvent(event: any,
                            cbk: (error: any, result: any) => void)
   {
@@ -146,6 +176,15 @@ export class Event {
                      toDate(obj.Start.DateTime),
                      toDate(obj.End.DateTime),
                      obj.Id);
+  }
+}
+
+// Represents a single calendar event.
+export class MeetingTimeSlot {
+  constructor(
+    public email: string,
+    public start: Date,
+    public end: Date) {
   }
 }
 
@@ -257,6 +296,29 @@ export class Calendar extends ExternalCollection<Event> {
     // Return a flattened set of events reflecting the current state.
     return PSet.set(events);
   }
+}
+// An OPAL API function to get free times for a person.
+export async function getFreeTimes(ctx: Context, email: string, start: Date, end: Date) {
+  return new Promise<MeetingTimeSlot[]>((resolve, reject) => {
+    Office.getFreeTimes(email, start, end, function (error, result) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      let freeTimes: MeetingTimeSlot[] = [];
+      for (let obj of result.body.value) {
+        let mts = obj.MeetingTimeSlot;
+        let start = mts.Start;
+        let end = mts.End;
+        let utc = (start.TimeZone == 'tzone://Microsoft/Utc');
+        freeTimes.push(new MeetingTimeSlot(email,
+          new Date(start.Date + ' ' + start.Time + (utc ? 'Z' : '')),
+          new Date(end.Date + ' ' + end.Time + (utc ? 'Z' : ''))));
+      }
+      resolve(freeTimes);
+    });
+  });
 }
 
 // An OPAL API function to get a few events from the user's calendar.

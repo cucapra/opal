@@ -32,8 +32,44 @@ function readCal() {
         console.log('getEvents returned ' + result.value.length + ' events.');
         result.value.forEach(function(ev) {
           console.log('  Subject: ' + ev.Subject);
-        });
+            });
       }
+    });
+
+    var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
+    var apiOptions = {
+        url: requestUrl,
+        token: token,
+        email: email,
+        payload: {
+            "Attendees": [ 
+                { "Type": "Required", "EmailAddress": { "Address": "t-adrsam@microsoft.com" } },
+                //{ "Type": "Required", "EmailAddress": { "Address": "slbird@microsoft.com"   } }
+            ],  
+            "LocationConstraint": {
+                "IsRequired": "false",  
+                "SuggestLocation": "false",  
+                "Locations": [{ "DisplayName": "unspecified" }]
+            },
+            "TimeConstraint": {
+                "Timeslots" : [{
+                      "Start": { "Date": "2016-02-25",  "Time": "09:00:00",  "TimeZone": "Pacific Standard Time" },  
+                        "End": { "Date": "2016-02-25", "Time": "21:00:00", "TimeZone": "Pacific Standard Time" }
+                } ] 
+          },  
+            "MeetingDuration": "PT30M" ,
+            "MaxCandidates" : 50
+        },
+        method: 'POST'
+    };
+
+    outlook.base.makeApiCall(apiOptions, function (error, response) {
+        console.log("error");
+        console.log(error);
+        console.log("response");
+        for (var slotid in response.body.value) {
+            console.log(response.body.value[slotid]);
+        }
     });
 }
 
