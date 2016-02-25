@@ -78,6 +78,19 @@ function toDate(d: string | Date): Date {
   }
 }
 
+function parseOfficeDate(d: { DateTime: string, TimeZone: string }): Date {
+  // The API's date format appears to be *almost* ISO 8601. Or rather, the
+  // zone-independent part is ISO 8601, but the time zone is never specified
+  // here. Instead, we need to append the time-zone offset as indicated in the
+  // other part of the structure.
+  let iso8601date = d.DateTime;
+
+  // This uses our precomputed lookup table of Windows time zone names.
+  iso8601date += timezones[d.TimeZone];
+
+  return new Date(iso8601date);
+}
+
 function pad0(n: number): string {
   if (n < 10) {
     return '0' + n;
@@ -140,8 +153,8 @@ export class Event {
   // Load an Event from the Office API's JSON representation.
   static fromOffice(obj: any): Event {
     return new Event(obj.Subject,
-                     toDate(obj.Start.DateTime),
-                     toDate(obj.End.DateTime),
+                     parseOfficeDate(obj.Start),
+                     parseOfficeDate(obj.End),
                      obj.Id);
   }
 }
