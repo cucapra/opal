@@ -35,7 +35,7 @@ namespace Office {
   export function getSomeEvents(cbk: (error: any, result: any) => void) {
     let queryParams = {
       '$select': 'Subject,Start,end',
-      '$orderby': 'Start/DateTime desc',
+      '$orderby': 'Start/DateTime asc',
       '$top': 10
     };
 
@@ -254,7 +254,10 @@ export class Calendar extends ExternalCollection<Event> {
   }
 }
 
-// An OPAL API function to get a few events from the user's calendar.
+// An OPAL API function to get a few events from the user's calendar. This
+// function currently gets a few of the *oldest* events on your calendar. This
+// is a good match for our tests, which take pace far in the past. Eventually,
+// we'll want to let it get events around an arbitrary point in time.
 export async function getEvents(ctx: Context) {
   return new Promise<Calendar>((resolve, reject) => {
     Office.getSomeEvents(function (error, result) {
