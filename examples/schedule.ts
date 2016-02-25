@@ -24,6 +24,25 @@ function* slots(start: Date, end: Date, incrementMinutes: number) {
   }
 }
 
+// Find events in `oldEvents` that overlap with `newEvent`.
+function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
+  for (let oldEvent of oldEvents) {
+    if ((newEvent.start >= oldEvent.start && newEvent.start <= oldEvent.end)
+        || (newEvent.end <= oldEvent.end && newEvent.end >= oldEvent.start)) {
+      yield oldEvent;
+    }
+  }
+}
+
+// Count the elements in an iterable.
+function iterCount(it: Iterable<any>) {
+  let n = 0;
+  for (let v of it) {
+    ++n;
+  }
+  return 0;
+}
+
 opal(async function (ctx) {
   // The search: find a meeting slot.
   async function schedule(cal: Calendar, range: Iterable<Date>,
@@ -39,7 +58,12 @@ opal(async function (ctx) {
       ctx.add(events, evt);
 
       // Check for conflicts.
-      ctx.set(conflicts, 1);  // TODO
+      // TODO: This is a little silly at the moment because we're looking for
+      // conflicts *with the new event itself*. A more realistic way to do
+      // this would be to count *all* the conflicts in the calendar, which is
+      // more reusable.
+      let numConflicts = iterCount(findConflicts(ctx.view(cal), evt));
+      ctx.set(conflicts, numConflicts);
     });
 
     // Find the best time.
