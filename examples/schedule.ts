@@ -40,7 +40,7 @@ function iterCount(it: Iterable<any>) {
   for (let v of it) {
     ++n;
   }
-  return 0;
+  return n;
 }
 
 opal(async function (ctx) {
