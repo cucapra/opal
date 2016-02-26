@@ -3,6 +3,8 @@
 import {opal} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
 
+// Copy a JavaScript Date object. (It's a shame this isn't as easy as
+// `d.clone()`.)
 // http://stackoverflow.com/a/1090817
 function copyDate(d: Date) {
   return new Date(d.getTime());
@@ -24,25 +26,31 @@ function* slots(start: Date, end: Date, incrementMinutes: number) {
   }
 }
 
+// Check whether two events overlap in time.
+function eventsConflict(e1: Event, e2: Event): boolean {
+  return (e1.start >= e2.start && e1.start < e2.end) ||
+    (e1.end <= e2.end && e1.end > e2.start);
+}
+
 // Find events in `oldEvents` that overlap with `newEvent`.
 function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
   for (let oldEvent of oldEvents) {
-    if ((newEvent.start >= oldEvent.start && newEvent.start <= oldEvent.end)
-        || (newEvent.end <= oldEvent.end && newEvent.end >= oldEvent.start)) {
+    if (eventsConflict(oldEvent, newEvent)) {
       yield oldEvent;
     }
   }
 }
 
-// Count the elements in an iterable.
+// Count the elements in a JavaScript iterable.
 function iterCount(it: Iterable<any>) {
   let n = 0;
   for (let v of it) {
     ++n;
   }
-  return 0;
+  return n;
 }
 
+// The main scheduling program.
 opal(async function (ctx) {
   // The search: find a meeting slot.
   async function schedule(cal: Calendar, range: Iterable<Date>,
@@ -77,9 +85,9 @@ opal(async function (ctx) {
   let world = await schedule(
     events,
     slots(
-      new Date("February 3, 2014 08:00:00"),
-      new Date("February 3, 2014 17:00:00"),
-      30
+      /* from */ new Date("February 3, 2014 08:00:00"),
+      /* to */   new Date("February 3, 2014 17:00:00"),
+      /* in increments of N minutes */ 30
     ),
     "Exciting Meeting!",
     60

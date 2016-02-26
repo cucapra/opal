@@ -18,12 +18,13 @@ Provided you have Node.js and npm:
 
 * Install the dependencies: `npm install`
 * Install the type definitinos: `npm run typings`
-* Build the example: `npm build`
-* Run it: `node opal.js`
+* Build the examples: `npm build`
+* Run one of the examples: `node build/examples/schedule.js`
 
 ### Visual Studio
 
-You can build OPAL using Visual Studio 2015 with its [Node.js Tools][njstools].
+You can build OPAL using Visual Studio 2015.
+You will need both its [Node.js Tools][njstools] and an *independent* installation of the latest official Node.js, which you can get from [nodejs.org][njs].
 Here's how:
 
 * Open the solution file.
@@ -32,9 +33,25 @@ Here's how:
 * Hit F5 to build and run the example program. Ignore the scary warning that Visual Studio for some reason emits.
 
 [njstools]: https://www.visualstudio.com/en-us/features/node-js-vs.aspx
+[njs]: https://nodejs.org/
 
 ### Visual Studio Code
 
 [Visual Studio Code][vscode] has great IDE support for TypeScript, but the build system is kind of broken. So you're probably best off using the command-line route to build and run the project.
 
 [vscode]: https://code.visualstudio.com/
+
+
+Using the Office Examples
+-------------------------
+
+Our examples use the [Office 365 API][officeapi]. To run them, you'll need to log in and authorize the OPAL application to access your data. Here's how to do that:
+
+* Go to the `office365Auth` directory in this repository.
+* Install the tool's dependencies: `npm install`
+* Run the authorization script: `node getOfficeAuthToken.js`
+* Your browser will open. Follow the link to log in.
+
+The script puts your email address and a token in text files inside your home directory. The credentials expire after an hour.
+
+[officeapi]: https://msdn.microsoft.com/en-us/office/office365/api/api-catalog

@@ -106,4 +106,4 @@ export default {
 "Tonga Standard Time": "+13:00",
 "Samoa Standard Time": "+13:00",
 "Line Islands Standard Time": "+14:00"
-}
+} as { [name: string]: string };
