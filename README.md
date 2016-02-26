@@ -40,3 +40,18 @@ Here's how:
 [Visual Studio Code][vscode] has great IDE support for TypeScript, but the build system is kind of broken. So you're probably best off using the command-line route to build and run the project.
 
 [vscode]: https://code.visualstudio.com/
+
+
+Using the Office Examples
+-------------------------
+
+Our examples use the [Office 365 API][officeapi]. To run them, you'll need to log in and authorize the OPAL application to access your data. Here's how to do that:
+
+* Go to the `office365Auth` directory in this repository.
+* Install the tool's dependencies: `npm install`
+* Run the authorization script: `node getOfficeAuthToken.js`
+* Your browser will open. Follow the link to log in.
+
+The script puts your email address and a token in text files inside your home directory. The credentials expire after an hour.
+
+[officeapi]: https://msdn.microsoft.com/en-us/office/office365/api/api-catalog
