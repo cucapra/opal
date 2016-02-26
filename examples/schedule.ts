@@ -41,7 +41,7 @@ function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
   }
 }
 
-// Count the elements in an iterable.
+// Count the elements in a JavaScript iterable.
 function iterCount(it: Iterable<any>) {
   let n = 0;
   for (let v of it) {
@@ -85,9 +85,9 @@ opal(async function (ctx) {
   let world = await schedule(
     events,
     slots(
-      new Date("February 3, 2014 08:00:00"),
-      new Date("February 3, 2014 17:00:00"),
-      30
+      /* from */ new Date("February 3, 2014 08:00:00"),
+      /* to */   new Date("February 3, 2014 17:00:00"),
+      /* in increments of N minutes */ 30
     ),
     "Exciting Meeting!",
     60
