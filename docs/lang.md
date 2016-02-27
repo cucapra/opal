@@ -182,7 +182,7 @@ When those operations appear in hypothetical worlds, they are buffered internall
 When updates appear (or are committed) in the top-level, non-hypothetical world, your `send` method gets called and the operations are unleashed.
 
 
-# Calendars
+# Calendars { #calendars }
 
 OPAL includes a library for interacting with Outlook calendars on Office 365.
 To use it, import the `calendar` module from OPAL.
