@@ -34,8 +34,12 @@ DOCS_SRC := $(wildcard $(DOCSDIR)/*.md)
 DOCS_NAMES := $(notdir $(basename $(DOCS_SRC)))
 docs: $(DOCS_NAMES:%=$(DOCSDIR)/build/%.html)
 
-$(DOCSDIR)/build/%.html: docs/%.md
-	$(MADOKO) --odir=docs/build $<
+$(DOCSDIR)/build/%.html: $(DOCSDIR)/%.md
+	$(MADOKO) --odir=$(DOCSDIR)/build $<
+
+.PHONY: docs-watch
+docs-watch: docs
+	liveserve -w $(DOCSDIR)/ -x 'make docs' $(DOCSDIR)/build/
 
 
 # Deploy docs to Web server.
