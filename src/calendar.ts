@@ -67,8 +67,8 @@ namespace Office {
             },
             "TimeConstraint": {
                 "Timeslots" : [{
-                  "Start" : { "DateTime" : dateToOffice(start), "TimeZone" : "Pacific Standard Time" },
-                  "End" : { "DateTime" : dateToOffice(end), "TimeZone" : "Pacific Standard Time" },
+                  "Start" : dateToOfficeDateTimeTimezone(start),
+                  "End" : dateToOfficeDateTimeTimezone(end),
                 } ] 
           },  
             "MeetingDuration": "PT30M" ,
@@ -136,6 +136,14 @@ function dateToOffice(d: Date): string {
     'T' + pad0(d.getHours()) +
     ':' + pad0(d.getMinutes()) +
     ':' + pad0(d.getSeconds());
+}
+
+function dateToOfficeDateTimeTimezone(d: Date): any {
+  return {
+    "Date" : d.getFullYear() + '-' + pad0(d.getMonth() + 1) + '-' + pad0(d.getDate()),
+    "Time" : pad0(d.getHours()) + ':' + pad0(d.getMinutes()) + ':' + pad0(d.getSeconds()),
+    "TimeZone" : "Pacific Standard Time"
+  };
 }
 
 // Represents a single calendar event.
@@ -325,6 +333,10 @@ export async function getFreeTimes(ctx: Context, email: string, start: Date, end
       }
 
       let freeTimes: MeetingTimeSlot[] = [];
+      console.log("ERROR");
+      console.log(error);
+      console.log("RESULT");
+      console.log(result);
       for (let obj of result.body.value) {
         let mts = obj.MeetingTimeSlot;
         let start = mts.Start;
