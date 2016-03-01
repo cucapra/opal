@@ -13,10 +13,12 @@ async function findopenslot(ctx: Context) {
 
   // Add an event.
   let hyp4 = ctx.hypothetical(async function (ctx) {
+    let attendees = <string[]>[];
     let e = new Event(
         "Exciting Meeting!",
         new Date("February 3, 2014 12:00:00"),
-        new Date("February 3, 2014 13:00:00")
+        new Date("February 3, 2014 13:00:00"),
+        attendees
         );
     ctx.add(events, e);
   });
