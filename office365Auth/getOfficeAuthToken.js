@@ -64,8 +64,8 @@ function tokenReceived(response, error, token) {
     else {
         var t = token.token.access_token;
         var em = authHelper.getEmailFromIdToken(token.token.id_token);
-        var cookies = ['node-tutorial-token=' + token.token.access_token + ';Max-Age=3600',
-            'node-tutorial-email=' + authHelper.getEmailFromIdToken(token.token.id_token) + ';Max-Age=3600'];
+        var cookies = ['node-tutorial-token=' + token.token.access_token + ';Max-Age=604800',
+            'node-tutorial-email=' + authHelper.getEmailFromIdToken(token.token.id_token) + ';Max-Age=604800'];
         response.setHeader('Set-Cookie', cookies);
         response.writeHead(200, { "Content-Type": "text/html" });
         response.write('<p>Access token saved in cookie.</p>');
