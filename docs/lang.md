@@ -85,7 +85,7 @@ Think of this as lazy evaluation: hypothetical worlds only execute up to the poi
 [ivar]: http://dl.acm.org/citation.cfm?id=69562
 
 
-# Collections and Committing
+# Collections and Committing { #collections }
 
 OPAL includes a data structure called a *collection*, which is just an ordinary set imbued with magical OPAL powers.
 Hypothetical updates (i.e., element addition and deletion) can be hidden until the parent world specifically decides to *commit* them.
@@ -180,3 +180,51 @@ One easy option is to use `PSet.set(values)` to construct a new set from an arra
 With all this in place, OPAL programs can use `ctx.add`, `ctx.del`, `ctx.view`, and commits to interact with your new external collection.
 When those operations appear in hypothetical worlds, they are buffered internally as those "Operation" objects.
 When updates appear (or are committed) in the top-level, non-hypothetical world, your `send` method gets called and the operations are unleashed.
+
+
+# Calendars { #calendars }
+
+OPAL includes a library for interacting with Outlook calendars on Office 365.
+To use it, import the `calendar` module from OPAL.
+For example:
+
+    import { Event, Calendar, getEvents, modifyEvent } from '../src/calendar';
+
+## Get Calendar Events
+
+Inside your OPAL program, call the `getEvents` function to fetch calendar information for the current user:
+
+    let cal = getEvents(ctx);
+
+The only parameter is an OPAL context.
+The function returns a `Calendar`, which is an OPAL collection of `Event` objects.
+(That is, it's a subtype of `Collection<Event>`.)
+
+## View, Add, and Delete Calendar Events
+
+Because a calendar is just a kind of collection, you can use the ordinary [OPAL collection tools][#collections] to interact with it.
+Specifically, use `ctx.view()` to get the `Event` objects out of a calendar:
+
+    for (let event of ctx.view(cal)) {
+      console.log(event.subject);
+    }
+
+Use `ctx.add()` to create a new event:
+
+    ctx.add(cal, new Event(subject, start, end))
+
+The three parameters to the `Event` class constructor are a subject string, a start [`Date`][jsdate], and an end `Date`.
+
+Use `ctx.del()` to delete an event:
+
+    ctx.del(cal, Array.from(ctx.view(cal))[0])
+
+[jsdate]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+
+## Modify Calendar Events
+
+The generic OPAL collection APIs don't support mutation, so the calendar library provides its own `modifyEvent` function:
+
+    modifyEvent(ctx, cal, event, { subject: "a new subject" });
+
+The parameters are the OPAL context, the calendar collection, the `Event` object to modify, and an object containing the fields of the event that you want to change.

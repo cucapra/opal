@@ -12,6 +12,7 @@ var redirectUri = "http://localhost:8191/authorize";
 // scopes
 var scopes = [
     "openid",
+    "profile",  // Required to get user's email address.
     "https://outlook.office.com/mail.read",
     "https://outlook.office.com/calendars.readwrite",
 ];

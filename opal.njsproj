@@ -27,7 +27,7 @@
     <Compile Include="opal.js" />
     <Content Include="docs\choices.md" />
     <Content Include="docs\opal.md" />
-    <TypeScriptCompile Include="examples\schedule.ts" />
+    <TypeScriptCompile Include="examples\findopenslot.ts" />
     <TypeScriptCompile Include="src\calendar.ts" />
     <TypeScriptCompile Include="src\opal.ts" />
     <TypeScriptCompile Include="src\pset.ts" />

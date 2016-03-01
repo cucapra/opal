@@ -3,6 +3,9 @@
 import * as PSet from './pset';
 import {ExternalCollection, Context} from './opal';
 
+// The Windows time zone names.
+import timezones from './timezones';
+
 let outlook = require("node-outlook");
 let fs = require("fs");
 let path = require("path");
@@ -20,8 +23,8 @@ namespace Office {
   // Load the user object and token string to pass to the Outlook library.
   function getConfig() {
     let home = getUserHome();
-    let email = fs.readFileSync(path.join(home, ".opal.email.txt"));
-    let token = fs.readFileSync(path.join(home, ".opal.token.txt"));
+    let email = fs.readFileSync(path.join(home, ".opal.email.txt")).toString();
+    let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
 
     return {
       user: {
@@ -105,6 +108,19 @@ function toDate(d: string | Date): Date {
   }
 }
 
+function parseOfficeDate(d: { DateTime: string, TimeZone: string }): Date {
+  // The API's date format appears to be *almost* ISO 8601. Or rather, the
+  // zone-independent part is ISO 8601, but the time zone is never specified
+  // here. Instead, we need to append the time-zone offset as indicated in the
+  // other part of the structure.
+  let iso8601date = d.DateTime;
+
+  // This uses our precomputed lookup table of Windows time zone names.
+  iso8601date += timezones[d.TimeZone];
+
+  return new Date(iso8601date);
+}
+
 function pad0(n: number): string {
   if (n < 10) {
     return '0' + n;
@@ -115,10 +131,11 @@ function pad0(n: number): string {
 
 function dateToOffice(d: Date): string {
   return d.getFullYear() +
-    '-' + pad0(d.getMonth() + 1)
+    '-' + pad0(d.getMonth() + 1) +
     '-' + pad0(d.getDate()) +
     'T' + pad0(d.getHours()) +
-    ':' + pad0(d.getMinutes());
+    ':' + pad0(d.getMinutes()) +
+    ':' + pad0(d.getSeconds());
 }
 
 // Represents a single calendar event.
@@ -173,8 +190,8 @@ export class Event {
       attendees.push(attendee.EmailAddress.Address);
     }
     return new Event(obj.Subject,
-                     toDate(obj.Start.DateTime),
-                     toDate(obj.End.DateTime),
+                     parseOfficeDate(obj.Start),
+                     parseOfficeDate(obj.End),
                      obj.Id);
   }
 }
@@ -266,7 +283,8 @@ export class Calendar extends ExternalCollection<Event> {
     for (let op of ops) {
       // Add an event.
       if (op instanceof PSet.Add) {
-        Office.addEvent(op.value.toOffice(), (error, result) => {
+        let data = op.value.toOffice();
+        Office.addEvent(data, (error, result) => {
           if (error) {
             console.log("error adding event:", error);
           } else {
@@ -321,7 +339,10 @@ export async function getFreeTimes(ctx: Context, email: string, start: Date, end
   });
 }
 
-// An OPAL API function to get a few events from the user's calendar.
+// An OPAL API function to get a few events from the user's calendar. This
+// function currently gets a few of the *oldest* events on your calendar. This
+// is a good match for our tests, which take pace far in the past. Eventually,
+// we'll want to let it get events around an arbitrary point in time.
 export async function getEvents(ctx: Context) {
   return new Promise<Calendar>((resolve, reject) => {
     Office.getSomeEvents(function (error, result) {
