@@ -1,21 +1,29 @@
 'use strict';
 
-// A PSet.Node is an immutable, atomic unit in a persistent set structure.
-// Each Node points to its parent (except the root EmptyNode, below). The
-// log of operations on a data structure can be found by tracing the chain of
-// parents.
+/**
+ * An immutable, unit in a persistent set structure.
+ * 
+ * Each Node points to its parent (except the root EmptyNode, below). The
+ * log of operations on a data structure can be found by tracing the chain of
+ * parents.
+ */
 export abstract class Node<T> {
   constructor(
     public parent: Node<T>
   ) {}
 
-  // Trace the chain of Nodes to build up a list of Operations that have
-  // been recorded for the data structure. The log begins either at the
-  // beginning of time or, if `until` is provided, up to (but not
-  // including) any Node in that set.
+  /**
+   * Trace the chain of Nodes to build up a list of `Operation`s that have
+   * been recorded for the data structure.
+   * 
+   * The log begins either at the beginning of time or, if `until` is
+   * provided, up to (but not including) any Node in that set.
+   */
   abstract log(until?: Set<Node<T>>): Operation<T>[];
 
-  // Get the flat set of values represented by the data structure.
+  /**
+   * Get the flat set of values represented by the data structure.
+   */
   view(): Set<T> {
     var out: Set<T> = new Set();
     for (let op of this.log()) {
@@ -25,12 +33,16 @@ export abstract class Node<T> {
   }
 }
 
-// An Operation represents an update to the data structure.
+/**
+ * Any change to the set data structure.
+ */
 export abstract class Operation<T> {
   abstract apply(set: Set<T>): void;
 }
 
-// An operation that adds a value to the set.
+/**
+ * An operation that adds a value to the set.
+ */
 export class Add<T> extends Operation<T> {
   constructor(
     public value: T
@@ -43,7 +55,9 @@ export class Add<T> extends Operation<T> {
   }
 }
 
-// An operation that removes a value from the set.
+/**
+ * An operation that removes a value from the set.
+ */
 export class Delete<T> extends Operation<T> {
   constructor(
     public value: T
@@ -56,8 +70,9 @@ export class Delete<T> extends Operation<T> {
   }
 }
 
-// PSets are mostly made up of OperationNodes, which just contain a
-// single Operation.
+/**
+ * A PSet node that contains a single `Operation`.
+ */
 class OperationNode<T> extends Node<T> {
   constructor(
     public parent: Node<T>,
@@ -65,10 +80,10 @@ class OperationNode<T> extends Node<T> {
   ) {
     super(parent);
   }
-
-  // The log here is just the parent's log, extended with this node's
-  // operation.
+  
   log(until: Set<Node<T>>): Operation<T>[] {
+    // The log here is just the parent's log, extended with this node's
+    // operation.
     if (until && until.has(this)) {
       return [];
     }
@@ -76,7 +91,9 @@ class OperationNode<T> extends Node<T> {
   }
 }
 
-// An EmptyNode is a root node with no contents.
+/**
+ * A root PSet node with no contents.
+ */
 class EmptyNode<T> extends Node<T> {
   constructor() {
     super(null);
@@ -87,7 +104,9 @@ class EmptyNode<T> extends Node<T> {
   }
 }
 
-// A FlatNode is a root node with a concrete list representing its contents.
+/**
+ * A root PSet node containing a concrete list for the set's contents.
+ */
 class FlatNode<T> extends Node<T> {
   constructor(public contents: T[]) {
     super(null);
@@ -105,8 +124,15 @@ class FlatNode<T> extends Node<T> {
   }
 }
 
-// Given two related sets, find the new operations on `overlay` that need to
-// be applied to `base` to merge them.
+/**
+ * Given two related sets, find the new operations on the second that need
+ * to be applied to `base` to merge them.
+ * 
+ * @param base     The "older" set that needs updating.
+ * @param overlay  The "newer" set, which must share a common ancestor with
+ *                 `base`, whose operations will be applied.
+ * @returns        A new set containing all operations.
+ */
 function merge_log<T>(base: Node<T>, overlay: Node<T>):
   Operation<T>[]
 {
@@ -137,12 +163,15 @@ function merge_log<T>(base: Node<T>, overlay: Node<T>):
 //
 //  rather than mutating the set in place.
 
-// Given two sets that share a common ancestor, merge the operations
-// that have occurred on either branch and return a new set. It is
-// an error to:
-// - Pass unrelated nodes (i.e., sets with no common ancestor).
-// - Merge two sets with conflicting updates (e.g., where both
-//   branches remove the same item from the set).
+/**
+ * Given two sets that share a common ancestor, merge the operations
+ * that have occurred on either branch and return a new set.
+ * 
+ * It is an error to:
+ * - Pass unrelated nodes (i.e., sets with no common ancestor).
+ * - Merge two sets with conflicting updates (e.g., where both
+ *   branches remove the same item from the set).
+ */
 export function merge<T>(base: Node<T>, overlay: Node<T>) {
   // Get the operations to replay.
   let log = merge_log(base, overlay);
@@ -155,7 +184,9 @@ export function merge<T>(base: Node<T>, overlay: Node<T>) {
   return out;
 }
 
-// Create a new set.
+/**
+ * Create a new set.
+ */
 export function set<T>(values?: Iterable<T>) {
   if (values) {
     return new FlatNode<T>(Array.from(values));
@@ -164,17 +195,23 @@ export function set<T>(values?: Iterable<T>) {
   }
 }
 
-// Apply any operation to a collection.
+/**
+ * Apply any operation to a collection.
+ */
 export function op<T>(coll: Node<T>, op: Operation<T>) {
   return new OperationNode(coll, op);
 }
 
-// Add a new value to a set.
+/**
+ * Add a new value to a set.
+ */
 export function add<T>(coll: Node<T>, value: T) {
   return op(coll, new Add(value));
 }
 
-// Remove a value from a set.
+/**
+ * Remove a value from a set.
+ */
 export function del<T>(coll: Node<T>, value: T) {
   return op(coll, new Delete(value));
 }

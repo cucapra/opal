@@ -2,11 +2,14 @@
 
 import * as PSet from './pset';
 
-// A simple "holder" for a promise that keeps its callbacks for later use.
-// This is useful when you want to call `then` on a promise but you don't know
-// where the "upstream" part of the chain will come from yet. Later, when you
-// want to complete the chain, you can call `resolve()` or `reject()` or even
-// connect up another promise with `.then(jar.resolve, jar.reject)`.
+/**
+ * A promise utility for delayed resolution.
+ * 
+ * This is useful when you want to call `then` on a promise but you don't know
+ * where the "upstream" part of the chain will come from yet. Later, when you
+ * want to complete the chain, you can call `resolve()` or `reject()` or even
+ * connect up another promise with `.then(jar.resolve, jar.reject)`.
+ */
 class PromiseJar<T> {
   promise: Promise<T>;
   resolve: (v: T) => void;
@@ -21,10 +24,21 @@ class PromiseJar<T> {
 }
 
 
-// A communication channel between hypothetical worlds and their parents.
+// 
+/**
+ * A communication channel between hypothetical worlds and their parents.
+ * 
+ * A child world can write to a weight using `ctx.set` and its parent can
+ * read that value using `ctx.get`.
+ */
 class Weight<T> {
   jars: Map<World, PromiseJar<T>>;
 
+  /**
+   * Create a new weight.
+   * 
+   * @param world   The parent ("home") world.
+   */
   constructor(public world: World) {
     this.jars = new Map();
   }
@@ -39,21 +53,42 @@ class Weight<T> {
     }
   }
 
+  /**
+   * Set the weight's value for a given child world.
+   */
   set(world: World, value: T) {
     this.jar(world).resolve(value);
   }
 
+  /**
+   * Get the weight's value for a given child world.
+   */
   get(world: World): Promise<T> {
     return this.jar(world).promise;
   }
 }
 
 
-// A fundamental world-aware data structure. This wraps a PSet per world where
-// it is used. Each world's PSet is updated in-place, imperatively.
+/**
+ * A world-aware set data structure.
+ * 
+ * Worlds have isolated views onto `Collection`s: the changes they make will
+ * only be visible to themselves until they are committed.
+ */
 export class Collection<T> {
+  /**
+   * The underlying `PSet`s for each world that has an interest in this
+   * `Collection`.
+   */
   sets: Map<World, PSet.Node<T>>;
 
+  /**
+   * Create a new `Collection`.
+   * 
+   * @param owner  The parent ("home") world for the collection.
+   * @param init   Optionally, the initial set for the owner world. Otherwise,
+   *               the set starts out empty.
+   */
   constructor(public owner: World, init?: PSet.Node<T>) {
     if (!init) {
       init = PSet.set<T>();
@@ -63,8 +98,12 @@ export class Collection<T> {
     this.sets.set(owner, init);
   }
 
-  // Get the underlying PSet for a given World. If it does not exist yet,
-  // create it (as a snapshot of its parent world's set).
+  /**
+   * Get the underlying PSet for a given World.
+   * 
+   * If the set does not exist yet, create it as a snapshot of the
+   * world's parent's view.
+   */
   lookup(world: World): PSet.Node<T> {
     if (this.sets.has(world)) {
       return this.sets.get(world);
@@ -77,16 +116,21 @@ export class Collection<T> {
     }
   }
 
-  // Replace the current set for a given world. The world must have an old
-  // set associated with it.
+  /**
+   * Replace the current set for a given world.
+   * 
+   * The world must have an old set associated with it.
+   */
   update(world: World, set: PSet.Node<T>) {
     console.assert(this.sets.has(world),
         "updating set that does not exist: %j not in %j", world, this.sets);
     this.sets.set(world, set);
   }
 
-  // If the collection has any updates for this world, merge them into the
-  // parent's collection.
+  /**
+   * Apply any updates in a child wolrd to its parent's view of the
+   * collection.
+   */
   merge(world: World) {
     if (this.sets.has(world)) {
       let child_set = this.sets.get(world);
@@ -96,11 +140,19 @@ export class Collection<T> {
   }
 }
 
-// An *external* collection is one where updates affect the world outside of
-// OPAL.
+/**
+ * An *external collection* is a `Collection` where updates affect the
+ * world outside of OPAL.
+ * 
+ * Subclasses override the `send` method to implement their semantics.
+ */
 export abstract class ExternalCollection<T> extends Collection<T> {
-  // Subclasses should implement `send`, which defines what happens when
-  // modifications need to affect the outside world.
+  /**
+   * Apply a new sequence of operations to the "real world."
+   * 
+   * This is called whenever operations are applied in the top-level OPAL
+   * world or committed to the top-level world from some child world.
+   */
   abstract send(old: PSet.Node<T>, ops: PSet.Operation<T>[]): PSet.Node<T>;
 
   update(world: World, set: PSet.Node<T>) {
@@ -119,15 +171,28 @@ export abstract class ExternalCollection<T> extends Collection<T> {
 }
 
 
-// The World components concerned with lazy evaluation. This lets worlds
-// suspend themselves (voluntarily) and *only* run when demanded to.
+/**
+ * An abstract mechanism for coordinating lazy evaluation via promises.
+ * 
+ * This provides the functionality for Worlds that lets them suspend
+ * themselves (voluntarily) and *only* run when demanded to. Specifically,
+ * the computation only advances when `acquire` has been called more times
+ * than `release`.
+ */
 export class Lazy {
-  // The next step to take, when this thread is suspended.
+  /**
+   * The next step to take, when this thread is suspended.
+   */
   private next: () => void;
 
-  // The number of times this thread has been acquired.
+  /**
+   * The number of times this thread has been acquired.
+   */
   private waiters: number;
 
+  /**
+   * A promise that is triggered when the thread completes.
+   */
   private finish_jar: PromiseJar<void>;
 
   constructor() {
@@ -136,9 +201,12 @@ export class Lazy {
     this.finish_jar = new PromiseJar<void>();
   }
 
-  // Load the function to execute. Threads start in a suspended state, so you
-  // have to call `acquire` after this to get the thread to actually start
-  // executing.
+  /**
+   * Load the function to execute.
+   * 
+   * Threads start in a suspended state, so you have to call `acquire`
+   * after this to get the thread to actually start executing.
+   */
   run(func: () => Promise<void>) {
     this.next = () => {
       let p = func();
@@ -157,13 +225,18 @@ export class Lazy {
     };
   }
 
-  // A promise you can await to know when this function has finished
-  // executing.
+  /**
+   * Get a promise that you can `await` to get called when this thread
+   * has finished executing.
+   */
   finish(): Promise<void> {
     return this.finish_jar.promise;
   }
 
-  // Instruct the thread to start executing eagerly.
+  /**
+   * Instruct the thread to start executing eagerly. It will keep
+   * executing until you call `release`.
+   */
   acquire() {
     this.waiters++;
     if (this.next) {
@@ -174,21 +247,27 @@ export class Lazy {
     }
   }
 
-  // Tell the thread that you no longer need it to execute eagerly, balancing
-  // an earlier `acquire` call.
+  /**
+   * Tell the thread that you no longer need it to execute eagerly,
+   * balancing an earlier `acquire` call.
+   */
   release() {
     this.waiters--;
     console.assert(this.waiters >= 0);
     console.assert(this.next === null);
   }
 
-  // Check whether anyone has called `acquire` but not `release`; i.e., anyone
-  // wants us to execute eagerly at the moment.
+  /**
+   * Check whether anyone has called `acquire` but not `release`; i.e.,
+   * anyone wants us to execute eagerly at the moment.
+   */
   active() {
     return this.waiters > 0;
   }
 
-  // Stop executing unless we're in an eager state (i.e., `active()` is true).
+  /**
+   * Suspend execution *unless the thread is active*.
+   */
   suspend(): Promise<void> {
     if (this.active()) {
       // We're active, so just continue executing.
@@ -203,16 +282,22 @@ export class Lazy {
 }
 
 
-// Type aliases for the coroutines that form the basis of hypothetical worlds.
+/**
+ * The type of async functions used as the "body" of OPAL worlds.
+ */
 type AsyncFunc = (ctx: Context) => Promise<void>;
 
 
-// A World is a dynamic instance of a hypothetical block. It wraps a coroutine
-// with additional state and utilities for managing the world's context.
+/**
+ * An isolated thread of execution. In other words, a dynamic instance of an
+ * OPAL `hypothetical` block.
+ */
 export class World extends Lazy {
   subworlds: Set<World>;
 
-  // Collections used (or created) in this world.
+  /**
+   * Collections used (or created) in this world.
+   */
   collections: Set<Collection<any>>;
 
   constructor(public parent: World, func: AsyncFunc) {
@@ -224,29 +309,45 @@ export class World extends Lazy {
 }
 
 
-// A container for functionality available within the context of a world.
+/**
+ * A wrapper for all the API calls available to OPAL code.
+ * 
+ * A Context keeps track of the code's current OPAL world and provides
+ * convenient ways to access it.
+ */
 export class Context {
   constructor(public world: World) {}
 
-  // Create a new child world of this one.
+  /**
+   * Create a new child world.
+   * 
+   * @param func  The body code to execute in the new `World`.
+   * @returns     A new `World` object.
+   */
   hypothetical(func: AsyncFunc): World {
     let world = new World(this.world, func);
     this.world.subworlds.add(world);
     return world;
   }
 
-  // Create a new weight for communication between this world and a subworld.
+  /**
+   * Create a new `Weight` for communication between this world and a subworld.
+   */
   weight<T>(): Weight<T> {
     return new Weight<T>(this.world);
   }
 
-  // Set a weight.
+  /**
+   * Set the value of a `Weight`.
+   */
   async set<T>(weight: Weight<T>, value: T) {
     weight.set(this.world, value);
     await this.world.suspend();
   }
 
-  // Get a weight.
+  /**
+   * Get the value of a `Weight`.
+   */
   async get<T>(weight: Weight<T>, subworld: World) {
     let promise = (async function () {
       let result = await weight.get(subworld);
@@ -257,33 +358,48 @@ export class Context {
     return await promise;
   }
 
-  // Create a new collection.
+  /**
+   * Create a new `Collection` based in this world.
+   */
   collection<T>(): Collection<T> {
     let c = new Collection<T>(this.world);
     this.world.collections.add(c);
     return c;
   }
 
-  // Add to a collection.
+  /**
+   * Add a value to a `Collection`.
+   */
   add<T>(collection: Collection<T>, value: T) {
     let s = PSet.add(collection.lookup(this.world), value);
     collection.update(this.world, s);
     this.world.collections.add(collection);
   }
 
-  // Remove from a collection.
+  /**
+   * Remove a value from a `Collection`.
+   */
   del<T>(collection: Collection<T>, value: T) {
     let s = PSet.del(collection.lookup(this.world), value);
     collection.update(this.world, s);
     this.world.collections.add(collection);
   }
 
-  // Get the contents of a collection.
+  /**
+   * Get the current contents of a collection as an `Iterable`.
+   * 
+   * You can use `Array.from()` to get a JavaScript array from the iterable.
+   */
   view<T>(collection: Collection<T>) {
     return collection.lookup(this.world).view();
   }
 
-  // Commit the collection modifications of a sub-world.
+  /**
+   * Apply all the state updates from a subworld.
+   * 
+   * This runs the subworld to completion and then merges all of its updates
+   * to `Collection`s into the current world.
+   */
   async commit(subworld: World) {
     // Complete executing the world in question.
     subworld.acquire();
@@ -295,7 +411,16 @@ export class Context {
     }
   }
 
-  // Explore many hypothetical worlds.
+  /**
+   * "Fork" several hypothetical worlds.
+   * 
+   * @param domain  Create a new world for each value in the domain. The
+   *                domain may be infinite.
+   * @param func    The body of the new worlds, paramterized by a
+   *                value selected from the domain.
+   * @returns       An iterable of new `World`s (with the same cardinality
+   *                as `domain`).
+   */
   *explore<T>(domain: Iterable<T>,
       func: (choice: T) => AsyncFunc): Iterable<World>
   {
@@ -304,7 +429,17 @@ export class Context {
     }
   }
 
-  // Find the world that minimizes a given weight.
+  /**
+   * Find the `World` that minimizes a given weight.
+   * 
+   * @param worlds   The sequence of `World`s to search. Could be produced
+   *                 by `explore`, for example.
+   * @param weight   The numerical weight to minimize.
+   * @param limit    Optionally, the maximum number of worlds to consider.
+   *                 Otherwise, all worlds are searched. If the `worlds`
+   *                 sequence is infinite, you definitely want to provide
+   *                 a limit.
+   */
   async minimize(worlds: Iterable<World>, weight: Weight<number>, limit?: number) {
     let count = 0;
     let min_weight: number = null;
@@ -327,7 +462,12 @@ export class Context {
 }
 
 
-// The topmost world has no parent and gets a special designation.
+/**
+ * The top-level `World`.
+ * 
+ * It is distinct from all other worlds because its actions can affect
+ * the world outside of OPAL.
+ */
 class TopWorld extends World {
   constructor(public func: AsyncFunc) {
     super(null, func);
@@ -335,7 +475,9 @@ class TopWorld extends World {
 }
 
 
-// A top-level entry point that constructs the initial, top-level world.
+/**
+ * Create and invoke a top-level OPAL world.
+ */
 export function opal(func: AsyncFunc) {
   let world = new TopWorld(func);
   world.acquire();  // Run to completion.

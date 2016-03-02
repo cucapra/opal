@@ -108,10 +108,22 @@ function dateToOffice(d: Date): string {
     ':' + pad0(d.getSeconds());
 }
 
-// Represents a single calendar event.
+/**
+ * A single event in a user's calendar.
+ */
 export class Event {
   id: string;
 
+  /**
+   * Create a new `Event`.
+   * 
+   * @param subject  The title.
+   * @param start    The time when the event starts.
+   * @param end      The end time.
+   * @param id       Optionally, the event's unique server-side id. For new
+   *                 events that haven't been published to the server yet,
+   *                 this will be empty.
+   */
   constructor(
     public subject: string,
     public start: Date,
@@ -130,7 +142,9 @@ export class Event {
     }
   };
 
-  // Convert to the Office API's JSON representation.
+  /**
+   * Convert an event to the Office API's JSON representation.
+   */
   toOffice() {
     return {
       'Subject': this.subject,
@@ -150,7 +164,9 @@ export class Event {
     };
   }
 
-  // Load an Event from the Office API's JSON representation.
+  /**
+   * Unpack an `Event` from the Office API's JSON representation.
+   */
   static fromOffice(obj: any): Event {
     return new Event(obj.Subject,
                      parseOfficeDate(obj.Start),
@@ -223,7 +239,10 @@ class Modify extends PSet.Operation<Event> {
   }
 }
 
-// A Calendar looks like a collection of events.
+/**
+ * An OPAL collection representing a user's calendar: i.e., a set of `Event`
+ * objects.
+ */
 export class Calendar extends ExternalCollection<Event> {
   // The `send` method implements the "real" operations that affect the
   // outside world.
@@ -270,10 +289,17 @@ export class Calendar extends ExternalCollection<Event> {
   }
 }
 
-// An OPAL API function to get a few events from the user's calendar. This
-// function currently gets a few of the *oldest* events on your calendar. This
-// is a good match for our tests, which take pace far in the past. Eventually,
-// we'll want to let it get events around an arbitrary point in time.
+/**
+ * Get a few events from the user's calendar.
+ * 
+ * For the moment, this gets a few of the *oldest* events. This
+ * is a good match for our tests, which take pace far in the past.
+ * Eventually, we'll want to let it get events around an arbitrary point
+ * in time.
+ * 
+ * @param ctx  The current OPAL context.
+ * @returns    A new `Calendar` collection.
+ */
 export async function getEvents(ctx: Context) {
   return new Promise<Calendar>((resolve, reject) => {
     Office.getSomeEvents(function (error, result) {
@@ -292,8 +318,14 @@ export async function getEvents(ctx: Context) {
   });
 }
 
-// An OPAL API function to *modify* a Calendar collection (which is not
-// part of the ordinary collection API).
+/**
+ * Modify a `Calendar` collection.
+ * 
+ * @param ctx         The current OPAL context.
+ * @param collection  The calendar to modify.
+ * @param event       The event to change (should be in the calendar already).
+ * @param changes     Field updates for the event.
+ */
 export function modifyEvent(ctx: Context, collection: Calendar,
                             event: Event, changes: EventChange) {
   let op = new Modify(event.id, changes);
