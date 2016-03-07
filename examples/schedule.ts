@@ -1,6 +1,6 @@
 'use strict';
 
-import {opal, Context} from '../src/opal';
+import {opal, Context, Diff} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
 
 // Copy a JavaScript Date object. (It's a shame this isn't as easy as
@@ -62,6 +62,18 @@ function conflictDelta(ctx: Context, cal: Calendar): number {
   );
 }
 
+// Preview changes for the user.
+function showChanges(diff: Diff<Event>) {
+  diff.foreach({
+    add(event) {
+      console.log(`scheduling ${event.subject} at ${event.start}`);
+    },
+    delete(event) {
+      console.log(`removing event ${event.subject}`);
+    },
+  });
+}
+
 // The main scheduling program.
 opal(async function (ctx) {
   // The search: find a meeting slot.
@@ -100,11 +112,8 @@ opal(async function (ctx) {
     60
   );
 
-  // TODO Here would be a great place to be able to say, "This is what I want
-  // to add to your calendar!" But since we just have a flat view of the
-  // *current state* of the calendar, this requires some kind of a "diff." We
-  // could do this either using the information available in the branchable
-  // set data structure or just by getting a difference "from scratch."
+  // Show the user what we're about to do.
+  showChanges(ctx.diff_child(world, events));
 
   // Affect the real world.
   await ctx.commit(world);

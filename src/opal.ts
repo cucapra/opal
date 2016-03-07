@@ -471,6 +471,18 @@ export class Context {
   }
 
   /**
+   * Get the set of changes in a child world that would be made if we were to
+   * commit it here.
+   */
+  diff_child<T>(world: World, collection: Collection<T>): Diff<T> {
+    console.assert(world.parent === this.world,
+        "diff_child() must be called on a child world");
+    let child_set = collection.lookup(world);
+    let parent_set = collection.lookup(this.world);
+    return new Diff(PSet.diff(parent_set, child_set));
+  }
+
+  /**
    * Apply all the state updates from a subworld.
    *
    * This runs the subworld to completion and then merges all of its updates
