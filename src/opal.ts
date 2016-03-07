@@ -174,11 +174,7 @@ export abstract class ExternalCollection<T> extends Collection<T> {
  * A *diff* contains a set of hypothetical changes to a collection.
  */
 export class Diff<T> {
-  constructor(private ops: PSet.Operation<T>[]) {}
-
-  values(): Iterable<PSet.Operation<T>> {
-    return this.ops;
-  }
+  constructor(public ops: PSet.Operation<T>[]) {}
 }
 
 

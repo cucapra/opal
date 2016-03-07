@@ -65,6 +65,12 @@ opal(async function (ctx) {
       let evt = new Event(title, start, end);
       ctx.add(events, evt);
 
+      // TODO Playing with the new `diff` operation.
+      let diff = ctx.diff(events);
+      for (let op of diff.ops) {
+        console.log(op);
+      }
+
       // Check for conflicts.
       // TODO: This is a little silly at the moment because we're looking for
       // conflicts *with the new event itself*. A more realistic way to do
