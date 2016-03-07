@@ -4,7 +4,7 @@ import * as PSet from './pset';
 
 /**
  * A promise utility for delayed resolution.
- * 
+ *
  * This is useful when you want to call `then` on a promise but you don't know
  * where the "upstream" part of the chain will come from yet. Later, when you
  * want to complete the chain, you can call `resolve()` or `reject()` or even
@@ -24,10 +24,10 @@ class PromiseJar<T> {
 }
 
 
-// 
+//
 /**
  * A communication channel between hypothetical worlds and their parents.
- * 
+ *
  * A child world can write to a weight using `ctx.set` and its parent can
  * read that value using `ctx.get`.
  */
@@ -36,7 +36,7 @@ class Weight<T> {
 
   /**
    * Create a new weight.
-   * 
+   *
    * @param world   The parent ("home") world.
    */
   constructor(public world: World) {
@@ -71,7 +71,7 @@ class Weight<T> {
 
 /**
  * A world-aware set data structure.
- * 
+ *
  * Worlds have isolated views onto `Collection`s: the changes they make will
  * only be visible to themselves until they are committed.
  */
@@ -84,7 +84,7 @@ export class Collection<T> {
 
   /**
    * Create a new `Collection`.
-   * 
+   *
    * @param owner  The parent ("home") world for the collection.
    * @param init   Optionally, the initial set for the owner world. Otherwise,
    *               the set starts out empty.
@@ -100,7 +100,7 @@ export class Collection<T> {
 
   /**
    * Get the underlying PSet for a given World.
-   * 
+   *
    * If the set does not exist yet, create it as a snapshot of the
    * world's parent's view.
    */
@@ -118,7 +118,7 @@ export class Collection<T> {
 
   /**
    * Replace the current set for a given world.
-   * 
+   *
    * The world must have an old set associated with it.
    */
   update(world: World, set: PSet.Node<T>) {
@@ -143,13 +143,13 @@ export class Collection<T> {
 /**
  * An *external collection* is a `Collection` where updates affect the
  * world outside of OPAL.
- * 
+ *
  * Subclasses override the `send` method to implement their semantics.
  */
 export abstract class ExternalCollection<T> extends Collection<T> {
   /**
    * Apply a new sequence of operations to the "real world."
-   * 
+   *
    * This is called whenever operations are applied in the top-level OPAL
    * world or committed to the top-level world from some child world.
    */
@@ -170,10 +170,21 @@ export abstract class ExternalCollection<T> extends Collection<T> {
   }
 }
 
+/**
+ * A *diff* contains a set of hypothetical changes to a collection.
+ */
+export class Diff<T> {
+  constructor(private ops: PSet.Operation<T>[]) {}
+
+  values(): Iterable<PSet.Operation<T>> {
+    return this.ops;
+  }
+}
+
 
 /**
  * An abstract mechanism for coordinating lazy evaluation via promises.
- * 
+ *
  * This provides the functionality for Worlds that lets them suspend
  * themselves (voluntarily) and *only* run when demanded to. Specifically,
  * the computation only advances when `acquire` has been called more times
@@ -203,7 +214,7 @@ export class Lazy {
 
   /**
    * Load the function to execute.
-   * 
+   *
    * Threads start in a suspended state, so you have to call `acquire`
    * after this to get the thread to actually start executing.
    */
@@ -311,7 +322,7 @@ export class World extends Lazy {
 
 /**
  * A wrapper for all the API calls available to OPAL code.
- * 
+ *
  * A Context keeps track of the code's current OPAL world and provides
  * convenient ways to access it.
  */
@@ -320,7 +331,7 @@ export class Context {
 
   /**
    * Create a new child world.
-   * 
+   *
    * @param func  The body code to execute in the new `World`.
    * @returns     A new `World` object.
    */
@@ -387,7 +398,7 @@ export class Context {
 
   /**
    * Get the current contents of a collection as an `Iterable`.
-   * 
+   *
    * You can use `Array.from()` to get a JavaScript array from the iterable.
    */
   view<T>(collection: Collection<T>) {
@@ -395,8 +406,20 @@ export class Context {
   }
 
   /**
+   * Get the set of changes that *would* be made to a collection if the
+   * current world were committed into its parent.
+   */
+  diff<T>(collection: Collection<T>): Diff<T> {
+    console.assert(this.world.parent !== null,
+        "diff() not available in top-level world");
+    let cur_set = collection.lookup(this.world);
+    let parent_set = collection.lookup(this.world.parent);
+    return new Diff(PSet.diff(parent_set, cur_set));
+  }
+
+  /**
    * Apply all the state updates from a subworld.
-   * 
+   *
    * This runs the subworld to completion and then merges all of its updates
    * to `Collection`s into the current world.
    */
@@ -413,7 +436,7 @@ export class Context {
 
   /**
    * "Fork" several hypothetical worlds.
-   * 
+   *
    * @param domain  Create a new world for each value in the domain. The
    *                domain may be infinite.
    * @param func    The body of the new worlds, paramterized by a
@@ -431,7 +454,7 @@ export class Context {
 
   /**
    * Find the `World` that minimizes a given weight.
-   * 
+   *
    * @param worlds   The sequence of `World`s to search. Could be produced
    *                 by `explore`, for example.
    * @param weight   The numerical weight to minimize.
@@ -464,7 +487,7 @@ export class Context {
 
 /**
  * The top-level `World`.
- * 
+ *
  * It is distinct from all other worlds because its actions can affect
  * the world outside of OPAL.
  */

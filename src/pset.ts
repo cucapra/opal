@@ -2,7 +2,7 @@
 
 /**
  * An immutable, unit in a persistent set structure.
- * 
+ *
  * Each Node points to its parent (except the root EmptyNode, below). The
  * log of operations on a data structure can be found by tracing the chain of
  * parents.
@@ -15,7 +15,7 @@ export abstract class Node<T> {
   /**
    * Trace the chain of Nodes to build up a list of `Operation`s that have
    * been recorded for the data structure.
-   * 
+   *
    * The log begins either at the beginning of time or, if `until` is
    * provided, up to (but not including) any Node in that set.
    */
@@ -80,7 +80,7 @@ class OperationNode<T> extends Node<T> {
   ) {
     super(parent);
   }
-  
+
   log(until: Set<Node<T>>): Operation<T>[] {
     // The log here is just the parent's log, extended with this node's
     // operation.
@@ -127,14 +127,13 @@ class FlatNode<T> extends Node<T> {
 /**
  * Given two related sets, find the new operations on the second that need
  * to be applied to `base` to merge them.
- * 
+ *
  * @param base     The "older" set that needs updating.
  * @param overlay  The "newer" set, which must share a common ancestor with
  *                 `base`, whose operations will be applied.
  * @returns        A new set containing all operations.
  */
-function merge_log<T>(base: Node<T>, overlay: Node<T>):
-  Operation<T>[]
+export function diff<T>(base: Node<T>, overlay: Node<T>): Operation<T>[]
 {
   // The first step is to accumulate the *entire* set of ancestors of the
   // base so we can check membership when traversing the overlay's ancestry.
@@ -154,8 +153,8 @@ function merge_log<T>(base: Node<T>, overlay: Node<T>):
   return log_suffix;
 }
 
-// The `export`ed functions below are the module's external interface. The
-// interface is uses a functional, immutable style, so to add a value to a
+// The `export`ed functions below are the module's main external interface.
+// The interface is uses a functional, immutable style, so to add a value to a
 // set, you do something like this:
 //
 //     let coll1 = ...;
@@ -166,7 +165,7 @@ function merge_log<T>(base: Node<T>, overlay: Node<T>):
 /**
  * Given two sets that share a common ancestor, merge the operations
  * that have occurred on either branch and return a new set.
- * 
+ *
  * It is an error to:
  * - Pass unrelated nodes (i.e., sets with no common ancestor).
  * - Merge two sets with conflicting updates (e.g., where both
@@ -174,7 +173,7 @@ function merge_log<T>(base: Node<T>, overlay: Node<T>):
  */
 export function merge<T>(base: Node<T>, overlay: Node<T>) {
   // Get the operations to replay.
-  let log = merge_log(base, overlay);
+  let log = diff(base, overlay);
 
   // Replay the partial log on top of the base.
   let out = base;
