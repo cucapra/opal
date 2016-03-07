@@ -186,15 +186,40 @@ export class Diff<T> {
    */
   score(scoring: (value: T) => number): number {
     let total = 0;
-    for (let op of this.ops) {
-      if (op instanceof PSet.Add) {
-        total += scoring(op.value);
-      } else if (op instanceof PSet.Delete) {
-        total -= scoring(op.value);
-      }
-    }
+    this.foreach({
+      add(value) {
+        total += scoring(value);
+      },
+      delete(value) {
+        total -= scoring(value);
+      },
+    });
     return total;
   }
+
+  /**
+   * Loop over the actions in a diff.
+   *
+   * @param actions  A struct containing functions indicating what to do with
+   *                 each operation type.
+   */
+  foreach(actions: DiffActions<T>) {
+    for (let op of this.ops) {
+      if (op instanceof PSet.Add && actions.add) {
+        actions.add(op.value);
+      } else if (op instanceof PSet.Delete && actions.delete) {
+        actions.delete(op.value);
+      }
+    }
+  }
+}
+
+/**
+ * A struct containing actions for `Diff.foreach`.
+ */
+interface DiffActions<T> {
+  add?: (value: T) => void;
+  delete?: (value: T) => void;
 }
 
 
