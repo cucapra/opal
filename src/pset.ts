@@ -125,6 +125,30 @@ class FlatNode<T> extends Node<T> {
 }
 
 /**
+ * Find the closest common ancestor among two sets. Specifically, this finds
+ * the most recent ancestor of `overlay` that is also an ancestor of `base`.
+ */
+export function common<T>(base: Node<T>, overlay: Node<T>): Node<T> {
+  // The first step is to accumulate the *entire* set of ancestors of the
+  // base so we can check membership when traversing the overlay's ancestry.
+  let base_ancestors: Set<Node<T>> = new Set();
+  let base_ancestor = base;
+  do {
+    base_ancestors.add(base_ancestor);
+    base_ancestor = base_ancestor.parent;
+  } while (base_ancestor !== null);
+
+  // Next, walk up the ancestors of `overlay` to find the closest common
+  // ancestor.
+  let overlay_ancestor = overlay;
+  while (overlay_ancestor !== null && !base_ancestors.has(overlay_ancestor)) {
+    overlay_ancestor = overlay_ancestor.parent;
+  }
+
+  return overlay_ancestor;
+}
+
+/**
  * Given two related sets, find the new operations on the second that need
  * to be applied to `base` to merge them.
  *
@@ -135,21 +159,15 @@ class FlatNode<T> extends Node<T> {
  */
 export function diff<T>(base: Node<T>, overlay: Node<T>): Operation<T>[]
 {
-  // The first step is to accumulate the *entire* set of ancestors of the
-  // base so we can check membership when traversing the overlay's ancestry.
-  let base_ancestors: Set<Node<T>> = new Set();
-  let base_ancestor = base;
-  do {
-    base_ancestors.add(base_ancestor);
-    base_ancestor = base_ancestor.parent;
-  } while (base_ancestor !== null && base_ancestor !== base);
+  // Get the closest common ancestor.
+  let ancestor = common(base, overlay);
+  console.assert(ancestor !== null, "base and overlay sets must be related");
 
   // Next, get the overlay's log *up to but not including* the closest
   // common ancestor.
-  let log_suffix = overlay.log(base_ancestors);
+  let log_suffix = overlay.log(new Set([ancestor]));
 
-  // TODO Check safety: the two nodes need to be related (have some common
-  // ancestor). We also need to check for conflicting concurrent operations.
+  // TODO Check for conflicting concurrent operations.
   return log_suffix;
 }
 
