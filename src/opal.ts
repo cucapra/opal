@@ -161,7 +161,7 @@ export abstract class ExternalCollection<T> extends Collection<T> {
       // we just need to replay the operations "in between" the old and new
       // sets.
       let old = this.lookup(world);
-      let log = set.log(new Set([old]));
+      let log = set.log(old);
       let newset = this.send(old, log);
       super.update(world, newset);
     } else {

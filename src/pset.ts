@@ -17,9 +17,9 @@ export abstract class Node<T> {
    * been recorded for the data structure.
    *
    * The log begins either at the beginning of time or, if `until` is
-   * provided, up to (but not including) any Node in that set.
+   * provided, up to (but not including) that `Node`.
    */
-  abstract log(until?: Set<Node<T>>): Operation<T>[];
+  abstract log(until?: Node<T>): Operation<T>[];
 
   /**
    * Get the flat set of values represented by the data structure.
@@ -81,10 +81,10 @@ class OperationNode<T> extends Node<T> {
     super(parent);
   }
 
-  log(until: Set<Node<T>>): Operation<T>[] {
+  log(until?: Node<T>): Operation<T>[] {
     // The log here is just the parent's log, extended with this node's
     // operation.
-    if (until && until.has(this)) {
+    if (this === until) {
       return [];
     }
     return this.parent.log(until).concat(this.operation);
@@ -99,7 +99,7 @@ class EmptyNode<T> extends Node<T> {
     super(null);
   }
 
-  log(until: Set<Node<T>>): Operation<T>[] {
+  log(until?: Node<T>): Operation<T>[] {
     return [];
   }
 }
@@ -112,8 +112,8 @@ class FlatNode<T> extends Node<T> {
     super(null);
   }
 
-  log(until: Set<Node<T>>): Operation<T>[] {
-    if (until && until.has(this)) {
+  log(until?: Node<T>): Operation<T>[] {
+    if (this === until) {
       return [];
     }
     let out: Operation<T>[] = [];
@@ -165,7 +165,7 @@ export function diff<T>(base: Node<T>, overlay: Node<T>): Operation<T>[]
 
   // Next, get the overlay's log *up to but not including* the closest
   // common ancestor.
-  let log_suffix = overlay.log(new Set([ancestor]));
+  let log_suffix = overlay.log(ancestor);
 
   // TODO Check for conflicting concurrent operations.
   return log_suffix;
