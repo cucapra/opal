@@ -145,7 +145,45 @@ Next, you'll want to choose the best world according to some criterion. This is 
 Pass the set of worlds from an `explore` call, a weight, and (optionally) a maximum number of worlds to try before giving up. (You'll definitely want to use `limit` if your domain is infinite.) The function returns the world in which `weight` is smallest. You then might want to `commit` that "winning" world.
 
 
-# External Collections
+# Diffs and Incremental Weighting { #diff }
+
+It's often useful to inspect your hypothetical changes before applying them.
+Specifically, when scoring a tentative change, you often want to accumulate a score for proposed change.
+For these cases, OPAL can give you "diffs," which are roughly analogous to patches in a version control system.
+
+Call `ctx.diff` in a hypothetical world to get a `Diff` object:
+
+    let coll = ctx.collection<string>();
+    let world = ctx.hypothetical(async function (ctx) {
+      ctx.add(coll, "foo");
+      // ...
+      let diff = ctx.diff(coll);
+      diff.foreach({
+        add(s) {
+          console.log("added " + foo);
+        },
+        delete(s) {
+          console.log("removed " + foo);
+        },
+      });
+    });
+
+That example shows of `Diff`'s `foreach` method, which lets you inspect the set of operations in the diff.
+The above hypothetical world just prints out "added foo" along with any other changes that happened to `coll`.
+
+You can also use diffs to accumulate weights.
+This is useful when you have a cost or score associated equally with *every value in a collection*, so adding or removing a value with increment or decrements the entire collection's total "value."
+Use the `Diff` object's `score` method:
+
+    let delta = diff.score(s => s.length);
+
+The argument is a function that scores an individual element in the collection.
+For every *addition* in the diff, the total score is incremented by this amount; for every *deletion*, the total score is decremented.
+In this example, the value of the string collection is the total length of the strings it contains.
+And the scoring result, `delta`, is the amount this total length changed---in our example above, it would be 3 because it added "foo" to the set.
+
+
+# External Collections { #external }
 
 OPAL lets you interact with external services by representing their data as collections.
 The idea is that you can represent a calendar, for instance, as a set of events.
