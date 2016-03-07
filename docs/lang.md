@@ -182,6 +182,11 @@ For every *addition* in the diff, the total score is incremented by this amount;
 In this example, the value of the string collection is the total length of the strings it contains.
 And the scoring result, `delta`, is the amount this total length changed---in our example above, it would be 3 because it added "foo" to the set.
 
+OPAL has two other useful utilities for working with diffs:
+
+* The `ctx.diff_child(world, collection)` gets the hypothetical changes in a child world (as opposed to the current world, as with `diff`). You can call this before committing with `ctx.commit(world)` to inspect the changes that would happen.
+* Inside a hypothetical world, `ctx.clean_view(collection)` gives you the contents of a collection *without any of the current hypothetical changes*. That is, a collection's `ctx.clean_view` combined with its `ctx.diff` are exactly equal to its current state given by `ctx.view`. This can be useful as a baseline when computing scores.
+
 
 # External Collections { #external }
 
