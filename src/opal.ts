@@ -402,6 +402,18 @@ export class Context {
   }
 
   /**
+   * Get the contents of a collection *without* any local modifications.
+   */
+  clean_view<T>(collection: Collection<T>) {
+    console.assert(this.world.parent !== null,
+        "clean_view() not available in top-level world");
+    let cur_set = collection.lookup(this.world);
+    let parent_set = collection.lookup(this.world.parent);
+    let ancestor = PSet.common(parent_set, cur_set);
+    return ancestor.view();
+  }
+
+  /**
    * Get the set of changes that *would* be made to a collection if the
    * current world were committed into its parent.
    */

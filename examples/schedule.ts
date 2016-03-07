@@ -57,12 +57,13 @@ function iterCount(it: Iterable<any>) {
 function conflictDelta(ctx: Context, cal: Calendar): number {
   let diff = ctx.diff(cal);
   let score = 0;
+  let old_events = ctx.clean_view(cal);  // Unmodified set of events.
   for (let op of diff.ops) {
     if (op instanceof pset.Add) {
-      // TODO clean_view
-      score += iterCount(findConflicts(ctx.view(cal), op.value));
+      score += iterCount(findConflicts(old_events, op.value));
     }
   }
+  console.log(score);
   return score;
 }
 
