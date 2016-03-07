@@ -55,15 +55,17 @@ function iterCount(it: Iterable<any>) {
 
 // Count the number of conflicts created or removed in a hypothetical world.
 function conflictDelta(ctx: Context, cal: Calendar): number {
-  let diff = ctx.diff(cal);
-  let score = 0;
   let old_events = ctx.clean_view(cal);  // Unmodified set of events.
+  let diff = ctx.diff(cal);  // The modifications to make.
+
+  // Compute a score.
+  let score = 0;
   for (let op of diff.ops) {
     if (op instanceof pset.Add) {
       score += iterCount(findConflicts(old_events, op.value));
     }
   }
-  console.log(score);
+
   return score;
 }
 
@@ -82,7 +84,7 @@ opal(async function (ctx) {
       let evt = new Event(title, start, end);
       ctx.add(events, evt);
 
-      // TODO Playing with the new `diff` operation.
+      // Our weight is the number of conflicts we've created.
       ctx.set(conflicts, conflictDelta(ctx, cal));
     });
 
