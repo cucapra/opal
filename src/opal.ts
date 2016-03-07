@@ -174,7 +174,27 @@ export abstract class ExternalCollection<T> extends Collection<T> {
  * A *diff* contains a set of hypothetical changes to a collection.
  */
 export class Diff<T> {
-  constructor(public ops: PSet.Operation<T>[]) {}
+  constructor(private ops: PSet.Operation<T>[]) {}
+
+  /**
+   * Compute a score for this diff.
+   *
+   * @param scoring  A function that assigns a score to any value. This is
+   *                 used as a positive weight for newly added items and a
+   *                 negative weight for newly removed items.
+   * @returns        The total score.
+   */
+  score(scoring: (value: T) => number): number {
+    let total = 0;
+    for (let op of this.ops) {
+      if (op instanceof PSet.Add) {
+        total += scoring(op.value);
+      } else if (op instanceof PSet.Delete) {
+        total -= scoring(op.value);
+      }
+    }
+    return total;
+  }
 }
 
 

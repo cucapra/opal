@@ -3,9 +3,6 @@
 import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
 
-// TODO Don't depend on this directly.
-import * as pset from '../src/pset';
-
 // Copy a JavaScript Date object. (It's a shame this isn't as easy as
 // `d.clone()`.)
 // http://stackoverflow.com/a/1090817
@@ -58,15 +55,11 @@ function conflictDelta(ctx: Context, cal: Calendar): number {
   let old_events = ctx.clean_view(cal);  // Unmodified set of events.
   let diff = ctx.diff(cal);  // The modifications to make.
 
-  // Compute a score.
-  let score = 0;
-  for (let op of diff.ops) {
-    if (op instanceof pset.Add) {
-      score += iterCount(findConflicts(old_events, op.value));
-    }
-  }
-
-  return score;
+  // Compute a score. Each event "counts" for the number of conflicts it
+  // creates or removes.
+  return diff.score(
+    ev => iterCount(findConflicts(old_events, ev))
+  );
 }
 
 // The main scheduling program.
