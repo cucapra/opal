@@ -1,7 +1,10 @@
 'use strict';
 
-import {opal} from '../src/opal';
+import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
+
+// TODO Don't depend on this directly.
+import * as pset from '../src/pset';
 
 // Copy a JavaScript Date object. (It's a shame this isn't as easy as
 // `d.clone()`.)
@@ -50,6 +53,19 @@ function iterCount(it: Iterable<any>) {
   return n;
 }
 
+// Count the number of conflicts created or removed in a hypothetical world.
+function conflictDelta(ctx: Context, cal: Calendar): number {
+  let diff = ctx.diff(cal);
+  let score = 0;
+  for (let op of diff.ops) {
+    if (op instanceof pset.Add) {
+      // TODO clean_view
+      score += iterCount(findConflicts(ctx.view(cal), op.value));
+    }
+  }
+  return score;
+}
+
 // The main scheduling program.
 opal(async function (ctx) {
   // The search: find a meeting slot.
@@ -66,18 +82,7 @@ opal(async function (ctx) {
       ctx.add(events, evt);
 
       // TODO Playing with the new `diff` operation.
-      let diff = ctx.diff(events);
-      for (let op of diff.ops) {
-        console.log(op);
-      }
-
-      // Check for conflicts.
-      // TODO: This is a little silly at the moment because we're looking for
-      // conflicts *with the new event itself*. A more realistic way to do
-      // this would be to count *all* the conflicts in the calendar, which is
-      // more reusable.
-      let numConflicts = iterCount(findConflicts(ctx.view(cal), evt));
-      ctx.set(conflicts, numConflicts);
+      ctx.set(conflicts, conflictDelta(ctx, cal));
     });
 
     // Find the best time.
