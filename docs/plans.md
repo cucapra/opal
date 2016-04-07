@@ -30,6 +30,11 @@ This has a nifty approximate computing angle:
 - Not every query will cost the same to compute with the same quality.
 - Not every query will matter as much to the user.
 
+### Real Time and True Parallelism
+
+Along these lines, we probably want the ability to cancel searches when they take too long.
+This could use a timeout that says, for example, "update me after 0.2 seconds, and don't run for any longer than 1 second."
+
 ## Agent-to-Agent Communication
 
 We need to build an API for multiple OPAL instances to talk to each other.
