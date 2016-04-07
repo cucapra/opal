@@ -1,6 +1,6 @@
 'use strict';
 
-import {opal} from '../src/opal';
+import {opal, Context, Diff} from '../src/opal';
 import {Event, Calendar, MeetingTimeSlot, getEvents, getFreeTimes} from '../src/calendar';
 
 // Copy a JavaScript Date object. (It's a shame this isn't as easy as
@@ -50,6 +50,30 @@ function iterCount(it: Iterable<any>) {
   return n;
 }
 
+// Count the number of conflicts created or removed in a hypothetical world.
+function conflictDelta(ctx: Context, cal: Calendar): number {
+  let old_events = ctx.clean_view(cal);  // Unmodified set of events.
+  let diff = ctx.diff(cal);  // The modifications to make.
+
+  // Compute a score. Each event "counts" for the number of conflicts it
+  // creates or removes.
+  return diff.score(
+    ev => iterCount(findConflicts(old_events, ev))
+  );
+}
+
+// Preview changes for the user.
+function showChanges(diff: Diff<Event>) {
+  diff.foreach({
+    add(event) {
+      console.log(`scheduling ${event.subject} at ${event.start}`);
+    },
+    delete(event) {
+      console.log(`removing event ${event.subject}`);
+    },
+  });
+}
+
 // The main scheduling program.
 opal(async function (ctx) {
   // The search: find a meeting slot.
@@ -65,13 +89,8 @@ opal(async function (ctx) {
       let evt = new Event(title, start, end);
       ctx.add(events, evt);
 
-      // Check for conflicts.
-      // TODO: This is a little silly at the moment because we're looking for
-      // conflicts *with the new event itself*. A more realistic way to do
-      // this would be to count *all* the conflicts in the calendar, which is
-      // more reusable.
-      let numConflicts = iterCount(findConflicts(ctx.view(cal), evt));
-      ctx.set(conflicts, numConflicts);
+      // Our weight is the number of conflicts we've created.
+      ctx.set(conflicts, conflictDelta(ctx, cal));
     });
 
     // Find the best time.
@@ -93,11 +112,8 @@ opal(async function (ctx) {
     60
     );
 
-  // TODO Here would be a great place to be able to say, "This is what I want
-  // to add to your calendar!" But since we just have a flat view of the
-  // *current state* of the calendar, this requires some kind of a "diff." We
-  // could do this either using the information available in the branchable
-  // set data structure or just by getting a difference "from scratch."
+  // Show the user what we're about to do.
+  showChanges(ctx.diff_child(world, events));
 
   // Affect the real world.
   await ctx.commit(world);
