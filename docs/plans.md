@@ -6,6 +6,10 @@ The goal is to work without a fixed fitness function when searching for solution
 That is, we should propose solutions and ask the user for feedback to refine them.
 Computationally, this means we need to efficiently support re-computation when the user makes adjustments.
 
+This continues our relationship with the "concurrent revisions" work: [the Two for the Price of One paper][cr-inc] shows a connection between parallelism and incrementalism.
+
+[cr-inc]: http://research.microsoft.com/apps/pubs/default.aspx?id=150180
+
 
 # Stuff I'm Not Working On Right Now
 
