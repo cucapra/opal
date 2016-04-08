@@ -58,7 +58,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
   });
 
   // Find the best time.
-  return await ctx.minimize(worlds, score, 100);
+  return await ctx.minimize(worlds, score);
 }
 
 /**

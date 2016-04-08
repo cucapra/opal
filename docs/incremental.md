@@ -11,39 +11,44 @@ Here's what this looks like in today's OPAL.
 (This actually works; it's in the repository as `examples/schedule_workday.ts`.)
 
 ```typescript
-let score = ctx.weight<number>();
+async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
+                        prefStart: number, prefEnd: number,
+                        title: string, minutes: number)
+{
+  let score = ctx.weight<number>();
 
-// Constants used to weight the two ranking factors.
-const conflictCost = 2.0;  // Cost per conflict.
-const prefCost = 1.0;  // Cost per hour outside of preferred range.
+  // Constants used to weight the two ranking factors.
+  const conflictCost = 2.0;  // Cost per conflict.
+  const prefCost = 1.0;  // Cost per hour outside of preferred range.
 
-let worlds = ctx.explore(range, start => async function (ctx) {
-  // Try adding the event to the calendar.
-  let evt = new Event(title, start, dateAdd(start, minutes));
-  ctx.add(cal, evt);
+  let worlds = ctx.explore(range, start => async function (ctx) {
+    // Try adding the event to the calendar.
+    let evt = new Event(title, start, dateAdd(start, minutes));
+    ctx.add(cal, evt);
 
-  // Get the number of conflicts the event would create.
-  let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
-  let edit = ctx.diff(cal);  // The modifications to make.
-  let conflictCount = edit.score( e => countConflicts(oldCal, e) );
+    // Get the number of conflicts the event would create.
+    let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
+    let edit = ctx.diff(cal);  // The modifications to make.
+    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
 
-  // Check whether the event is in the user's preferred range and, if not,
-  // how far out-of-range it its.
-  let distFromPref = 0;
-  if (evt.start.getHours() <= prefStart) {
-    distFromPref = prefStart - evt.start.getHours();
-  }
-  if (evt.end.getHours() >= prefEnd) {
-    distFromPref = evt.end.getHours() - prefEnd;
-  }
+    // Check whether the event is in the user's preferred range and, if not,
+    // how far out-of-range it its.
+    let distFromPref = 0;
+    if (evt.start.getHours() <= prefStart) {
+      distFromPref = prefStart - evt.start.getHours();
+    }
+    if (evt.end.getHours() >= prefEnd) {
+      distFromPref = evt.end.getHours() - prefEnd;
+    }
 
-  // Combine the two factors into a cost.
-  ctx.set(score, conflictCount * conflictCost +
-                 distFromPref * prefCost);
-});
+    // Combine the two factors into a cost.
+    ctx.set(score, conflictCount * conflictCost +
+                   distFromPref * prefCost);
+  });
 
-// Find the best time.
-return await ctx.minimize(worlds, score, 100);
+  // Find the best time.
+  return await ctx.minimize(worlds, score);
+}
 ```
 
 As a summary, this is how it works:
@@ -58,4 +63,22 @@ As a summary, this is how it works:
 In effect, this will try to fill in gaps in my schedule.
 When there are no more slots left, it will start encroaching into my personal time at the beginning and the end of the day, from the inside out.
 
+# Goal
+
+In this example, adding incrementalism should let us cheaply update:
+
+* The original calendar `cal`, if the user wants to add or remove previous commitments on the fly.
+* The preferred time range (i.e., `prefStart` and `prefEnd` above).
+* The relative importance of the weighting factors (i.e., the `conflictCost` and `prefCost` constants above).
+
+We should then be able to re-rank the results in `minimize` without recomputing everything.
+
 # ???
+
+```typescript
+let worlds = ctx.explore(range, start => async function (ctx) {
+  ctx.add(cal, ...);
+});
+
+let edit = ctx.diff_child(w, cal);
+```
