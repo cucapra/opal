@@ -29,8 +29,8 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
   let score = ctx.weight<number>();
 
   // Constants used to weight the two ranking factors.
-  let conflictCost = 2.0;  // Cost per conflict.
-  let prefCost = 1.0;  // Cost per hour outside of preferred range.
+  const conflictCost = 2.0;  // Cost per conflict.
+  const prefCost = 1.0;  // Cost per hour outside of preferred range.
 
   let worlds = ctx.explore(range, start => async function (ctx) {
     // Try adding the event to the calendar.
@@ -51,7 +51,6 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     if (evt.end.getHours() >= prefEnd) {
       distFromPref = evt.end.getHours() - prefEnd;
     }
-    console.log(distFromPref);
 
     // Combine the two factors into a cost.
     ctx.set(score, conflictCount * conflictCost +
