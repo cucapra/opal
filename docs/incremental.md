@@ -138,3 +138,7 @@ ctx.minimize(worlds, (world) => {
 ```
 
 # Hybrid Responsibility
+
+You could also imagine a midpoint between these two extremes: the child could be responsible for computing the basic quantities, `conflicts` and `sadness`.
+The parent would combine them into the overall `score`.
+I don't yet have any convincing arguments for why this would be any better than either of the simpler alternatives.
