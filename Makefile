@@ -34,7 +34,8 @@ DOCS_SRC := $(wildcard $(DOCSDIR)/*.md)
 DOCS_NAMES := $(notdir $(basename $(DOCS_SRC)))
 docs: $(DOCS_NAMES:%=$(DOCSDIR)/build/%.html)
 
-$(DOCSDIR)/build/%.html: $(DOCSDIR)/%.md
+DOCDEPS := $(DOCSDIR)/typescript.json
+$(DOCSDIR)/build/%.html: $(DOCSDIR)/%.md $(DOCDEPS)
 	$(MADOKO) --odir=$(DOCSDIR)/build $<
 
 .PHONY: docs-watch
