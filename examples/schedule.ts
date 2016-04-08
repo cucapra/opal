@@ -5,7 +5,7 @@
 
 import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
-import {dateAdd, slots, showChanges, iterCount, findConflicts} from './schedutil';
+import {dateAdd, slots, showChanges, countConflicts} from './schedutil';
 
 /**
  * Find an open slot for a new meeting.
@@ -30,9 +30,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     // Weight this world by the number of conflicts it would create.
     let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
     let edit = ctx.diff(cal);  // The modifications to make.
-    let conflictCount = edit.score(
-      ev => iterCount(findConflicts(oldCal, ev))
-    );
+    let conflictCount = edit.score( ev => countConflicts(oldCal, ev) );
     ctx.set(conflicts, conflictCount);
   });
 

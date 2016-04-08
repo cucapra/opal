@@ -43,7 +43,7 @@ export function eventsConflict(e1: Event, e2: Event): boolean {
 /**
  * Find events in `oldEvents` that overlap with `newEvent`.
  */
-export function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
+function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
   for (let oldEvent of oldEvents) {
     if (eventsConflict(oldEvent, newEvent)) {
       yield oldEvent;
@@ -54,13 +54,22 @@ export function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
 /**
  * Count the elements in a JavaScript iterable.
  */
-export function iterCount(it: Iterable<any>) {
+function iterCount(it: Iterable<any>) {
   let n = 0;
   for (let v of it) {
     ++n;
   }
   return n;
 }
+
+/**
+ * Count the number of conflicts between a specific event and existing events
+ * on a calendar.
+ */
+export function countConflicts(oldEvents: Iterable<Event>, newEvent: Event): number {
+  return iterCount(findConflicts(oldEvents, newEvent));
+}
+
 
 /**
  * Print the changes in a calendar.
