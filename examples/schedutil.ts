@@ -1,14 +1,22 @@
+/**
+ * Utilities for scheduling-related examples.
+ */
+
 import {Context, Diff} from '../src/opal';
 import {Event, Calendar} from '../src/calendar';
 
-// Copy a JavaScript Date object. (It's a shame this isn't as easy as
-// `d.clone()`.)
-// http://stackoverflow.com/a/1090817
+/**
+ * Copy a JavaScript Date object. (It's a shame this isn't as easy as
+ * `d.clone()`.)
+ * http://stackoverflow.com/a/1090817
+ */
 export function copyDate(d: Date) {
   return new Date(d.getTime());
 }
 
-// Generate candidate times from a range.
+/**
+ * Generate candidate times from a range.
+ */
 export function* slots(start: Date, end: Date, incrementMinutes: number) {
   // Clone the start date for our iterator.
 
@@ -24,13 +32,17 @@ export function* slots(start: Date, end: Date, incrementMinutes: number) {
   }
 }
 
-// Check whether two events overlap in time.
+/**
+ * Check whether two events overlap in time.
+ */
 export function eventsConflict(e1: Event, e2: Event): boolean {
   return (e1.start >= e2.start && e1.start < e2.end) ||
     (e1.end <= e2.end && e1.end > e2.start);
 }
 
-// Find events in `oldEvents` that overlap with `newEvent`.
+/**
+ * Find events in `oldEvents` that overlap with `newEvent`.
+ */
 export function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
   for (let oldEvent of oldEvents) {
     if (eventsConflict(oldEvent, newEvent)) {
@@ -39,8 +51,10 @@ export function* findConflicts(oldEvents: Iterable<Event>, newEvent: Event) {
   }
 }
 
-// Count the elements in a JavaScript iterable.
-function iterCount(it: Iterable<any>) {
+/**
+ * Count the elements in a JavaScript iterable.
+ */
+export function iterCount(it: Iterable<any>) {
   let n = 0;
   for (let v of it) {
     ++n;
@@ -48,19 +62,9 @@ function iterCount(it: Iterable<any>) {
   return n;
 }
 
-// Count the number of conflicts created or removed in a hypothetical world.
-export function conflictDelta(ctx: Context, cal: Calendar): number {
-  let old_events = ctx.clean_view(cal);  // Unmodified set of events.
-  let diff = ctx.diff(cal);  // The modifications to make.
-
-  // Compute a score. Each event "counts" for the number of conflicts it
-  // creates or removes.
-  return diff.score(
-    ev => iterCount(findConflicts(old_events, ev))
-  );
-}
-
-// Preview changes for the user.
+/**
+ * Print the changes in a calendar.
+ */
 export function showChanges(diff: Diff<Event>) {
   diff.foreach({
     add(event) {
