@@ -74,6 +74,15 @@ function showChanges(diff: Diff<Event>) {
   });
 }
 
+/**
+ * Date math: advance a date by a number of minutes. Return a new `Date`.
+ */
+function dateAdd(date: Date, minutes: number) {
+  let out = copyDate(date);
+  out.setMinutes(date.getMinutes() + minutes);
+  return out;
+}
+
 // The main scheduling program.
 opal(async function (ctx) {
   // The search: find a meeting slot.
@@ -84,9 +93,7 @@ opal(async function (ctx) {
 
     let worlds = ctx.explore(range, start => async function (ctx) {
       // Try adding the event to the calendar.
-      let end = copyDate(start);
-      end.setMinutes(start.getMinutes() + minutes);
-      let evt = new Event(title, start, end);
+      let evt = new Event(title, start, dateAdd(start, minutes));
       ctx.add(events, evt);
 
       // Our weight is the number of conflicts we've created.
