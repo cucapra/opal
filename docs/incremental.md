@@ -26,20 +26,14 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     let evt = new Event(title, start, dateAdd(start, minutes));
     ctx.add(cal, evt);
 
-    // Get the number of conflicts the event would create.
-    let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
-    let edit = ctx.diff(cal);  // The modifications to make.
-    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
+    // To compute the weighting factors, we need the unmodified calendar and
+    // the modifications we want to make to it.
+    let oldCal = ctx.clean_view(cal);
+    let edit = ctx.diff(cal);
 
-    // Check whether the event is in the user's preferred range and, if not,
-    // how far out-of-range it its.
-    let distFromPref = 0;
-    if (evt.start.getHours() <= prefStart) {
-      distFromPref = prefStart - evt.start.getHours();
-    }
-    if (evt.end.getHours() >= prefEnd) {
-      distFromPref = evt.end.getHours() - prefEnd;
-    }
+    // Compute the weighting factors.
+    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
+    let distFromPref = edit.score( e => sadness(prefStart, prefEnd, e) );
 
     // Combine the two factors into a cost.
     ctx.set(score, conflictCount * conflictCost +
@@ -55,8 +49,8 @@ As a summary, this is how it works:
 
 1. The `explore` function creates a bunch of hypothetical worlds, one for each potential start time.
 2. In the hypothetical world, we add the proposed new event to the calendar.
-3. Then we get a "patch" indicating the changes to the calendar. The `clean_view` function gets the old, unmodified state of the calendar.
-4. We compute our two ranking features: the number of conflicts, and the distance that the new event lies outside the preferred range of hours. The language guide has more information on [how that magic-looking `edit.score` function works][diffdoc].
+3. Then we get an "edit" value indicating the changes to the calendar. The `clean_view` function gets the old, unmodified state of the calendar.
+4. Using the edit, we compute our two ranking features: the number of conflicts, and the distance that the new event lies outside the preferred range of hours. The language guide has more information on [how that magic-looking `edit.score` function works][diffdoc].
 5. We combine the two factors into a `score` that indicates the world's rank.
 6. The `minimize` utility finds the world that minimizes `score`.
 
