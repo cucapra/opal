@@ -154,24 +154,26 @@ export class Event {
 
   /**
    * Create a new `Event`.
-   * 
-   * @param subject  The title.
-   * @param start    The time when the event starts.
-   * @param end      The end time.
-   * @param id       Optionally, the event's unique server-side id. For new
-   *                 events that haven't been published to the server yet,
-   *                 this will be empty.
+   *
+   * @param subject   The title.
+   * @param start     The time when the event starts.
+   * @param end       The end time.
+   * @param attendees Optionally, a list of email address of participants in
+   *                  the event.
+   * @param id        Optionally, the event's unique server-side id. For new
+   *                  events that haven't been published to the server yet,
+   *                  this will be empty.
    */
   constructor(
     public subject: string,
     public start: Date,
     public end: Date,
-    public attendees: string[],
+    public attendees?: string[],
     id?: string
   ) {
     this.start = toDate(start);
     this.end = toDate(end);
-    this.attendees = attendees;
+    this.attendees = attendees || [];
     // An ID is not required. This lets us construct Event objects before
     // they are sent to the server.
     if (id) {
