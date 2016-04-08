@@ -38,7 +38,7 @@ namespace Office {
   export function getSomeEvents(cbk: (error: any, result: any) => void) {
     let queryParams = {
       '$select': 'Subject,Start,End,Attendees',
-      '$orderby': 'Start/DateTime desc',
+      '$orderby': 'Start/DateTime asc',
       '$top': 10
     };
 
@@ -57,20 +57,20 @@ namespace Office {
         token: config.token,
         email: config.user,
         payload: {
-            "Attendees": [ 
+            "Attendees": [
                 { "Type": "Required", "EmailAddress": { "Address": email } },
-            ],  
+            ],
             "LocationConstraint": {
-                "IsRequired": "false",  
-                "SuggestLocation": "false",  
+                "IsRequired": "false",
+                "SuggestLocation": "false",
                 "Locations": [{ "DisplayName": "unspecified" }]
             },
             "TimeConstraint": {
                 "Timeslots" : [{
                   "Start" : dateToOfficeDateTimeTimezone(start),
                   "End" : dateToOfficeDateTimeTimezone(end),
-                } ] 
-          },  
+                } ]
+          },
             "MeetingDuration": "PT30M" ,
             "MaxCandidates" : 50
         },
@@ -374,12 +374,12 @@ export async function getFreeTimes(ctx: Context, email: string, start: Date, end
 
 /**
  * Get a few events from the user's calendar.
- * 
+ *
  * For the moment, this gets a few of the *oldest* events. This
  * is a good match for our tests, which take pace far in the past.
  * Eventually, we'll want to let it get events around an arbitrary point
  * in time.
- * 
+ *
  * @param ctx  The current OPAL context.
  * @returns    A new `Calendar` collection.
  */
@@ -403,7 +403,7 @@ export async function getEvents(ctx: Context) {
 
 /**
  * Modify a `Calendar` collection.
- * 
+ *
  * @param ctx         The current OPAL context.
  * @param collection  The calendar to modify.
  * @param event       The event to change (should be in the calendar already).

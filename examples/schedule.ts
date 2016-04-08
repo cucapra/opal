@@ -30,7 +30,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     // Weight this world by the number of conflicts it would create.
     let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
     let edit = ctx.diff(cal);  // The modifications to make.
-    let conflictCount = edit.score( ev => countConflicts(oldCal, ev) );
+    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
     ctx.set(conflicts, conflictCount);
   });
 
@@ -54,7 +54,7 @@ opal(async function (ctx) {
       /* to */   new Date("February 3, 2014 17:00:00"),
       /* in increments of N minutes */ 30
     ),
-      "Exciting Meeting!",
+    "Exciting Meeting!",
     60
   );
 
