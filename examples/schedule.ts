@@ -8,21 +8,6 @@ import {Event, Calendar, getEvents} from '../src/calendar';
 import {dateAdd, slots, showChanges, iterCount, findConflicts} from './schedutil';
 
 /**
- * Count the number of conflicts created or removed in a hypothetical world.
- */
-function conflictDelta(ctx: Context, cal: Calendar): number {
-  let old_events = ctx.clean_view(cal);  // Unmodified set of events.
-  let diff = ctx.diff(cal);  // The modifications to make.
-
-  // Compute a score. Each event "counts" for the number of conflicts it
-  // creates or removes.
-  return diff.score(
-    ev => iterCount(findConflicts(old_events, ev))
-  );
-}
-
-
-/**
  * Find an open slot for a new meeting.
  *
  * @param ctx     The OPAL context.
@@ -42,8 +27,13 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     let evt = new Event(title, start, dateAdd(start, minutes));
     ctx.add(cal, evt);
 
-    // Our weight is the number of conflicts we've created.
-    ctx.set(conflicts, conflictDelta(ctx, cal));
+    // Weight this world by the number of conflicts it would create.
+    let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
+    let diff = ctx.diff(cal);  // The modifications to make.
+    let conflictCount = diff.score(
+      ev => iterCount(findConflicts(oldCal, ev))
+    );
+    ctx.set(conflicts, conflictCount);
   });
 
   // Find the best time.
