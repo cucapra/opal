@@ -69,6 +69,9 @@ In this example, adding incrementalism should let us cheaply update:
 
 We should then be able to re-rank the results in `minimize` without recomputing everything.
 
+The problem with the current language is that it doesn't "carve up" the computation enough: there are no delineations between the chunks of code that would need to be re-executed separately.
+This disaggregation, along with conflict detection, is a pre-requisite for incrementalism.
+
 # ???
 
 The current approach places all of the weighting computation in the hypothetical world, which makes it difficult to incrementalize.
