@@ -11,6 +11,7 @@
     "src/timezones.ts",
     "examples/schedule.ts",
     "examples/event_modify.ts",
+    "examples/schedule_workday.ts",
     "typings/main.d.ts"
   ]
 }
