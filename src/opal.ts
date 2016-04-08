@@ -171,9 +171,9 @@ export abstract class ExternalCollection<T> extends Collection<T> {
 }
 
 /**
- * A *diff* contains a set of hypothetical changes to a collection.
+ * An *edit* contains a set of hypothetical changes to a collection.
  */
-export class Diff<T> {
+export class Edit<T> {
   constructor(private ops: PSet.Operation<T>[]) {}
 
   /**
@@ -203,7 +203,7 @@ export class Diff<T> {
    * @param actions  A struct containing functions indicating what to do with
    *                 each operation type.
    */
-  foreach(actions: DiffActions<T>) {
+  foreach(actions: EditActions<T>) {
     for (let op of this.ops) {
       if (op instanceof PSet.Add && actions.add) {
         actions.add(op.value);
@@ -215,9 +215,9 @@ export class Diff<T> {
 }
 
 /**
- * A struct containing actions for `Diff.foreach`.
+ * A struct containing actions for `Edit.foreach`.
  */
-interface DiffActions<T> {
+interface EditActions<T> {
   add?: (value: T) => void;
   delete?: (value: T) => void;
 }
@@ -462,24 +462,24 @@ export class Context {
    * Get the set of changes that *would* be made to a collection if the
    * current world were committed into its parent.
    */
-  diff<T>(collection: Collection<T>): Diff<T> {
+  diff<T>(collection: Collection<T>): Edit<T> {
     console.assert(this.world.parent !== null,
         "diff() not available in top-level world");
     let cur_set = collection.lookup(this.world);
     let parent_set = collection.lookup(this.world.parent);
-    return new Diff(PSet.diff(parent_set, cur_set));
+    return new Edit(PSet.diff(parent_set, cur_set));
   }
 
   /**
    * Get the set of changes in a child world that would be made if we were to
    * commit it here.
    */
-  diff_child<T>(world: World, collection: Collection<T>): Diff<T> {
+  diff_child<T>(world: World, collection: Collection<T>): Edit<T> {
     console.assert(world.parent === this.world,
         "diff_child() must be called on a child world");
     let child_set = collection.lookup(world);
     let parent_set = collection.lookup(this.world);
-    return new Diff(PSet.diff(parent_set, child_set));
+    return new Edit(PSet.diff(parent_set, child_set));
   }
 
   /**

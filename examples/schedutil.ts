@@ -2,7 +2,7 @@
  * Utilities for scheduling-related examples.
  */
 
-import {Context, Diff} from '../src/opal';
+import {Context, Edit} from '../src/opal';
 import {Event, Calendar} from '../src/calendar';
 
 /**
@@ -65,8 +65,8 @@ export function iterCount(it: Iterable<any>) {
 /**
  * Print the changes in a calendar.
  */
-export function showChanges(diff: Diff<Event>) {
-  diff.foreach({
+export function showChanges(edit: Edit<Event>) {
+  edit.foreach({
     add(event) {
       console.log(`scheduling ${event.subject} at ${event.start}`);
     },

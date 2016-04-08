@@ -29,8 +29,8 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
 
     // Weight this world by the number of conflicts it would create.
     let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
-    let diff = ctx.diff(cal);  // The modifications to make.
-    let conflictCount = diff.score(
+    let edit = ctx.diff(cal);  // The modifications to make.
+    let conflictCount = edit.score(
       ev => iterCount(findConflicts(oldCal, ev))
     );
     ctx.set(conflicts, conflictCount);
