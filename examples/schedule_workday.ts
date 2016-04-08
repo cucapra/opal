@@ -11,6 +11,23 @@ import {Event, Calendar, getEvents} from '../src/calendar';
 import {dateAdd, slots, showChanges, countConflicts} from './schedutil';
 
 /**
+ * Check whether the event is in the user's preferred range and, if not, how
+ * far out-of-range it its.
+ */
+function sadness(prefStart: number, prefEnd: number, evt: Event): number {
+  if (evt.start.getHours() <= prefStart) {
+    // Too early.
+    return prefStart - evt.start.getHours();
+  } else if (evt.end.getHours() >= prefEnd) {
+    // Too late.
+    return evt.end.getHours() - prefEnd;
+  } else {
+    // In range.
+    return 0.0;
+  }
+}
+
+/**
  * Find an open slot for a new meeting.
  *
  * @param ctx       The OPAL context.
@@ -37,20 +54,14 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
     let evt = new Event(title, start, dateAdd(start, minutes));
     ctx.add(cal, evt);
 
-    // Get the number of conflicts the event would create.
-    let oldCal = ctx.clean_view(cal);  // Unmodified set of events.
-    let edit = ctx.diff(cal);  // The modifications to make.
-    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
+    // To compute the weighting factors, we need the unmodified calendar and
+    // the modifications we want to make to it.
+    let oldCal = ctx.clean_view(cal);
+    let edit = ctx.diff(cal);
 
-    // Check whether the event is in the user's preferred range and, if not,
-    // how far out-of-range it its.
-    let distFromPref = 0;
-    if (evt.start.getHours() <= prefStart) {
-      distFromPref = prefStart - evt.start.getHours();
-    }
-    if (evt.end.getHours() >= prefEnd) {
-      distFromPref = evt.end.getHours() - prefEnd;
-    }
+    // Compute the weighting factors.
+    let conflictCount = edit.score( e => countConflicts(oldCal, e) );
+    let distFromPref = edit.score( e => sadness(prefStart, prefEnd, e) );
 
     // Combine the two factors into a cost.
     ctx.set(score, conflictCount * conflictCost +
