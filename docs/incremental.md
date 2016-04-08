@@ -114,3 +114,27 @@ ctx.minimize(worlds, score);
 
 The idea is to redefine a "weight" to be a recorded computation instead of fixed value.
 You set a weight by giving it a function so the system can re-run that code if necessary.
+
+# Parents Compute Weights
+
+Another alternative would be to move the responsibility for computing weights entirely onto the parent---i.e., into the ranking call, `minimize`.
+This way, the world would *just* modify its state.
+Then, `minimize` would take a function for computing a score. This function would still need to be decomposed somehow into three separate components.
+Here's what that might look like:
+
+```typescript
+let worlds = ctx.explore(range, start => async function (ctx) {
+  ctx.add(cal, ...);
+});
+
+// A "weight" here now just means a computation that uses information about the
+// hypothetical world and produces a number.
+ctx.minimize(worlds, (world) => {
+  let conflicts = weight((edit, oldCal) => ...);
+  let sadness = weight((prefStart, prefEnd) => ...);
+  let score = weight((conflicts, sadness) => ...);
+  return score;
+});
+```
+
+# Hybrid Responsibility
