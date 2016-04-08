@@ -1,15 +1,11 @@
 {
-  "displayName":    "JavaScript",
-  "name":           "javascript",
-  "mimeTypes":      ["text/javascript","application/json"],
-  "fileExtensions": ["js","json"],
+  "displayName":    "TypeScript",
+  "name":           "typescript",
+  "fileExtensions": ["ts"],
 
   "lineComment":      "//",
   "blockCommentStart": "/*",
   "blockCommentEnd":   "*/",
-
-  "workerScriptPath": "vs/languages/javascript/javascript-worker",
-  "tokenPostfix":     ".js",
 
   "keywords": [
     "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger",
@@ -18,7 +14,8 @@
     "instanceof", "int", "interface", "long", "native", "new", "null", "package", "private",
     "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this",
     "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while",
-    "with"
+    "with",
+    "async", "await", "let"
   ],
 
   "extraKeywords": [
