@@ -14,7 +14,7 @@ import {dateAdd, slots, showChanges, countConflicts} from './schedutil';
  * Check whether the event is in the user's preferred range and, if not, how
  * far out-of-range it its.
  */
-function sadness(prefStart: number, prefEnd: number, evt: Event): number {
+function getSadness(prefStart: number, prefEnd: number, evt: Event): number {
   if (evt.start.getHours() <= prefStart) {
     // Too early.
     return prefStart - evt.start.getHours();
@@ -61,7 +61,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
 
     // Compute the weighting factors.
     let conflictCount = edit.score( e => countConflicts(oldCal, e) );
-    let distFromPref = edit.score( e => sadness(prefStart, prefEnd, e) );
+    let distFromPref = edit.score( e => getSadness(prefStart, prefEnd, e) );
 
     // Combine the two factors into a cost.
     ctx.set(score, conflictCount * conflictCost +

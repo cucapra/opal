@@ -33,7 +33,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
 
     // Compute the weighting factors.
     let conflictCount = edit.score( e => countConflicts(oldCal, e) );
-    let distFromPref = edit.score( e => sadness(prefStart, prefEnd, e) );
+    let distFromPref = edit.score( e => getSadness(prefStart, prefEnd, e) );
 
     // Combine the two factors into a cost.
     ctx.set(score, conflictCount * conflictCost +
@@ -72,25 +72,45 @@ We should then be able to re-rank the results in `minimize` without recomputing 
 The problem with the current language is that it doesn't "carve up" the computation enough: there are no delineations between the chunks of code that would need to be re-executed separately.
 This disaggregation, along with conflict detection, is a pre-requisite for incrementalism.
 
-# ???
+# Weight Trees
 
-The current approach places all of the weighting computation in the hypothetical world, which makes it difficult to incrementalize.
-Here's one alternative that instead places all of the weighting in the parent world:
+Here's an idea that lets hypothetical worlds decompose weight computations into parts.
+The weight output is then computed lazily.
 
 ```typescript
+// Set up three *separate* weights for the world.
+let conflicts = ctx.weight<number>();
+let sadness = ctx.weight<number>();
+let score = ctx.weight<number>();
+
 let worlds = ctx.explore(range, start => async function (ctx) {
+  // Create the hypothetical event.
   ctx.add(cal, ...);
+
+  // Now compute the two parts of the weight separately. The left-hand side of
+  // the arrow functions here describe what the computations depend on. This is
+  // a bit idealized (we'd need more information to get the dependencies), but
+  // you get the idea.
+  ctx.set(conflicts, (edit, oldCal) =>
+    edit.score( e => countConflicts(oldCal, e) )
+  );
+  ctx.set(sadness, (edit, prefStart, prefEnd) =>
+    edit.score( e => getSadness(prefStart, prefEnd, e) )
+  );
+
+  // Now we use the output of those two computations to compute an overall
+  // score. A real version of this function would also need to declare its
+  // dependence on `conflictCost` and `prefCost`.
+  ctx.set(score, (conflicts, sadness) =>
+    conflicts * conflictCost +
+    sadness * prefCost
+  );
 });
 
-function conflictScore(cal: Calendar, edit: Edit<Event>) {
-  // Count the conflicts introduced by `edit`.
-}
-
-function preferenceScore(prefStart: number, prefEnd: number, edit: Edit<event>) {
-  // Determine how far outside of the preferred range
-}
-
-function score(world: World) {
-  let edit = ctx.diff_child(world, cal);
-}
+// Now the parent can choose to look at any of the three weights: `conflicts`,
+// `sadness`, or the combined value `score`.
+ctx.minimize(worlds, score);
 ```
+
+The idea is to redefine a "weight" to be a recorded computation instead of fixed value.
+You set a weight by giving it a function so the system can re-run that code if necessary.
