@@ -145,20 +145,20 @@ Next, you'll want to choose the best world according to some criterion. This is 
 Pass the set of worlds from an `explore` call, a weight, and (optionally) a maximum number of worlds to try before giving up. (You'll definitely want to use `limit` if your domain is infinite.) The function returns the world in which `weight` is smallest. You then might want to `commit` that "winning" world.
 
 
-# Diffs and Incremental Weighting { #diff }
+# Edits and Incremental Weighting { #diff }
 
 It's often useful to inspect your hypothetical changes before applying them.
 Specifically, when scoring a tentative change, you often want to accumulate a score for proposed change.
 For these cases, OPAL can give you "diffs," which are roughly analogous to patches in a version control system.
 
-Call `ctx.diff` in a hypothetical world to get a `Diff` object:
+Call `ctx.diff` in a hypothetical world to get an `Edit` object:
 
     let coll = ctx.collection<string>();
     let world = ctx.hypothetical(async function (ctx) {
       ctx.add(coll, "foo");
       // ...
-      let diff = ctx.diff(coll);
-      diff.foreach({
+      let edit = ctx.diff(coll);
+      edit.foreach({
         add(s) {
           console.log("added " + foo);
         },
@@ -168,21 +168,21 @@ Call `ctx.diff` in a hypothetical world to get a `Diff` object:
       });
     });
 
-That example shows of `Diff`'s `foreach` method, which lets you inspect the set of operations in the diff.
+That example shows of `Edit`'s `foreach` method, which lets you inspect the set of operations in the edit.
 The above hypothetical world just prints out "added foo" along with any other changes that happened to `coll`.
 
-You can also use diffs to accumulate weights.
+You can also use edits to accumulate weights.
 This is useful when you have a cost or score associated equally with *every value in a collection*, so adding or removing a value with increment or decrements the entire collection's total "value."
-Use the `Diff` object's `score` method:
+Use the `Edit` object's `score` method:
 
-    let delta = diff.score(s => s.length);
+    let delta = edit.score(s => s.length);
 
 The argument is a function that scores an individual element in the collection.
-For every *addition* in the diff, the total score is incremented by this amount; for every *deletion*, the total score is decremented.
+For every *addition* in the edit, the total score is incremented by this amount; for every *deletion*, the total score is decremented.
 In this example, the value of the string collection is the total length of the strings it contains.
 And the scoring result, `delta`, is the amount this total length changed---in our example above, it would be 3 because it added "foo" to the set.
 
-OPAL has two other useful utilities for working with diffs:
+OPAL has two other useful utilities for working with edits:
 
 * The `ctx.diff_child(world, collection)` gets the hypothetical changes in a child world (as opposed to the current world, as with `diff`). You can call this before committing with `ctx.commit(world)` to inspect the changes that would happen.
 * Inside a hypothetical world, `ctx.clean_view(collection)` gives you the contents of a collection *without any of the current hypothetical changes*. That is, a collection's `ctx.clean_view` combined with its `ctx.diff` are exactly equal to its current state given by `ctx.view`. This can be useful as a baseline when computing scores.

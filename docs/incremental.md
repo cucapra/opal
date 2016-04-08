@@ -56,12 +56,14 @@ As a summary, this is how it works:
 1. The `explore` function creates a bunch of hypothetical worlds, one for each potential start time.
 2. In the hypothetical world, we add the proposed new event to the calendar.
 3. Then we get a "patch" indicating the changes to the calendar. The `clean_view` function gets the old, unmodified state of the calendar.
-4. We compute our two ranking features: the number of conflicts, and the distance that the new event lies outside the preferred range of hours.
+4. We compute our two ranking features: the number of conflicts, and the distance that the new event lies outside the preferred range of hours. The language guide has more information on [how that magic-looking `edit.score` function works][diffdoc].
 5. We combine the two factors into a `score` that indicates the world's rank.
 6. The `minimize` utility finds the world that minimizes `score`.
 
 In effect, this will try to fill in gaps in my schedule.
 When there are no more slots left, it will start encroaching into my personal time at the beginning and the end of the day, from the inside out.
+
+[diffdoc]: http://adriansampson.net/opal/lang.html#diff
 
 # Goal
 
@@ -75,10 +77,23 @@ We should then be able to re-rank the results in `minimize` without recomputing 
 
 # ???
 
+The current approach places all of the weighting computation in the hypothetical world, which makes it difficult to incrementalize.
+Here's one alternative that instead places all of the weighting in the parent world:
+
 ```typescript
 let worlds = ctx.explore(range, start => async function (ctx) {
   ctx.add(cal, ...);
 });
 
-let edit = ctx.diff_child(w, cal);
+function conflictScore(cal: Calendar, edit: Edit<Event>) {
+  // Count the conflicts introduced by `edit`.
+}
+
+function preferenceScore(prefStart: number, prefEnd: number, edit: Edit<event>) {
+  // Determine how far outside of the preferred range
+}
+
+function score(world: World) {
+  let edit = ctx.diff_child(world, cal);
+}
 ```
