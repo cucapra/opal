@@ -1,104 +1,10 @@
-'use strict';
-
 import * as PSet from './pset';
 import {ExternalCollection, Context} from './opal';
+import * as office from './office';
+import {dateToOffice} from './office';
 
 // The Windows time zone names.
 import timezones from './timezones';
-
-let outlook = require("node-outlook");
-let fs = require("fs");
-let path = require("path");
-
-// Use the 2.0 version of the Office 365 API.
-outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-
-// Simple wrappers for the `node-outlook` library.
-namespace Office {
-  function getUserHome(): string {
-      return process.env[(process.platform == 'win32') ?
-        'USERPROFILE' : 'HOME'];
-  }
-
-  // Load the user object and token string to pass to the Outlook library.
-  function getConfig() {
-    let home = getUserHome();
-    let email = fs.readFileSync(path.join(home, ".opal.email.txt")).toString();
-    let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
-
-    return {
-      user: {
-        email: email,
-        timezone: 'Pacific Standard Time',
-      },
-      token: token,
-    };
-  }
-
-  export function getSomeEvents(cbk: (error: any, result: any) => void) {
-    let queryParams = {
-      '$select': 'Subject,Start,End,Attendees',
-      '$orderby': 'Start/DateTime asc',
-      '$top': 10
-    };
-
-    let config = getConfig();
-    outlook.calendar.getEvents(
-      {token: config.token, user: config.user, odataParams: queryParams},
-      cbk
-    );
-  }
-
-  export function getFreeTimes(email: string, start: Date, end: Date, cbk: (error: any, result: any) => void) {
-    let config = getConfig();
-    var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
-    var apiOptions = {
-        url: requestUrl,
-        token: config.token,
-        email: config.user,
-        payload: {
-            "Attendees": [
-                { "Type": "Required", "EmailAddress": { "Address": email } },
-            ],
-            "LocationConstraint": {
-                "IsRequired": "false",
-                "SuggestLocation": "false",
-                "Locations": [{ "DisplayName": "unspecified" }]
-            },
-            "TimeConstraint": {
-                "Timeslots" : [{
-                  "Start" : dateToOfficeDateTimeTimezone(start),
-                  "End" : dateToOfficeDateTimeTimezone(end),
-                } ]
-          },
-            "MeetingDuration": "PT30M" ,
-            "MaxCandidates" : 50
-        },
-        method: 'POST'
-    };
-    outlook.base.makeApiCall(apiOptions, cbk);
-  }
-
-  export function addEvent(event: any,
-                           cbk: (error: any, result: any) => void)
-  {
-    let config = getConfig();
-    outlook.calendar.createEvent(
-      {token: config.token, user: config.user, event: event},
-      cbk
-    );
-  }
-  export function modifyEvent(id: string, changes: any,
-                              cbk: (error: any, result: any) => void)
-  {
-    let config = getConfig();
-    outlook.calendar.updateEvent(
-      {token: config.token, user: config.user, eventId: id,
-        update: changes},
-      cbk
-    );
-  }
-}
 
 function toDate(d: string | Date): Date {
   if (d instanceof Date) {
@@ -119,31 +25,6 @@ function parseOfficeDate(d: { DateTime: string, TimeZone: string }): Date {
   iso8601date += timezones[d.TimeZone];
 
   return new Date(iso8601date);
-}
-
-function pad0(n: number): string {
-  if (n < 10) {
-    return '0' + n;
-  } else {
-    return n.toString();
-  }
-}
-
-function dateToOffice(d: Date): string {
-  return d.getFullYear() +
-    '-' + pad0(d.getMonth() + 1) +
-    '-' + pad0(d.getDate()) +
-    'T' + pad0(d.getHours()) +
-    ':' + pad0(d.getMinutes()) +
-    ':' + pad0(d.getSeconds());
-}
-
-function dateToOfficeDateTimeTimezone(d: Date): any {
-  return {
-    "Date" : d.getFullYear() + '-' + pad0(d.getMonth() + 1) + '-' + pad0(d.getDate()),
-    "Time" : pad0(d.getHours()) + ':' + pad0(d.getMinutes()) + ':' + pad0(d.getSeconds()),
-    "TimeZone" : "Pacific Standard Time"
-  };
 }
 
 /**
@@ -313,7 +194,7 @@ export class Calendar extends ExternalCollection<Event> {
       // Add an event.
       if (op instanceof PSet.Add) {
         let data = op.value.toOffice();
-        Office.addEvent(data, (error, result) => {
+        office.addEvent(data, (error, result) => {
           if (error) {
             console.log("error adding event:", error);
           } else {
@@ -329,7 +210,7 @@ export class Calendar extends ExternalCollection<Event> {
 
       // Modify an event.
       } else if (op instanceof Modify) {
-        Office.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
+        office.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
           if (error) {
             console.log("error modifying event:", error);
           }
@@ -347,7 +228,7 @@ export class Calendar extends ExternalCollection<Event> {
 // An OPAL API function to get free times for a person.
 export async function getFreeTimes(ctx: Context, email: string, start: Date, end: Date) {
   return new Promise<MeetingTimeSlot[]>((resolve, reject) => {
-    Office.getFreeTimes(email, start, end, function (error, result) {
+    office.getFreeTimes(email, start, end, function (error, result) {
       if (error) {
         reject(error);
         return;
@@ -385,7 +266,7 @@ export async function getFreeTimes(ctx: Context, email: string, start: Date, end
  */
 export async function getEvents(ctx: Context) {
   return new Promise<Calendar>((resolve, reject) => {
-    Office.getSomeEvents(function (error, result) {
+    office.getSomeEvents(function (error, result) {
       if (error) {
         reject(error);
         return;
