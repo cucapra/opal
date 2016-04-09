@@ -131,8 +131,6 @@ export namespace Auth {
   }
   var oauth2 = require("simple-oauth2")(credentials);
 
-  var redirectUri = "http://localhost:8191/authorize";
-
   // scopes
   var scopes = [
       "openid",
@@ -141,19 +139,29 @@ export namespace Auth {
       "https://outlook.office.com/calendars.readwrite",
   ];
 
-  export function getAuthUrl() {
+  /**
+   * Get a URL that a user should follow to authenticate with the
+   * Office service.
+   * 
+   * @param callbackUrl  Where the user is redirected after authenticating.
+   *                     You need to get the token from this request.
+   * @param state        A secret string that will be passed back so you
+   *                     can identify this specific auth request.
+   */
+  export function getAuthUrl(callbackUrl: string, state: string) {
       var returnVal = oauth2.authCode.authorizeURL({
-          redirect_uri: redirectUri,
-          scope: scopes.join(" ")
+          redirect_uri: callbackUrl,
+          scope: scopes.join(" "),
+          state: state
       });
       return returnVal;
   }
 
-  export function getTokenFromCode(auth_code: string, callback: (error: any, token: string) => void) {
+  export function getTokenFromCode(auth_code: string, callbackUrl: string, callback: (error: any, token: string) => void) {
       var token: any;
       oauth2.authCode.getToken({
           code: auth_code,
-          redirect_uri: redirectUri,
+          redirect_uri: callbackUrl,
           scope: scopes.join(" ")
       }, function (error: any, result: string) {
           if (error) {
