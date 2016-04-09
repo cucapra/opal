@@ -149,7 +149,7 @@ export namespace Auth {
       return returnVal;
   }
 
-  export function getTokenFromCode(auth_code: string, callback: (response: any, error: any, token: string) => void, response: any) {
+  export function getTokenFromCode(auth_code: string, callback: (error: any, token: string) => void) {
       var token: any;
       oauth2.authCode.getToken({
           code: auth_code,
@@ -157,11 +157,11 @@ export namespace Auth {
           scope: scopes.join(" ")
       }, function (error: any, result: string) {
           if (error) {
-              callback(response, error, null);
+              callback(error, null);
           }
           else {
               token = oauth2.accessToken.create(result);
-              callback(response, null, token);
+              callback(null, token);
           }
       });
   }
