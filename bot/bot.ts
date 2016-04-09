@@ -3,14 +3,21 @@ import {Auth} from '../src/office';
 let restify = require('restify');
 import * as crypto from 'crypto';
 
-const AUTH_CBK = "http://localhost:8191/authorize";
+// #CLI
+// const AUTH_CBK = "http://localhost:8191/authorize";
+const AUTH_CBK = "http://jasmine.radbox.org:8191/authorize";
 
 function randomString() {
   return crypto.randomBytes(64).toString('hex');
 }
 
 // The bot interaction (CLI for now).
-let bot = new botbuilder.TextBot();
+// #CLI
+// let bot = new botbuilder.TextBot();
+let bot = new botbuilder.BotConnectorBot({
+  appId: "opal",
+  appSecret: "60aadc8c1092469a9b11537d2ac6835f",
+});
 
 // The default dialog (the entry point).
 bot.add('/', function (session) {
@@ -39,7 +46,8 @@ bot.add('/loggedin', function (session) {
     session.userData['email'] + ".");
 });
 
-bot.listenStdin();
+// #CLI
+// bot.listenStdin();
 
 // Handle an authentication.
 function sessionAuthenticated(session: botbuilder.Session,
@@ -63,6 +71,7 @@ function authenticated(token: string, email: string, state: string) {
 // The Web server.
 let server = restify.createServer();
 server.use(restify.queryParser());
+
 server.get('/authorize', function (req, res, next) {
   let code = req.params['code'];
   let state = req.params['state'];
@@ -80,6 +89,10 @@ server.get('/authorize', function (req, res, next) {
   });
   return next();
 });
+
+// #CLI
+server.post('/api/messages', bot.verifyBotFramework(), bot.listen());
+
 server.listen(8191, function () {
   console.log('server listening at %s', server.url);
 });
