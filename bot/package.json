@@ -1,0 +1,9 @@
+{
+  "name": "opalbot",
+  "version": "1.0.0",
+  "private": "yes",
+  "dependencies": {
+    "botbuilder": "^0.8.0",
+    "restify": "^4.0.4"
+  }
+}
