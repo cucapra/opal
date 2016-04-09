@@ -121,7 +121,7 @@ function dateToOfficeDateTimeTimezone(d: Date): any {
 /**
  * Office authentication tools.
  */
-namespace Auth {
+export namespace Auth {
   var credentials = {
       clientID: "944881d4-f34a-4e54-b102-586c11f0e49f",
       clientSecret: "dMGSZmPP1prDatq5AvcjqCJ",
