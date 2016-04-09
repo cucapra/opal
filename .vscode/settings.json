@@ -13,5 +13,6 @@
         "typings": true,
         "node_modules": true
 	},
-	"editor.wrappingColumn": 80
+	"editor.wrappingColumn": 80,
+  "editor.tabSize": 2
 }

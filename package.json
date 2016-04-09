@@ -4,7 +4,8 @@
   "private": true,
 
   "dependencies": {
-    "node-outlook": "^1.1.5"
+    "node-outlook": "^1.1.5",
+    "simple-oauth2" : "^0.6.0"
   },
   "devDependencies": {
     "tape": "^4.2.2",
