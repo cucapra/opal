@@ -47,6 +47,17 @@ bot.add('/loggedin', function (session) {
     session.userData['email'] + ".");
 });
 
+// Log some events.
+bot.on('error', function (evt) {
+  console.log('bot error:', evt);
+});
+bot.on('send', function (evt) {
+  console.log('sent:', evt);
+});
+bot.on('Message', function (evt) {
+  console.log('received:', evt);
+});
+
 // #CLI
 // bot.listenStdin();
 
