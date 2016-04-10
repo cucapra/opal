@@ -51,11 +51,8 @@ bot.add('/loggedin', function (session) {
 bot.on('error', function (evt) {
   console.log('bot error:', evt);
 });
-bot.on('send', function (evt) {
-  console.log('sent:', evt);
-});
 bot.on('Message', function (evt) {
-  console.log('received:', evt);
+  console.log('received:', evt.text);
 });
 
 // #CLI
