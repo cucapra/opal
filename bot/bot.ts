@@ -9,7 +9,9 @@ const BASE_URL = "http://jasmine.radbox.org:8191";
 const AUTH_CBK = BASE_URL + "/authorize";
 
 function randomString() {
-  return crypto.randomBytes(16).toString('hex');
+  // I'd use base64 here if there were an option for a URL-safe version (or
+  // even base32).
+  return crypto.randomBytes(8).toString('hex').slice(0, 10);
 }
 
 // The bot interaction (CLI for now).
