@@ -5,7 +5,8 @@ import * as crypto from 'crypto';
 
 // #CLI
 // const AUTH_CBK = "http://localhost:8191/authorize";
-const AUTH_CBK = "http://jasmine.radbox.org:8191/authorize";
+const BASE_URL = "http://jasmine.radbox.org:8191";
+const AUTH_CBK = BASE_URL + "/authorize";
 
 function randomString() {
   return crypto.randomBytes(64).toString('hex');
@@ -36,8 +37,8 @@ bot.add('/login', function (session) {
   session.send("Let's get you signed in.");
   let authKey = randomString();
   authRequests[authKey] = session;
-  let authurl = Auth.getAuthUrl(AUTH_CBK, authKey);
-  session.send("Please follow this URL: " + authurl);
+  let loginUrl = BASE_URL + "/login/" + authKey;
+  session.send("Please follow this URL: " + loginUrl);
 });
 
 // When authorization succeeds.
@@ -72,6 +73,7 @@ function authenticated(token: string, email: string, state: string) {
 let server = restify.createServer();
 server.use(restify.queryParser());
 
+// The OAuth2 callback.
 server.get('/authorize', function (req, res, next) {
   let code = req.params['code'];
   let state = req.params['state'];
@@ -88,6 +90,14 @@ server.get('/authorize', function (req, res, next) {
     }
   });
   return next();
+});
+
+// Authentication redirect. This lets us put cleaner URLs into chat
+// messages.
+server.get('/login/:state', function (req, res, next) {
+  let state = req.params['state'];
+  let authurl = Auth.getAuthUrl(AUTH_CBK, state);
+  res.redirect(authurl, next);
 });
 
 // #CLI
