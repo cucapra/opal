@@ -232,10 +232,20 @@ function main() {
     boolean: ['t'],
   });
   let terminal: boolean = args['t'];
+
+  // Command-line help.
   if (args['h'] || args['help'] || args['?']) {
     console.error("usage: " + process.argv[1] + " [-t]");
     console.error("  -t: terminal interaction (for testing)");
     process.exit(1);
+  }
+
+  // In terminal mode, use a localhost sever.
+  let baseURL: string;
+  if (terminal) {
+    baseURL = "http://localhost:8191";
+  } else {
+    baseURL = "https://jasmine.radbox.org/opal";
   }
 
   let opalbot = new OPALBot({
@@ -243,13 +253,10 @@ function main() {
     bcAppSecret: "60aadc8c1092469a9b11537d2ac6835f",
     officeAppId: "7faa69f2-359b-49fc-aba4-38bb7fe7d7ba",
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
-    baseURL: "https://jasmine.radbox.org/opal",
+    baseURL,
     terminal,
   });
   opalbot.run();
-
-  // #CLI
-  // "http://localhost:8191";
 }
 
 main();

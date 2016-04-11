@@ -17,10 +17,18 @@ npm run typings
 npm run build
 ```
 
-Run the server:
+Run the server, which uses Bot Connector to interface with services:
 
 ```sh
 npm run serve
+# or:
+node build/bot/bot.js
 ```
 
-(Or just `node build/bot/bot.js` if you prefer.)
+Or run the terminal version for testing:
+
+```sh
+npm run run
+# or:
+node build/bot/bot.js -t
+```
