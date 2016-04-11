@@ -41,24 +41,44 @@ interface Options {
    * The Web URL where the application is hosted.
    */
   baseURL: string,
+
+  /**
+   * Run the bot on stdin/stdout for test interaction *instead of* a Bot
+   * Connector bot?
+   */
+  terminal?: boolean,
 }
 
+/**
+ * A supertype of Bot Builder bot types.
+ */
+type AnyBot = botbuilder.BotConnectorBot | botbuilder.TextBot;
+
+/**
+ * All the machinery for an OPAL chat bot instance.
+ */
 class OPALBot {
-  bot: botbuilder.BotConnectorBot;
+  bot: AnyBot;
   authRequests: { [key: string]: any };
   client: Client;
   server: any;  // A Restify server.
 
   constructor(opts: Options) {
+    // The Bot Builder bot object.
+    if (opts.terminal) {
+      this.bot = new botbuilder.TextBot();
+    } else {
+      this.bot = new botbuilder.BotConnectorBot({
+        appId: opts.bcAppId,
+        appSecret: opts.bcAppSecret,
+      });
+    }
+    this.setupBot(this.bot, opts.baseURL);
+
     this.client = new Client(
       opts.officeAppId,
       opts.officeAppSecret,
       opts.baseURL + "/authorize"
-    );
-    this.bot = this.setupBot(
-      opts.bcAppId,
-      opts.bcAppSecret,
-      opts.baseURL
     );
     this.server = this.setupServer();
     this.authRequests = {};
@@ -67,12 +87,7 @@ class OPALBot {
   /**
    * Create the Bot Framework bot object.
    */
-  private setupBot(appId, appSecret, baseURL) {
-    let bot = new botbuilder.BotConnectorBot({ appId, appSecret });
-
-    // #CLI
-    // bot = new botbuilder.TextBot();
-
+  private setupBot(bot: AnyBot, baseURL: string) {
     // The default dialog (the entry point).
     bot.add('/', (session) => {
       if (!session.userData.token) {
@@ -156,8 +171,11 @@ class OPALBot {
       res.redirect(authurl, next);
     });
 
-    // #CLI
-    server.post('/api/messages', this.bot.verifyBotFramework(), this.bot.listen());
+    // If we're using the Bot Connector, set up its API endpoint.
+    let bot = this.bot;
+    if (bot instanceof botbuilder.BotConnectorBot) {
+      server.post('/api/messages', bot.verifyBotFramework(), bot.listen());
+    }
 
     // Log requests.
     server.on('after', (req, resp, route, error) => {
@@ -192,8 +210,11 @@ class OPALBot {
    * to, messages on stdin.
    */
   run() {
-    // #CLI
-    // this.bot.listenStdin();
+    // If we're running a terminal bot, connect it to stdin/stdout.
+    let bot = this.bot;
+    if (bot instanceof botbuilder.TextBot) {
+      bot.listenStdin();
+    }
 
     this.server.listen(8191, () => {
       console.log('server listening at %s', this.server.url);
@@ -210,7 +231,8 @@ function main() {
     bcAppSecret: "60aadc8c1092469a9b11537d2ac6835f",
     officeAppId: "7faa69f2-359b-49fc-aba4-38bb7fe7d7ba",
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
-    baseURL: "https://jasmine.radbox.org/opal"
+    baseURL: "https://jasmine.radbox.org/opal",
+    terminal: false,
   });
   opalbot.run();
 
