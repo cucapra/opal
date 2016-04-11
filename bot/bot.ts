@@ -93,9 +93,11 @@ server.use(restify.queryParser());
 server.get('/authorize', function (req, res, next) {
   let code = req.params['code'];
   let state = req.params['state'];
+  console.log("authorization request: state", state);
   client.getTokenFromCode(code, (error, token) => {
     if (error) {
       res.send("Sorry! We couldn't sign you in. " + error.message);
+      console.log("oauth error:", error);
     } else {
       let pair = client.parseToken(token);
       if (authenticated(pair[0], pair[1], state)) {
@@ -112,6 +114,7 @@ server.get('/authorize', function (req, res, next) {
 // messages.
 server.get('/login/:state', function (req, res, next) {
   let state = req.params['state'];
+  console.log("redirecting for login: state", state);
   let authurl = client.getAuthUrl(state);
   res.redirect(authurl, next);
 });
