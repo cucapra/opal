@@ -118,63 +118,73 @@ function dateToOfficeDateTimeTimezone(d: Date): any {
   };
 }
 
+const simple_oauth2 = require("simple-oauth2");
+
 /**
  * Office authentication tools.
  */
-export namespace Auth {
-  var credentials = {
-      clientID: "944881d4-f34a-4e54-b102-586c11f0e49f",
-      clientSecret: "dMGSZmPP1prDatq5AvcjqCJ",
+export class Client {
+  oauth2: any;
+  scopes: string[];
+
+  /**
+   * Create a new client using these OAuth application credentials. Also
+   * provide an OAuth callback URL.
+   */
+  constructor(clientID: string,
+              clientSecret: string,
+              public authCallbackURL: string) {
+    this.oauth2 = simple_oauth2({
+      clientID,
+      clientSecret,
       site: "https://login.microsoftonline.com/common",
       authorizationPath: "/oauth2/v2.0/authorize",
       tokenPath: "/oauth2/v2.0/token"
-  }
-  var oauth2 = require("simple-oauth2")(credentials);
+    });
 
-  // scopes
-  var scopes = [
+    this.scopes = [
       "openid",
       "profile",  // Required to get user's email address.
       "https://outlook.office.com/mail.read",
       "https://outlook.office.com/calendars.readwrite",
-  ];
+    ];
+  }
 
   /**
    * Get a URL that a user should follow to authenticate with the
    * Office service.
-   * 
+   *
    * @param callbackUrl  Where the user is redirected after authenticating.
    *                     You need to get the token from this request.
    * @param state        A secret string that will be passed back so you
    *                     can identify this specific auth request.
    */
-  export function getAuthUrl(callbackUrl: string, state: string) {
-      var returnVal = oauth2.authCode.authorizeURL({
-          redirect_uri: callbackUrl,
-          scope: scopes.join(" "),
-          state: state
-      });
-      return returnVal;
+  getAuthUrl(state: string) {
+    return this.oauth2.authCode.authorizeURL({
+        redirect_uri: this.authCallbackURL,
+        scope: this.scopes.join(" "),
+        state: state
+    });
   }
 
-  export function getTokenFromCode(auth_code: string, callbackUrl: string, callback: (error: any, token: string) => void) {
+  getTokenFromCode(auth_code: string, callback: (error: any, token: string) => void) {
       var token: any;
-      oauth2.authCode.getToken({
+      this.oauth2.authCode.getToken({
           code: auth_code,
-          redirect_uri: callbackUrl,
-          scope: scopes.join(" ")
+          redirect_uri: this.authCallbackURL,
+          scope: this.scopes.join(" ")
       }, function (error: any, result: string) {
           if (error) {
               callback(error, null);
           }
           else {
-              token = oauth2.accessToken.create(result);
+              token = this.oauth2.accessToken.create(result);
               callback(null, token);
           }
       });
   }
 
-  function getEmailFromIdToken(id_token: string) {
+  getEmailFromIdToken(id_token: string) {
       // JWT is in three parts, separated by a '.'
       var token_parts = id_token.split('.');
 
@@ -193,9 +203,9 @@ export namespace Auth {
    * Given an OAuth token object, return the token string and the user's
    * email address. Together, these can be used for future API requests.
    */
-  export function parseToken(token: any): [string, string] {
+  parseToken(token: any): [string, string] {
     var t = token.token.access_token;
-    var em = getEmailFromIdToken(token.token.id_token);
+    var em = this.getEmailFromIdToken(token.token.id_token);
     return [t, em];
   }
 }

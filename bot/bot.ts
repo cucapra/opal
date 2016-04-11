@@ -1,12 +1,11 @@
 import * as botbuilder from 'botbuilder';
-import {Auth} from '../src/office';
+import {Client} from '../src/office';
 let restify = require('restify');
 import * as crypto from 'crypto';
 
 // #CLI
 // const AUTH_CBK = "http://localhost:8191/authorize";
-const BASE_URL = "http://jasmine.radbox.org:8191";
-const AUTH_CBK = BASE_URL + "/authorize";
+const BASE_URL = "https://jasmine.radbox.org/opal";
 
 function randomString() {
   // I'd use base64 here if there were an option for a URL-safe version (or
@@ -60,6 +59,13 @@ bot.on('Message', function (evt) {
 // #CLI
 // bot.listenStdin();
 
+// This should not be a global either.
+const client = new Client(
+  "7faa69f2-359b-49fc-aba4-38bb7fe7d7ba",
+  "5B99417F9ECFF0E451B9AD31F787E4412642527D",
+  BASE_URL + "/authorize"
+);
+
 // Handle an authentication.
 function sessionAuthenticated(session: botbuilder.Session,
   token: string, email: string)
@@ -87,11 +93,11 @@ server.use(restify.queryParser());
 server.get('/authorize', function (req, res, next) {
   let code = req.params['code'];
   let state = req.params['state'];
-  Auth.getTokenFromCode(code, AUTH_CBK, (error, token) => {
+  client.getTokenFromCode(code, (error, token) => {
     if (error) {
       res.send("Sorry! We couldn't sign you in. " + error.message);
     } else {
-      let pair = Auth.parseToken(token);
+      let pair = client.parseToken(token);
       if (authenticated(pair[0], pair[1], state)) {
         res.send("Thanks! You're all signed in. You can close this tab.");
       } else {
@@ -106,7 +112,7 @@ server.get('/authorize', function (req, res, next) {
 // messages.
 server.get('/login/:state', function (req, res, next) {
   let state = req.params['state'];
-  let authurl = Auth.getAuthUrl(AUTH_CBK, state);
+  let authurl = client.getAuthUrl(state);
   res.redirect(authurl, next);
 });
 
