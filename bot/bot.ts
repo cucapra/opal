@@ -13,6 +13,9 @@ function randomString() {
   return crypto.randomBytes(8).toString('hex').slice(0, 10);
 }
 
+/**
+ * The configuration for `OPALBot`, which is passed to its constructor.
+ */
 interface Options {
   /**
    * Bot Connector application ID.
@@ -71,7 +74,7 @@ class OPALBot {
     // bot = new botbuilder.TextBot();
 
     // The default dialog (the entry point).
-    bot.add('/', function (session) {
+    bot.add('/', (session) => {
       if (!session.userData.token) {
         session.beginDialog('/login');
       } else {
@@ -80,7 +83,7 @@ class OPALBot {
     });
 
     // A dialog for requesting authorization.
-    bot.add('/login', function (session) {
+    bot.add('/login', (session) => {
       session.send("Let's get you signed in.");
       let authKey = randomString();
       this.authRequests[authKey] = session;
@@ -89,16 +92,16 @@ class OPALBot {
     });
 
     // When authorization succeeds.
-    bot.add('/loggedin', function (session) {
+    bot.add('/loggedin', (session) => {
       session.send("That worked! You're now signed in as " +
         session.userData['email'] + ".");
     });
 
     // Log some events.
-    bot.on('error', function (evt) {
+    bot.on('error', (evt) => {
       console.log('bot error:', evt);
     });
-    bot.on('Message', function (evt) {
+    bot.on('Message', (evt) => {
       console.log('received:', evt.text);
     });
 
@@ -124,7 +127,7 @@ class OPALBot {
     server.use(restify.queryParser());
 
     // The OAuth2 callback.
-    server.get('/authorize', function (req, res, next) {
+    server.get('/authorize', (req, res, next) => {
       let code = req.params['code'];
       let state = req.params['state'];
       console.log("authorization request: state", state);
@@ -146,7 +149,7 @@ class OPALBot {
 
     // Authentication redirect. This lets us put cleaner URLs into chat
     // messages.
-    server.get('/login/:state', function (req, res, next) {
+    server.get('/login/:state', (req, res, next) => {
       let state = req.params['state'];
       console.log("redirecting for login: state", state);
       let authurl = this.client.getAuthUrl(state);
@@ -157,7 +160,7 @@ class OPALBot {
     server.post('/api/messages', this.bot.verifyBotFramework(), this.bot.listen());
 
     // Log requests.
-    server.on('after', function (req, resp, route, error) {
+    server.on('after', (req, resp, route, error) => {
       console.log(resp.statusCode, req.method, req.url);
       if (error) {
         console.log(error);
@@ -165,7 +168,7 @@ class OPALBot {
     });
 
     // Log exceptions.
-    server.on('uncaughtException', function (req, res, route, err) {
+    server.on('uncaughtException', (req, res, route, err) => {
       console.error(err.stack);
       res.send("Server error.");
     });
@@ -192,7 +195,7 @@ class OPALBot {
     // #CLI
     // this.bot.listenStdin();
 
-    this.server.listen(8191, function () {
+    this.server.listen(8191, () => {
       console.log('server listening at %s', this.server.url);
     });
   }
