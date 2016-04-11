@@ -2,8 +2,20 @@
   "name": "opalbot",
   "version": "1.0.0",
   "private": "yes",
+
   "dependencies": {
     "botbuilder": "^0.8.0",
     "restify": "^4.0.4"
+  },
+
+  "devDependencies": {
+    "typescript": "^1.7.3",
+    "typings": "^0.6.2"
+  },
+
+  "scripts": {
+    "build": "tsc",
+    "typings": "typings install",
+    "serve": "node build/bot/bot.js"
   }
 }
