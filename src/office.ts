@@ -169,7 +169,8 @@ export class Client {
 
   getTokenFromCode(auth_code: string, callback: (error: any, token: string) => void) {
       var token: any;
-      this.oauth2.authCode.getToken({
+      let oauth2 = this.oauth2;  // Work around JavaScript's broken `this`.
+      oauth2.authCode.getToken({
           code: auth_code,
           redirect_uri: this.authCallbackURL,
           scope: this.scopes.join(" ")
@@ -178,7 +179,7 @@ export class Client {
               callback(error, null);
           }
           else {
-              token = this.oauth2.accessToken.create(result);
+              token = oauth2.accessToken.create(result);
               callback(null, token);
           }
       });
