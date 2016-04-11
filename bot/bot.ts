@@ -92,14 +92,26 @@ class OPALBot {
    * Create the Bot Framework bot object.
    */
   private setupBot(bot: AnyBot, baseURL: string) {
-    // The default dialog (the entry point).
+    // The default dialog (the entry point). Makes sure the user is
+    // authenticated before doing anything.
     bot.add('/', (session) => {
       if (!session.userData.token) {
         session.beginDialog('/login');
       } else {
-        session.send("You're signed in!");
+        session.beginDialog('/command');
       }
     });
+
+    // Main command menu.
+    let cmdDialog = new botbuilder.CommandDialog();
+    cmdDialog.matches('^hi', (session) => {
+      session.send('Hello there! Let me know if you want to schedule a meeting.');
+    });
+    cmdDialog.matches('^schedule', '/schedule');
+    cmdDialog.matches('^add', '/schedule');
+    cmdDialog.matches('^meet', '/schedule');
+    cmdDialog.onDefault(botbuilder.DialogAction.send("Let me know if you need anything."));
+    bot.add('/command', cmdDialog);
 
     // A dialog for requesting authorization.
     bot.add('/login', (session) => {
@@ -114,6 +126,12 @@ class OPALBot {
     bot.add('/loggedin', (session) => {
       session.send("That worked! You're now signed in as " +
         session.userData['email'] + ".");
+      session.beginDialog('/command');
+    });
+
+    // Schedule command.
+    bot.add('/schedule', (session) => {
+      session.send("Coming soon!");
     });
 
     // Log some events.
