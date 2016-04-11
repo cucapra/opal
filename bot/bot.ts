@@ -131,16 +131,6 @@ class OPALBot {
    * Create the web server.
    */
   private setupServer() {
-    function authenticated(token: string, email: string, state: string) {
-      let session = this.authRequests[state];
-      if (session) {
-        this.sessionAuthenticated(session, token, email);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
     // The Web server.
     let server = restify.createServer();
     server.use(restify.queryParser());
@@ -156,7 +146,7 @@ class OPALBot {
           console.log("oauth error:", error);
         } else {
           let pair = this.client.parseToken(token);
-          if (authenticated(pair[0], pair[1], state)) {
+          if (this.authenticated(pair[0], pair[1], state)) {
             res.contentType = 'text/html';
             res.end(`<html><head><title>Signed In</title><head><body>` +
                     `<script>window.close();</script>` +
@@ -211,6 +201,23 @@ class OPALBot {
     session.userData['token'] = token;
     session.userData['email'] = email;
     session.beginDialog('/loggedin');
+  }
+
+  /**
+   * Called with every authentication callback. Return a Boolean indicating
+   * whether the request should succeed.
+   */
+  private authenticated(token: string, email: string, state: string) {
+    // TODO Eventually, we should time out entries in this `authRequests`
+    // thing to avoid exposing very old, unused requests.
+    let session = this.authRequests[state];
+    if (session) {
+      delete this.authRequests[state];
+      this.sessionAuthenticated(session, token, email);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /**
