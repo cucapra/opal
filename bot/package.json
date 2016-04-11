@@ -5,7 +5,8 @@
 
   "dependencies": {
     "botbuilder": "^0.8.0",
-    "restify": "^4.0.4"
+    "restify": "^4.0.4",
+    "minimist": "^1.2.0"
   },
 
   "devDependencies": {
@@ -16,6 +17,7 @@
   "scripts": {
     "build": "tsc",
     "typings": "typings install",
-    "serve": "node build/bot/bot.js"
+    "serve": "node build/bot/bot.js",
+    "run": "node build/bot/bot.js -t"
   }
 }

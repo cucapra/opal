@@ -1,5 +1,6 @@
 {
   "ambientDependencies": {
-    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#4a8a2ed5c35be37a5f1a199a391be21548c81c09"
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#4a8a2ed5c35be37a5f1a199a391be21548c81c09",
+    "minimist": "github:DefinitelyTyped/DefinitelyTyped/minimist/minimist.d.ts#5974b1be295ed7f61ff611459bc06a56cb35fd0c"
   }
 }

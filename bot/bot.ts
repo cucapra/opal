@@ -2,6 +2,7 @@ import * as botbuilder from 'botbuilder';
 import {Client} from '../src/office';
 let restify = require('restify');
 import * as crypto from 'crypto';
+import * as minimist from 'minimist';
 
 
 /**
@@ -226,13 +227,24 @@ class OPALBot {
  * Create and run a bot server.
  */
 function main() {
+  // Parse the command-line options.
+  let args = minimist(process.argv.slice(2), {
+    boolean: ['t'],
+  });
+  let terminal: boolean = args['t'];
+  if (args['h'] || args['help'] || args['?']) {
+    console.error("usage: " + process.argv[1] + " [-t]");
+    console.error("  -t: terminal interaction (for testing)");
+    process.exit(1);
+  }
+
   let opalbot = new OPALBot({
     bcAppId: "opal",
     bcAppSecret: "60aadc8c1092469a9b11537d2ac6835f",
     officeAppId: "7faa69f2-359b-49fc-aba4-38bb7fe7d7ba",
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
     baseURL: "https://jasmine.radbox.org/opal",
-    terminal: false,
+    terminal,
   });
   opalbot.run();
 
