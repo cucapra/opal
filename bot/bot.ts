@@ -122,6 +122,14 @@ server.get('/login/:state', function (req, res, next) {
 // #CLI
 server.post('/api/messages', bot.verifyBotFramework(), bot.listen());
 
+// Log requests.
+server.on('after', function (req, resp, route, error) {
+  console.log(resp.statusCode, req.method, req.url);
+  if (error) {
+    console.log(error);
+  }
+});
+
 server.listen(8191, function () {
   console.log('server listening at %s', server.url);
 });
