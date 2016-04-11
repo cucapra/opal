@@ -62,7 +62,7 @@ bot.on('Message', function (evt) {
 // This should not be a global either.
 const client = new Client(
   "7faa69f2-359b-49fc-aba4-38bb7fe7d7ba",
-  "5B99417F9ECFF0E451B9AD31F787E4412642527D",
+  "CkcqfFRAAFejeyBcZbdc0Xr",
   BASE_URL + "/authorize"
 );
 
