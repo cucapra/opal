@@ -157,7 +157,11 @@ class OPALBot {
         } else {
           let pair = this.client.parseToken(token);
           if (authenticated(pair[0], pair[1], state)) {
-            res.send("Thanks! You're all signed in. You can close this tab.");
+            res.contentType = 'text/html';
+            res.end(`<html><head><title>Signed In</title><head><body>` +
+                    `<script>window.close();</script>` +
+                    `<p>Thanks! You're all signed in. ` +
+                    `You can close this tab.</p></body>`);
           } else {
             res.send("We don't have a record of this authentication request.");
           }
