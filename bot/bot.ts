@@ -130,6 +130,12 @@ server.on('after', function (req, resp, route, error) {
   }
 });
 
+// Log exceptions.
+server.on('uncaughtException', function (req, res, route, err) {
+  console.error(err.stack);
+  res.send("Server error.");
+});
+
 server.listen(8191, function () {
   console.log('server listening at %s', server.url);
 });
