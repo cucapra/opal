@@ -67,11 +67,14 @@ class OPALBot {
   constructor(opts: Options) {
     // The Bot Builder bot object.
     if (opts.terminal) {
-      this.bot = new botbuilder.TextBot();
+      this.bot = new botbuilder.TextBot({
+        minSendDelay: 100,
+      });
     } else {
       this.bot = new botbuilder.BotConnectorBot({
         appId: opts.bcAppId,
         appSecret: opts.bcAppSecret,
+        minSendDelay: 100,
       });
     }
     this.setupBot(this.bot, opts.baseURL);
