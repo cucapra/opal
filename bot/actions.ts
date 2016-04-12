@@ -91,12 +91,13 @@ function dateRange(date: Date): [Date, Date] {
 /**
  * Schedule a new meeting for a user.
  */
-export function scheduleMeeting(user: User, date: Date, title: string) {
+export async function scheduleMeeting(user: User, date: Date, title: string) {
   let pair = dateRange(date);
   let rangeStart = pair[0];
   let rangeEnd = pair[1];
 
-  opal(async function (ctx) {
+  let out: string;
+  await opal(async function (ctx) {
     // Get my calendar.
     let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
 
@@ -129,15 +130,13 @@ export function scheduleMeeting(user: User, date: Date, title: string) {
         messages.push(`removing event ${event.subject}`);
       },
     });
-    let out = messages.join("\n");
-    console.log(out);
-    // TODO Figure out how to return this message.
+    out = messages.join("\n");
 
     // Affect the real world.
     await ctx.commit(world);
   });
 
-  return "I probably did something!";
+  return out;
 };
 
 function humanTime(date: Date) {

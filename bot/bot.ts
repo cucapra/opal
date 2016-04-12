@@ -289,7 +289,7 @@ class OPALBot {
   /**
    * Schedule a meeting based on a user request.
    */
-  schedule(user: User, request: string): string {
+  async schedule(user: User, request: string) {
     let parsed = chrono.parse(request)[0];
     if (parsed === undefined) {
       return "Please tell me when you want the meeting.";
@@ -308,7 +308,7 @@ class OPALBot {
 
     console.log("scheduling", title, "on", date);
 
-    return scheduleMeeting(user, date, title);
+    return await scheduleMeeting(user, date, title);
   }
 
   /**
