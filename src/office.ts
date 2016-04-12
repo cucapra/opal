@@ -240,4 +240,16 @@ export class User {
       cbk
     );
   }
+  
+  /**
+   * Check whether the user's credentials are valid to access their calendar.
+   * This can be false, for example, if the OAuth token has expired. 
+   */
+  checkCredentials(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.getSomeEvents((error, result) => {
+        resolve(!!error);
+      });
+    });
+  }
 }

@@ -88,6 +88,19 @@ class OPALBot {
     this.server = this.setupServer();
     this.authRequests = {};
   }
+  
+  /**
+   * Get the currently logged-in Office user, if any.
+   */
+  getUser(session: botbuilder.Session): User {
+    let token = session.userData['token'];
+    let email = session.userData['email'];
+    if (token) {
+      return new User(token, email);
+    } else {
+      return null;
+    }
+  }
 
   /**
    * Create the Bot Framework bot object.
@@ -96,7 +109,9 @@ class OPALBot {
     // The default dialog (the entry point). Makes sure the user is
     // authenticated before doing anything.
     bot.add('/', (session) => {
-      if (!session.userData['token']) {
+      let user = this.getUser(session);
+      if (user) {
+        session.send("Let's get you signed in.");
         session.beginDialog('/login');
       } else {
         session.beginDialog('/command');
@@ -105,24 +120,31 @@ class OPALBot {
 
     // Main command menu.
     let cmdDialog = new botbuilder.CommandDialog();
+    bot.add('/command', cmdDialog);
+    
     cmdDialog.matches('^hi', (session) => {
       session.send('Hello there! Let me know if you want to schedule a meeting.');
     });
+    
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
+      let user = this.getUser(session);
+      if (!user || !user.checkCredentials()) {
+        session.send("Welcome back! Your login seems to have expired.");
+        session.beginDialog('/login');
+        return;
+      }
+      
       let arg = args.matches[2];
-      let user = new User(session.userData['token'],
-                          session.userData['email']);
       let reply = this.schedule(user, arg);
       session.send(reply);
     });
+    
     cmdDialog.onDefault(
       botbuilder.DialogAction.send("Let me know if you need anything.")
     );
-    bot.add('/command', cmdDialog);
 
     // A dialog for requesting authorization.
     bot.add('/login', (session) => {
-      session.send("Let's get you signed in.");
       let authKey = randomString();
       this.authRequests[authKey] = session;
       let loginUrl = baseURL + "/login/" + authKey;
