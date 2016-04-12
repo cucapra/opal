@@ -6,7 +6,7 @@ import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts} from '../examples/schedutil';
-import {User} from '../src/office';
+import {User, pad0} from '../src/office';
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -140,6 +140,29 @@ export function scheduleMeeting(user: User, date: Date, title: string) {
   return "I probably did something!";
 };
 
+function humanTime(date: Date) {
+  let out = "";
+
+  let hours = date.getHours();
+  let suffix: string;
+  if (hours <= 12) {
+    out += hours;
+    suffix = 'am';
+  } else {
+    out += hours - 12;
+    suffix = 'pm';
+  }
+
+  let minutes = date.getMinutes();
+  if (minutes !== 0) {
+    out += ':' + pad0(minutes);
+  }
+
+  out += suffix;
+
+  return out;
+}
+
 /**
  * Get a summary of events on the user's calendar.
  */
@@ -151,7 +174,11 @@ export async function viewEvents(user: User, date: Date) {
   let res: string;
   await opal(async function (ctx) {
     let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
-    res = events.toString();
+    let summaries: string[] = [];
+    for (let event of ctx.view(events)) {
+      summaries.push(event.subject + " at " + humanTime(event.start));
+    }
+    res = summaries.join("; ");
   });
   return res;
 }

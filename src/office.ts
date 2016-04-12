@@ -14,7 +14,7 @@ function getUserHome(): string {
     'USERPROFILE' : 'HOME'];
 }
 
-function pad0(n: number): string {
+export function pad0(n: number): string {
   if (n < 10) {
     return '0' + n;
   } else {
