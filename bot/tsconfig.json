@@ -6,6 +6,7 @@
   },
   "files": [
     "bot.ts",
+    "actions.ts",
     "typings/main.d.ts"
   ]
 }

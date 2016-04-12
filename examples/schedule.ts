@@ -8,8 +8,6 @@ import {Event, Calendar, getEvents} from '../src/calendar';
 import {dateAdd, slots, showChanges, countConflicts} from './schedutil';
 import {User} from '../src/office';
 
-let user = User.load();
-
 /**
  * Find an open slot for a new meeting.
  *
@@ -46,6 +44,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
  */
 opal(async function (ctx) {
   // Get my calendar.
+  let user = User.load();
   let events: Calendar = await getEvents(ctx, user);
 
   // Schedule a meeting.

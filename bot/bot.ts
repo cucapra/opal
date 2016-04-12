@@ -4,6 +4,7 @@ const restify = require('restify');
 import * as crypto from 'crypto';
 import * as minimist from 'minimist';
 const chrono = require('chrono-node');
+import {scheduleMeeting} from './actions';
 
 /**
  * Generate a random, URL-safe slug.
@@ -111,7 +112,8 @@ class OPALBot {
       let arg = args.matches[2];
       let user = new User(session.userData['token'],
                           session.userData['email']);
-      this.schedule(user, arg);
+      let reply = this.schedule(user, arg);
+      session.send(reply);
     });
     cmdDialog.onDefault(
       botbuilder.DialogAction.send("Let me know if you need anything.")
@@ -263,7 +265,12 @@ class OPALBot {
       return "Please tell me when you want the meeting.";
     }
     
-    let date: Date = parsed[0].start.date();
+    console.log("parsed date", parsed);
+    let date: Date = parsed.start.date();
+    console.log("scheduling on", date);
+    // TODO: Turn the date into a range.
+    
+    return scheduleMeeting(user, date, date);
   }
 }
 

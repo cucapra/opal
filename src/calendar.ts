@@ -91,7 +91,6 @@ export class Event {
    * Unpack an `Event` from the Office API's JSON representation.
    */
   static fromOffice(obj: any): Event {
-    console.log(obj.Attendees);
     let attendees: string[] = [];
     for (let attendee of obj.Attendees) {
       attendees.push(attendee.EmailAddress.Address);
