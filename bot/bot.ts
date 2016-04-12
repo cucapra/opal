@@ -122,21 +122,26 @@ class OPALBot {
     let cmdDialog = new botbuilder.CommandDialog();
     bot.add('/command', cmdDialog);
 
+    cmdDialog.onBegin((session, args, next) => {
+      let user = this.getUser(session);
+      user.checkCredentials().then((valid) => {
+        if (valid) {
+          next();
+        } else {
+          session.send("Welcome back! Your login seems to have expired.");
+          session.beginDialog('/login');
+        }
+      });
+    });
+
     cmdDialog.matches('^hi', (session) => {
       session.send('Hello there! Let me know if you want to schedule a meeting.');
     });
 
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
       let user = this.getUser(session);
-      user.checkCredentials().then((valid) => {
-        if (valid) {
-          let arg = args.matches[2];
-          this.schedule(user, arg).then(session.send);
-        } else {
-          session.send("Welcome back! Your login seems to have expired.");
-          session.beginDialog('/login');
-        }
-      });
+      let arg = args.matches[2];
+      this.schedule(user, arg).then(session.send);
     });
 
     cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
