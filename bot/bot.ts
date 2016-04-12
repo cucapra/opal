@@ -88,7 +88,7 @@ class OPALBot {
     this.server = this.setupServer();
     this.authRequests = {};
   }
-  
+
   /**
    * Get the currently logged-in Office user, if any.
    */
@@ -121,11 +121,11 @@ class OPALBot {
     // Main command menu.
     let cmdDialog = new botbuilder.CommandDialog();
     bot.add('/command', cmdDialog);
-    
+
     cmdDialog.matches('^hi', (session) => {
       session.send('Hello there! Let me know if you want to schedule a meeting.');
     });
-    
+
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
       let user = this.getUser(session);
       user.checkCredentials().then((valid) => {
@@ -139,7 +139,7 @@ class OPALBot {
         }
       });
     });
-    
+
     cmdDialog.onDefault(
       botbuilder.DialogAction.send("Let me know if you need anything.")
     );
@@ -191,7 +191,7 @@ class OPALBot {
           let pair = this.client.parseToken(token);
           if (this.authenticated(pair[0], pair[1], state)) {
             res.contentType = 'text/html';
-            res.end(`<html><head><title>Signed In</title><head><body>` +
+            res.end(`<html><head><title>Signed In</title></head><body>` +
                     `<script>window.close();</script>` +
                     `<p>Thanks! You're all signed in. ` +
                     `You can close this tab.</p></body>`);
@@ -278,7 +278,7 @@ class OPALBot {
       console.log('server listening at %s', this.server.url);
     });
   }
-  
+
   /**
    * Schedule a meeting based on a user request.
    */
@@ -287,11 +287,21 @@ class OPALBot {
     if (parsed === undefined) {
       return "Please tell me when you want the meeting.";
     }
-    
+
     let date: Date = parsed.start.date();
-    console.log("scheduling a meeting on", date);
-    
-    return scheduleMeeting(user, date);
+
+    // Use the remaining (non-date) text as the event title.
+    let beforeDate = request.slice(0, parsed.index);
+    let afterDate = request.slice(parsed.index + parsed.text.length);
+    let title = beforeDate + ' ' + afterDate;
+    title = title.replace(/\s+/g, ' ').trim();
+    if (title.length <= 1) {
+      title = "Appointment";
+    }
+
+    console.log("scheduling", title, "on", date);
+
+    return scheduleMeeting(user, date, title);
   }
 }
 

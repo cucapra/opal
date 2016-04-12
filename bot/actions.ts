@@ -81,7 +81,7 @@ function clearTime(date: Date): Date {
 /**
  * Schedule a new meeting for a user.
  */
-export function scheduleMeeting(user: User, date: Date) {
+export function scheduleMeeting(user: User, date: Date, title: string) {
   // Turn the single moment into an all-day range.
   let rangeStart = clearTime(copyDate(date));
   let rangeEnd = clearTime(copyDate(date));
@@ -106,7 +106,7 @@ export function scheduleMeeting(user: User, date: Date) {
       ),
       workdayStart,
       workdayEnd,
-      "Exciting Meeting!",
+      title,
       60
     );
 
