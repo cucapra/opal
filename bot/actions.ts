@@ -140,11 +140,20 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
 };
 
 function humanTime(date: Date) {
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+
+  if (hours === 12 && minutes === 0) {
+    return "noon";
+  }
+
   let out = "";
 
-  let hours = date.getHours();
   let suffix: string;
-  if (hours <= 12) {
+  if (hours === 12) {
+    out += hours;
+    suffix = 'pm';
+  } else if (hours <= 12) {
     out += hours;
     suffix = 'am';
   } else {
@@ -152,7 +161,6 @@ function humanTime(date: Date) {
     suffix = 'pm';
   }
 
-  let minutes = date.getMinutes();
   if (minutes !== 0) {
     out += ':' + pad0(minutes);
   }
