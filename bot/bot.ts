@@ -111,10 +111,10 @@ class OPALBot {
     bot.add('/', (session) => {
       let user = this.getUser(session);
       if (user) {
+        session.beginDialog('/command');
+      } else {
         session.send("Let's get you signed in.");
         session.beginDialog('/login');
-      } else {
-        session.beginDialog('/command');
       }
     });
 
