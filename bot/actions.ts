@@ -124,10 +124,10 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
     let messages = [];
     ctx.diff_child(world, events).foreach({
       add(event) {
-        messages.push(`scheduling ${event.subject} at ${event.start}`);
+        messages.push(`scheduling ${event.subject} at ${humanTime(event.start)}`);
       },
       delete(event) {
-        messages.push(`removing event ${event.subject}`);
+        messages.push(`removing ${event.subject}`);
       },
     });
     out = messages.join("\n");

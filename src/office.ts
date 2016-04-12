@@ -144,11 +144,8 @@ export class Client {
  * A user authenticated with the Office API.
  */
 export class User {
-  timezone: string;
-
   constructor(public token: string,
               public email: string) {
-    this.timezone = "Pacific Standard Time";
   }
 
   /**
@@ -168,7 +165,7 @@ export class User {
     return {
       user: {
         email: this.email,
-        timezone: this.timezone,
+        timezone: "UTC",
       },
       token: this.token,
     };
