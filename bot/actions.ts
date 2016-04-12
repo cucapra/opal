@@ -3,7 +3,7 @@
  */
 
 import {opal, Context} from '../src/opal';
-import {Event, Calendar, getEvents, getEventRange} from '../src/calendar';
+import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts} from '../examples/schedutil';
 import {User, pad0} from '../src/office';
@@ -98,7 +98,7 @@ export function scheduleMeeting(user: User, date: Date, title: string) {
 
   opal(async function (ctx) {
     // Get my calendar.
-    let events: Calendar = await getEvents(ctx, user);
+    let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
 
     // Make up a preferred workday range (as hours).
     let workdayStart = 8;
