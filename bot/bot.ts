@@ -265,12 +265,10 @@ class OPALBot {
       return "Please tell me when you want the meeting.";
     }
     
-    console.log("parsed date", parsed);
     let date: Date = parsed.start.date();
-    console.log("scheduling on", date);
-    // TODO: Turn the date into a range.
+    console.log("scheduling a meeting on", date);
     
-    return scheduleMeeting(user, date, date);
+    return scheduleMeeting(user, date);
   }
 }
 

@@ -4,7 +4,7 @@
 
 import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
-import {dateAdd, slots, showChanges,
+import {dateAdd, slots, showChanges, copyDate,
   countConflicts} from '../examples/schedutil';
 import {User} from '../src/office';
 
@@ -70,10 +70,23 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
   return await ctx.minimize(worlds, score);
 }
 
+function clearTime(date: Date): Date {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return date;
+}
+
 /**
  * Schedule a new meeting for a user.
  */
-export function scheduleMeeting(user: User, rangeStart: Date, rangeEnd: Date) {
+export function scheduleMeeting(user: User, date: Date) {
+  // Turn the single moment into an all-day range.
+  let rangeStart = clearTime(copyDate(date));
+  let rangeEnd = clearTime(copyDate(date));
+  rangeEnd.setHours(23);
+  
   opal(async function (ctx) {
     // Get my calendar.
     let events: Calendar = await getEvents(ctx, user);
@@ -87,8 +100,8 @@ export function scheduleMeeting(user: User, rangeStart: Date, rangeEnd: Date) {
       ctx,
       events,
       slots(
-        new Date("February 3, 2014 00:00:00"),
-        new Date("February 3, 2014 23:00:00"),
+        rangeStart,
+        rangeEnd,
         30
       ),
       workdayStart,
@@ -108,6 +121,7 @@ export function scheduleMeeting(user: User, rangeStart: Date, rangeEnd: Date) {
       },
     });
     let out = messages.join("\n");
+    console.log(out);
     // TODO Figure out how to return this message.
 
     // Affect the real world.
