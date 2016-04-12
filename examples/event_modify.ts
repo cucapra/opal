@@ -2,8 +2,11 @@
 
 import {opal} from '../src/opal';
 import {Event, Calendar, getEvents, modifyEvent} from '../src/calendar';
+import {User} from '../src/office';
 
 const readline = require('readline');
+
+let user = User.load();
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -18,7 +21,7 @@ function input(prompt: string): Promise<string> {
 }
 
 opal(async function (ctx) {
-  let cal: Calendar = await getEvents(ctx);
+  let cal: Calendar = await getEvents(ctx, user);
 
   let allEvents = Array.from(ctx.view(cal));
   let i = 0;

@@ -9,6 +9,9 @@
 import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEvents} from '../src/calendar';
 import {dateAdd, slots, showChanges, countConflicts} from './schedutil';
+import {User} from '../src/office';
+
+let user = User.load();
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -77,7 +80,7 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
  */
 opal(async function (ctx) {
   // Get my calendar.
-  let events: Calendar = await getEvents(ctx);
+  let events: Calendar = await getEvents(ctx, user);
 
   // Make up a preferred workday range (as hours).
   let workdayStart = 8;

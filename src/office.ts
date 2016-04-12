@@ -14,85 +14,6 @@ function getUserHome(): string {
     'USERPROFILE' : 'HOME'];
 }
 
-// Load the user object and token string to pass to the Outlook library.
-function getConfig() {
-  let home = getUserHome();
-  let email = fs.readFileSync(path.join(home, ".opal.email.txt")).toString();
-  let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
-
-  return {
-    user: {
-      email: email,
-      timezone: 'Pacific Standard Time',
-    },
-    token: token,
-  };
-}
-
-export function getSomeEvents(cbk: (error: any, result: any) => void) {
-  let queryParams = {
-    '$select': 'Subject,Start,End,Attendees',
-    '$orderby': 'Start/DateTime asc',
-    '$top': 10
-  };
-
-  let config = getConfig();
-  outlook.calendar.getEvents(
-    {token: config.token, user: config.user, odataParams: queryParams},
-    cbk
-  );
-}
-
-export function getFreeTimes(email: string, start: Date, end: Date, cbk: (error: any, result: any) => void) {
-  let config = getConfig();
-  var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
-  var apiOptions = {
-      url: requestUrl,
-      token: config.token,
-      email: config.user,
-      payload: {
-          "Attendees": [
-              { "Type": "Required", "EmailAddress": { "Address": email } },
-          ],
-          "LocationConstraint": {
-              "IsRequired": "false",
-              "SuggestLocation": "false",
-              "Locations": [{ "DisplayName": "unspecified" }]
-          },
-          "TimeConstraint": {
-              "Timeslots" : [{
-                "Start" : dateToOfficeDateTimeTimezone(start),
-                "End" : dateToOfficeDateTimeTimezone(end),
-              } ]
-        },
-          "MeetingDuration": "PT30M" ,
-          "MaxCandidates" : 50
-      },
-      method: 'POST'
-  };
-  outlook.base.makeApiCall(apiOptions, cbk);
-}
-
-export function addEvent(event: any,
-                         cbk: (error: any, result: any) => void)
-{
-  let config = getConfig();
-  outlook.calendar.createEvent(
-    {token: config.token, user: config.user, event: event},
-    cbk
-  );
-}
-export function modifyEvent(id: string, changes: any,
-                            cbk: (error: any, result: any) => void)
-{
-  let config = getConfig();
-  outlook.calendar.updateEvent(
-    {token: config.token, user: config.user, eventId: id,
-      update: changes},
-    cbk
-  );
-}
-
 function pad0(n: number): string {
   if (n < 10) {
     return '0' + n;
@@ -197,7 +118,7 @@ export class Client {
       var jwt = JSON.parse(decoded_token);
 
       // Email is in the preferred_username field
-      return jwt.preferred_username
+      return jwt.preferred_username;
   }
 
   /**
@@ -208,5 +129,115 @@ export class Client {
     var t = token.token.access_token;
     var em = this.getEmailFromIdToken(token.token.id_token);
     return [t, em];
+  }
+  
+  /**
+   * Get a `User` object from a token.
+   */
+  tokenUser(token: any): User {
+    let pair = this.parseToken(token);
+    return new User(pair[0], pair[1]);
+  }
+}
+
+/**
+ * A user authenticated with the Office API.
+ */
+export class User {
+  timezone: string;
+  
+  constructor(public token: string,
+              public email: string) {
+    this.timezone = "Pacific Standard Time";
+  }
+  
+  /**
+   * Load credentials for a previously-authenticated user from disk.
+   */
+  static load(): User {
+    let home = getUserHome();
+    let email = fs.readFileSync(path.join(home, ".opal.email.txt")).toString();
+    let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
+    return new User(token, email);
+  }
+  
+  /**
+   * Get the config object to pass with API requests.
+   */
+  private getConfig() {
+    return {
+      user: {
+        email: this.email,
+        timezone: this.timezone,
+      },
+      token: this.token,
+    };
+  }
+  
+  /**
+   * Get a few events from the user's calendar.
+   */
+  getSomeEvents(cbk: (error: any, result: any) => void) {
+    let queryParams = {
+      '$select': 'Subject,Start,End,Attendees',
+      '$orderby': 'Start/DateTime asc',
+      '$top': 10
+    };
+
+    let config = this.getConfig();
+    outlook.calendar.getEvents(
+      {token: config.token, user: config.user, odataParams: queryParams},
+      cbk
+    );
+  }
+  
+  getFreeTimes(email: string, start: Date, end: Date, cbk: (error: any, result: any) => void) {
+    let config = this.getConfig();
+    var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
+    var apiOptions = {
+        url: requestUrl,
+        token: config.token,
+        email: config.user,
+        payload: {
+            "Attendees": [
+                { "Type": "Required", "EmailAddress": { "Address": email } },
+            ],
+            "LocationConstraint": {
+                "IsRequired": "false",
+                "SuggestLocation": "false",
+                "Locations": [{ "DisplayName": "unspecified" }]
+            },
+            "TimeConstraint": {
+                "Timeslots" : [{
+                  "Start" : dateToOfficeDateTimeTimezone(start),
+                  "End" : dateToOfficeDateTimeTimezone(end),
+                } ]
+          },
+            "MeetingDuration": "PT30M" ,
+            "MaxCandidates" : 50
+        },
+        method: 'POST'
+    };
+    outlook.base.makeApiCall(apiOptions, cbk);
+  }
+
+  addEvent(event: any, cbk: (error: any, result: any) => void)
+  {
+    let config = this.getConfig();
+    outlook.calendar.createEvent(
+      {token: config.token, user: config.user, event: event},
+      cbk
+    );
+  }
+  
+  modifyEvent(id: string, changes: any,
+              cbk: (error: any, result: any) => void)
+  {
+    let config = this.getConfig();
+    outlook.calendar.updateEvent(
+      {token: config.token, user: config.user, eventId: id,
+        update: changes},
+      cbk
+    );
   }
 }

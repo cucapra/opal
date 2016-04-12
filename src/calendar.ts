@@ -181,6 +181,8 @@ class Modify extends PSet.Operation<Event> {
  * objects.
  */
 export class Calendar extends ExternalCollection<Event> {
+  user: office.User;
+  
   // The `send` method implements the "real" operations that affect the
   // outside world.
   send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
@@ -194,7 +196,7 @@ export class Calendar extends ExternalCollection<Event> {
       // Add an event.
       if (op instanceof PSet.Add) {
         let data = op.value.toOffice();
-        office.addEvent(data, (error, result) => {
+        this.user.addEvent(data, (error, result) => {
           if (error) {
             console.log("error adding event:", error);
           } else {
@@ -210,7 +212,7 @@ export class Calendar extends ExternalCollection<Event> {
 
       // Modify an event.
       } else if (op instanceof Modify) {
-        office.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
+        this.user.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
           if (error) {
             console.log("error modifying event:", error);
           }
@@ -226,9 +228,9 @@ export class Calendar extends ExternalCollection<Event> {
   }
 }
 // An OPAL API function to get free times for a person.
-export async function getFreeTimes(ctx: Context, email: string, start: Date, end: Date) {
+export async function getFreeTimes(ctx: Context, user: office.User, email: string, start: Date, end: Date) {
   return new Promise<MeetingTimeSlot[]>((resolve, reject) => {
-    office.getFreeTimes(email, start, end, function (error, result) {
+    user.getFreeTimes(email, start, end, function (error, result) {
       if (error) {
         reject(error);
         return;
@@ -262,11 +264,12 @@ export async function getFreeTimes(ctx: Context, email: string, start: Date, end
  * in time.
  *
  * @param ctx  The current OPAL context.
+ * @param user The Office 365 API user.
  * @returns    A new `Calendar` collection.
  */
-export async function getEvents(ctx: Context) {
+export async function getEvents(ctx: Context, user: office.User) {
   return new Promise<Calendar>((resolve, reject) => {
-    office.getSomeEvents(function (error, result) {
+    user.getSomeEvents(function (error, result) {
       if (error) {
         reject(error);
         return;
@@ -277,6 +280,7 @@ export async function getEvents(ctx: Context) {
         events.push(Event.fromOffice(obj));
       }
       let coll = new Calendar(ctx.world, PSet.set(events));
+      coll.user = user;
       resolve(coll);
     });
   });
