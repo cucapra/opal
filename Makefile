@@ -43,10 +43,21 @@ docs-watch: docs
 	liveserve -w $(DOCSDIR)/ -x 'make docs' $(DOCSDIR)/build/
 
 
-# Deploy docs to Web server.
+# Deploy docs and bot.
 
-.PHONY: deploy
+.PHONY: deploy deploy_docs deploy_bot
+
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh
 DEST := dh:domains/adriansampson.net/opal
-deploy: docs
+deploy_docs: docs
 	rsync $(RSYNCARGS) docs/build/ $(DEST)
+
+deploy_bot:
+	npm install
+	npm run typings
+	cd bot && npm install
+	cd bot && npm typings
+	cd bot && npm build
+	systemctl --user restart opal
+
+deploy: deploy_docs deploy_bot
