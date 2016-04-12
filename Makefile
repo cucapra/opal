@@ -56,8 +56,8 @@ deploy_bot:
 	npm install
 	npm run typings
 	cd bot && npm install
-	cd bot && npm typings
-	cd bot && npm build
+	cd bot && npm run typings
+	cd bot && npm run build
 	systemctl --user restart opal
 
 deploy: deploy_docs deploy_bot
