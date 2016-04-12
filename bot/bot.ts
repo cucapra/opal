@@ -128,15 +128,16 @@ class OPALBot {
     
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
       let user = this.getUser(session);
-      if (!user || !user.checkCredentials()) {
-        session.send("Welcome back! Your login seems to have expired.");
-        session.beginDialog('/login');
-        return;
-      }
-      
-      let arg = args.matches[2];
-      let reply = this.schedule(user, arg);
-      session.send(reply);
+      user.checkCredentials().then((valid) => {
+        if (valid) {
+          let arg = args.matches[2];
+          let reply = this.schedule(user, arg);
+          session.send(reply);
+        } else {
+          session.send("Welcome back! Your login seems to have expired.");
+          session.beginDialog('/login');
+        }
+      });
     });
     
     cmdDialog.onDefault(
