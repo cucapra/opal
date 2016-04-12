@@ -248,7 +248,7 @@ export class User {
   checkCredentials(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       this.getSomeEvents((error, result) => {
-        resolve(!!error);
+        resolve(!error);
       });
     });
   }
