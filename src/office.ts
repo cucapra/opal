@@ -130,7 +130,7 @@ export class Client {
     var em = this.getEmailFromIdToken(token.token.id_token);
     return [t, em];
   }
-  
+
   /**
    * Get a `User` object from a token.
    */
@@ -145,12 +145,12 @@ export class Client {
  */
 export class User {
   timezone: string;
-  
+
   constructor(public token: string,
               public email: string) {
     this.timezone = "Pacific Standard Time";
   }
-  
+
   /**
    * Load credentials for a previously-authenticated user from disk.
    */
@@ -160,7 +160,7 @@ export class User {
     let token = fs.readFileSync(path.join(home, ".opal.token.txt")).toString();
     return new User(token, email);
   }
-  
+
   /**
    * Get the config object to pass with API requests.
    */
@@ -173,7 +173,7 @@ export class User {
       token: this.token,
     };
   }
-  
+
   /**
    * Get a few events from the user's calendar.
    */
@@ -190,11 +190,40 @@ export class User {
       cbk
     );
   }
-  
+
+  /**
+   * Get event *instances* from a specified time range on the user's calendar.
+   */
+  calendarView(start: Date, end: Date): Promise<any> {
+    let config = this.getConfig();
+    let parameters = {
+      url: 'https://outlook.office.com/api/v2.0/me/calendarview',
+      token: config.token,
+      user: config.user,
+      method: 'GET',
+      query: {
+        'StartDateTime': dateToOffice(start),
+        'EndDateTime': dateToOffice(end),
+      },
+    };
+    return new Promise<any>((resolve, reject) => {
+      outlook.base.makeApiCall(parameters, (error, response) => {
+        if (error) {
+          reject(error);
+        } else if (response.statusCode != 200) {
+          reject("HTTP error " + response.statusCode +
+                 "; body: " + JSON.stringify(response.body));
+        } else {
+          resolve(response.body);
+        }
+      });
+    });
+  }
+
   getFreeTimes(email: string, start: Date, end: Date, cbk: (error: any, result: any) => void) {
     let config = this.getConfig();
-    var requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
-    var apiOptions = {
+    let requestUrl = 'https://outlook.office.com/api/beta/me/findmeetingtimes';
+    let apiOptions = {
         url: requestUrl,
         token: config.token,
         email: config.user,
@@ -229,7 +258,7 @@ export class User {
       cbk
     );
   }
-  
+
   modifyEvent(id: string, changes: any,
               cbk: (error: any, result: any) => void)
   {
@@ -240,10 +269,10 @@ export class User {
       cbk
     );
   }
-  
+
   /**
    * Check whether the user's credentials are valid to access their calendar.
-   * This can be false, for example, if the OAuth token has expired. 
+   * This can be false, for example, if the OAuth token has expired.
    */
   checkCredentials(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {

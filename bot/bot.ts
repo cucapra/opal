@@ -4,7 +4,7 @@ const restify = require('restify');
 import * as crypto from 'crypto';
 import * as minimist from 'minimist';
 const chrono = require('chrono-node');
-import {scheduleMeeting} from './actions';
+import {scheduleMeeting, viewEvents} from './actions';
 
 /**
  * Generate a random, URL-safe slug.
@@ -137,6 +137,13 @@ class OPALBot {
           session.send("Welcome back! Your login seems to have expired.");
           session.beginDialog('/login');
         }
+      });
+    });
+
+    cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
+      let user = this.getUser(session);
+      this.view(user, args.matches[2] || "").then((resp) => {
+        session.send("Here's what's on your calendar: " + resp);
       });
     });
 
@@ -302,6 +309,22 @@ class OPALBot {
     console.log("scheduling", title, "on", date);
 
     return scheduleMeeting(user, date, title);
+  }
+
+  /**
+   * Get events from a user's calendar.
+   */
+  async view(user: User, request: string) {
+    // Get the specified date, or today if unspecified.
+    let parsed = chrono.parse(request)[0];
+    let date: Date;
+    if (parsed === undefined) {
+      date = new Date();
+    } else {
+      date = parsed.start.date();
+    }
+
+    return await viewEvents(user, date);
   }
 }
 

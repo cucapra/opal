@@ -79,14 +79,23 @@ function clearTime(date: Date): Date {
 }
 
 /**
- * Schedule a new meeting for a user.
+ * Turn a single instant into an all-day range.
  */
-export function scheduleMeeting(user: User, date: Date, title: string) {
-  // Turn the single moment into an all-day range.
+function dateRange(date: Date): [Date, Date] {
   let rangeStart = clearTime(copyDate(date));
   let rangeEnd = clearTime(copyDate(date));
   rangeEnd.setHours(23);
-  
+  return [rangeStart, rangeEnd];
+}
+
+/**
+ * Schedule a new meeting for a user.
+ */
+export function scheduleMeeting(user: User, date: Date, title: string) {
+  let pair = dateRange(date);
+  let rangeStart = pair[0];
+  let rangeEnd = pair[1];
+
   opal(async function (ctx) {
     // Get my calendar.
     let events: Calendar = await getEvents(ctx, user);
@@ -127,6 +136,23 @@ export function scheduleMeeting(user: User, date: Date, title: string) {
     // Affect the real world.
     await ctx.commit(world);
   });
-  
+
   return "I probably did something!";
 };
+
+/**
+ * Get a summary of events on the user's calendar.
+ */
+export async function viewEvents(user: User, date: Date) {
+  let pair = dateRange(date);
+  let rangeStart = pair[0];
+  let rangeEnd = pair[1];
+
+  try {
+    let res = await user.calendarView(rangeStart, rangeEnd);
+    return res.toString();
+  } catch (e) {
+    console.error("error getting calendar:", e);
+    return "I couldn't fetch your calendar.";
+  }
+}
