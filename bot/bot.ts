@@ -1,12 +1,12 @@
 import * as botbuilder from 'botbuilder';
-import {Client} from '../src/office';
-let restify = require('restify');
+import {Client, User} from '../src/office';
+const restify = require('restify');
 import * as crypto from 'crypto';
 import * as minimist from 'minimist';
-
+const chrono = require('chrono-node');
 
 /**
- * Generate a random, URL-safe string.
+ * Generate a random, URL-safe slug.
  */
 function randomString() {
   // I'd use base64 here if there were an option for a URL-safe version (or
@@ -95,7 +95,7 @@ class OPALBot {
     // The default dialog (the entry point). Makes sure the user is
     // authenticated before doing anything.
     bot.add('/', (session) => {
-      if (!session.userData.token) {
+      if (!session.userData['token']) {
         session.beginDialog('/login');
       } else {
         session.beginDialog('/command');
@@ -107,10 +107,15 @@ class OPALBot {
     cmdDialog.matches('^hi', (session) => {
       session.send('Hello there! Let me know if you want to schedule a meeting.');
     });
-    cmdDialog.matches('^schedule', '/schedule');
-    cmdDialog.matches('^add', '/schedule');
-    cmdDialog.matches('^meet', '/schedule');
-    cmdDialog.onDefault(botbuilder.DialogAction.send("Let me know if you need anything."));
+    cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
+      let arg = args.matches[2];
+      let user = new User(session.userData['token'],
+                          session.userData['email']);
+      this.schedule(user, arg);
+    });
+    cmdDialog.onDefault(
+      botbuilder.DialogAction.send("Let me know if you need anything.")
+    );
     bot.add('/command', cmdDialog);
 
     // A dialog for requesting authorization.
@@ -127,11 +132,6 @@ class OPALBot {
       session.send("That worked! You're now signed in as " +
         session.userData['email'] + ".");
       session.beginDialog('/command');
-    });
-
-    // Schedule command.
-    bot.add('/schedule', (session) => {
-      session.send("Coming soon!");
     });
 
     // Log some events.
@@ -252,6 +252,18 @@ class OPALBot {
     this.server.listen(8191, () => {
       console.log('server listening at %s', this.server.url);
     });
+  }
+  
+  /**
+   * Schedule a meeting based on a user request.
+   */
+  schedule(user: User, request: string): string {
+    let parsed = chrono.parse(request)[0];
+    if (parsed === undefined) {
+      return "Please tell me when you want the meeting.";
+    }
+    
+    let date: Date = parsed[0].start.date();
   }
 }
 

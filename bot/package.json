@@ -10,7 +10,8 @@
   "dependencies": {
     "botbuilder": "^0.8.0",
     "restify": "^4.0.4",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "chrono-node": "^1.2.1"
   },
 
   "devDependencies": {
