@@ -22,13 +22,23 @@ export function pad0(n: number): string {
   }
 }
 
-export function dateToOffice(d: Date): string {
+function dateToOffice(d: Date): string {
   return d.getFullYear() +
     '-' + pad0(d.getMonth() + 1) +
     '-' + pad0(d.getDate()) +
     'T' + pad0(d.getHours()) +
     ':' + pad0(d.getMinutes()) +
     ':' + pad0(d.getSeconds());
+}
+
+export function dateToOfficeUTC(d: Date) {
+  let s = d.getUTCFullYear() +
+    '-' + pad0(d.getUTCMonth() + 1) +
+    '-' + pad0(d.getUTCDate()) +
+    'T' + pad0(d.getUTCHours()) +
+    ':' + pad0(d.getUTCMinutes()) +
+    ':' + pad0(d.getUTCSeconds());
+  return { DateTime: s, TimeZone: 'UTC' };
 }
 
 function dateToOfficeDateTimeTimezone(d: Date): any {

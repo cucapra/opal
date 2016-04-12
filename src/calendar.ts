@@ -1,7 +1,7 @@
 import * as PSet from './pset';
 import {ExternalCollection, Context} from './opal';
 import * as office from './office';
-import {dateToOffice} from './office';
+import {dateToOfficeUTC} from './office';
 
 // The Windows time zone names.
 import timezones from './timezones';
@@ -74,14 +74,8 @@ export class Event {
         'ContentType': 'HTML',
         'Content': '',  // TODO
       },
-      'Start': {
-        'DateTime': dateToOffice(this.start),
-        'TimeZone': 'Pacific Standard Time', // TODO
-      },
-      'End': {
-        'DateTime': dateToOffice(this.end),
-        'TimeZone': 'Pacific Standard Time', // TODO
-      },
+      'Start': dateToOfficeUTC(this.start),
+      'End': dateToOfficeUTC(this.end),
       // i am a bad person -- should distinguish required from optional attendees
       'Attendees': this.attendees
     };
@@ -125,16 +119,10 @@ function changeToOffice(change: EventChange): { [key: string]: any } {
     out['Subject'] = change.subject;
   }
   if (change.start) {
-    out['Start'] = {
-      'DateTime': dateToOffice(change.start),
-      'TimeZone': 'Pacific Standard Time', // TODO
-    };
+    out['Start'] = dateToOfficeUTC(change.start);
   }
   if (change.end) {
-    out['End'] = {
-      'DateTime': dateToOffice(change.end),
-      'TimeZone': 'Pacific Standard Time', // TODO
-    };
+    out['End'] = dateToOfficeUTC(change.end);
   }
   return out;
 }

@@ -131,8 +131,7 @@ class OPALBot {
       user.checkCredentials().then((valid) => {
         if (valid) {
           let arg = args.matches[2];
-          let reply = this.schedule(user, arg);
-          session.send(reply);
+          this.schedule(user, arg).then(session.send);
         } else {
           session.send("Welcome back! Your login seems to have expired.");
           session.beginDialog('/login');
@@ -142,9 +141,8 @@ class OPALBot {
 
     cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
       let user = this.getUser(session);
-      this.view(user, args.matches[2] || "").then((resp) => {
-        session.send("Here's what's on your calendar: " + resp);
-      });
+      let when = args.matches[2] || "";
+      this.view(user, when).then(session.send);
     });
 
     cmdDialog.onDefault(
@@ -324,7 +322,12 @@ class OPALBot {
       date = parsed.start.date();
     }
 
-    return await viewEvents(user, date);
+    let reply = await viewEvents(user, date);
+    if (reply.length) {
+      return "Here's what's on your calendar: " + reply;
+    } else {
+      return "There's nothing on your calendar.";
+    }
   }
 }
 

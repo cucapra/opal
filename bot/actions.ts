@@ -131,6 +131,7 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
       },
     });
     out = messages.join("\n");
+    console.log("scheduling changes:", out);
 
     // Affect the real world.
     await ctx.commit(world);
