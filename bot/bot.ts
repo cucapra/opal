@@ -103,54 +103,60 @@ class OPALBot {
   }
 
   /**
+   * Ensure we have a logged-in user.
+   */
+  ensureUser(session: botbuilder.Session): Promise<User> {
+    return new Promise<User>((resolve, reject) => {
+      let user = this.getUser(session);
+      if (user) {
+        user.checkCredentials().then((valid) => {
+          if (valid) {
+            resolve(user);
+          } else {
+            session.send("Welcome back! Your login seems to have expired.");
+            session.beginDialog('/login');
+          }
+        });
+      } else {
+        session.send("Let's get you signed in.");
+        session.beginDialog('/login');
+      }
+    });
+  }
+
+  /**
    * Create the Bot Framework bot object.
    */
   private setupBot(bot: AnyBot, baseURL: string) {
     // The default dialog (the entry point). Makes sure the user is
     // authenticated before doing anything.
     bot.add('/', (session) => {
-      let user = this.getUser(session);
-      if (user) {
-        session.beginDialog('/command');
-      } else {
-        session.send("Let's get you signed in.");
-        session.beginDialog('/login');
-      }
+      session.beginDialog('/command');
     });
 
     // Main command menu.
     let cmdDialog = new botbuilder.CommandDialog();
     bot.add('/command', cmdDialog);
 
-    cmdDialog.onBegin((session, args, next) => {
-      let user = this.getUser(session);
-      user.checkCredentials().then((valid) => {
-        if (valid) {
-          next();
-        } else {
-          session.send("Welcome back! Your login seems to have expired.");
-          session.beginDialog('/login');
-        }
-      });
-    });
-
     cmdDialog.matches('^hi', (session) => {
       session.send('Hello there! Let me know if you want to schedule a meeting.');
     });
 
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
-      let user = this.getUser(session);
-      let arg = args.matches[2];
-      this.schedule(user, arg).then((reply) => {
-        session.send(reply);
+      this.ensureUser(session).then((user) => {
+        let arg = args.matches[2];
+        this.schedule(user, arg).then((reply) => {
+          session.send(reply);
+        });
       });
     });
 
     cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
-      let user = this.getUser(session);
-      let when = args.matches[2] || "";
-      this.view(user, when).then((reply) => {
-        session.send(reply);
+      this.ensureUser(session).then((user) => {
+        let when = args.matches[2] || "";
+        this.view(user, when).then((reply) => {
+          session.send(reply);
+        });
       });
     });
 
