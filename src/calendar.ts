@@ -286,6 +286,28 @@ export async function getEvents(ctx: Context, user: office.User) {
 }
 
 /**
+ * Get events from a user's calendar in a given date range.
+ *
+ * @param ctx   The current OPAL context.
+ * @param user  The Office 365 API user.
+ * @param start The start of the range to get events from.
+ * @param end   The end of the range.
+ * @returns     A new `Calendar` collection.
+ */
+export async function getEventRange(ctx: Context, user: office.User, start: Date, end: Date) {
+  let result = await user.calendarView(start, end);
+
+  let events: Event[] = [];
+  for (let obj of result.value) {
+    events.push(Event.fromOffice(obj));
+  }
+
+  let coll = new Calendar(ctx.world, PSet.set(events));
+  coll.user = user;
+  return coll;
+}
+
+/**
  * Modify a `Calendar` collection.
  *
  * @param ctx         The current OPAL context.

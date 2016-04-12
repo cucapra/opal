@@ -565,8 +565,11 @@ class TopWorld extends World {
 
 /**
  * Create and invoke a top-level OPAL world.
+ *
+ * @returns A promise that resolves when OPAL execution finishes.
  */
-export function opal(func: AsyncFunc) {
+export function opal(func: AsyncFunc): Promise<void> {
   let world = new TopWorld(func);
   world.acquire();  // Run to completion.
+  return world.finish();
 }

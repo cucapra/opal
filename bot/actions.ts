@@ -3,7 +3,7 @@
  */
 
 import {opal, Context} from '../src/opal';
-import {Event, Calendar, getEvents} from '../src/calendar';
+import {Event, Calendar, getEvents, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts} from '../examples/schedutil';
 import {User} from '../src/office';
@@ -148,11 +148,10 @@ export async function viewEvents(user: User, date: Date) {
   let rangeStart = pair[0];
   let rangeEnd = pair[1];
 
-  try {
-    let res = await user.calendarView(rangeStart, rangeEnd);
-    return res.toString();
-  } catch (e) {
-    console.error("error getting calendar:", e);
-    return "I couldn't fetch your calendar.";
-  }
+  let res: string;
+  await opal(async function (ctx) {
+    let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
+    res = events.toString();
+  });
+  return res;
 }
