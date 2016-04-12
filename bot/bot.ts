@@ -141,13 +141,17 @@ class OPALBot {
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
       let user = this.getUser(session);
       let arg = args.matches[2];
-      this.schedule(user, arg).then(session.send);
+      this.schedule(user, arg).then((reply) => {
+        session.send(reply);
+      });
     });
 
     cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
       let user = this.getUser(session);
       let when = args.matches[2] || "";
-      this.view(user, when).then(session.send);
+      this.view(user, when).then((reply) => {
+        session.send(reply);
+      });
     });
 
     cmdDialog.onDefault(
