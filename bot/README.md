@@ -1,5 +1,16 @@
 # OPAL Chat Bot
 
+## Using the Bot
+
+You can say:
+
+* "add (something with a day in it)" to schedule a meeting
+* "show (day)" to see events from your calendar
+
+The bot should help you log into your Outlook account automatically when you send your first command.
+
+## Running the Bot
+
 Build OPAL:
 
 ```sh
