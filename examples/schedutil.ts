@@ -4,6 +4,7 @@
 
 import {Context, Edit} from '../src/opal';
 import {Event, Calendar} from '../src/calendar';
+import {pad0} from '../src/office';
 
 /**
  * Copy a JavaScript Date object. (It's a shame this isn't as easy as
@@ -91,6 +92,41 @@ export function showChanges(edit: Edit<Event>) {
 export function dateAdd(date: Date, minutes: number) {
   let out = copyDate(date);
   out.setMinutes(date.getMinutes() + minutes);
+  return out;
+}
+
+
+/**
+ * Format the time portion of a `Date` as a human-readable string.
+ */
+export function humanTime(date: Date) {
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+
+  if (hours === 12 && minutes === 0) {
+    return "noon";
+  }
+
+  let out = "";
+
+  let suffix: string;
+  if (hours === 12) {
+    out += hours;
+    suffix = 'pm';
+  } else if (hours <= 12) {
+    out += hours;
+    suffix = 'am';
+  } else {
+    out += hours - 12;
+    suffix = 'pm';
+  }
+
+  if (minutes !== 0) {
+    out += ':' + pad0(minutes);
+  }
+
+  out += suffix;
+
   return out;
 }
 

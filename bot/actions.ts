@@ -5,8 +5,8 @@
 import {opal, Context} from '../src/opal';
 import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
-  countConflicts} from '../examples/schedutil';
-import {User, pad0} from '../src/office';
+  countConflicts, humanTime} from '../examples/schedutil';
+import {User} from '../src/office';
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -139,37 +139,6 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
 
   return out;
 };
-
-function humanTime(date: Date) {
-  let hours = date.getHours();
-  let minutes = date.getMinutes();
-
-  if (hours === 12 && minutes === 0) {
-    return "noon";
-  }
-
-  let out = "";
-
-  let suffix: string;
-  if (hours === 12) {
-    out += hours;
-    suffix = 'pm';
-  } else if (hours <= 12) {
-    out += hours;
-    suffix = 'am';
-  } else {
-    out += hours - 12;
-    suffix = 'pm';
-  }
-
-  if (minutes !== 0) {
-    out += ':' + pad0(minutes);
-  }
-
-  out += suffix;
-
-  return out;
-}
 
 /**
  * Get a summary of events on the user's calendar.
