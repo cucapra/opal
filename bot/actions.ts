@@ -141,6 +141,28 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
 };
 
 /**
+ * Create a JavaScript ordering function given a function that looks up an
+ * element's key. For example, use:
+ *
+ *     array.sort(orderBy((o) => o.f));
+ *
+ * to sort by an object's `f` field.
+ */
+function orderBy<S, T>(f: (v: S) => T) {
+  return (a: S, b: S) => {
+    let aKey = f(a);
+    let bKey = f(b);
+    if (aKey < bKey) {
+      return -1;
+    } else if (aKey > bKey) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+}
+
+/**
  * Get a summary of events on the user's calendar.
  */
 export async function viewEvents(user: User, date: Date) {
@@ -150,9 +172,15 @@ export async function viewEvents(user: User, date: Date) {
 
   let res: string;
   await opal(async function (ctx) {
-    let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
+    let cal: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
+
+    // Sort the events by time.
+    let events = Array.from(ctx.view(cal));
+    events.sort(orderBy((e: Event) => e.start));
+
+    // Format as a string.
     let summaries: string[] = [];
-    for (let event of ctx.view(events)) {
+    for (let event of events) {
       summaries.push(event.subject + " at " + humanTime(event.start));
     }
     res = summaries.join("; ");
