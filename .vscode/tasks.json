@@ -1,23 +1,20 @@
 {
 	"version": "0.1.0",
-    "command": "tsc",
+  "command": "npm",
 	"isShellCommand": true,
-	"suppressTaskName": true,
-	
+  "args": ["run"],
 	"tasks": [
 		{
 			"taskName": "build",
-			"args": ["-p", "."],
 			"isBuildCommand": true,
 			"problemMatcher": "$tsc",
 			"showOutput": "silent"
 		},
 		{
 			"taskName": "test",
-			"args": ["-p", "test"],
 			"isTestCommand": true,
 			"problemMatcher": "$tsc",
-			"showOutput": "silent"
+			"showOutput": "always"
 		}
 	]
 }
