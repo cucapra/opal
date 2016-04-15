@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import * as minimist from 'minimist';
 const chrono = require('chrono-node');
 import {scheduleMeeting, viewEvents} from './actions';
+import * as fs from 'fs';
 
 /**
  * Generate a random, URL-safe slug.
@@ -14,6 +15,44 @@ function randomString() {
   // even base32).
   return crypto.randomBytes(8).toString('hex').slice(0, 10);
 }
+
+/**
+ * HTML page template for the login redirect, which also determines the user's
+ * time zone.
+ *
+ * The server replaces the tokens `DEST_URL` and `TZ_URL` with
+ * JavaScript-encoded strings.
+ */
+const LOGIN_HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OPAL Log In</title>
+    <script>
+var dest_url = DEST_URL;
+var tz_url = TZ_URL;
+
+var offset = (new Date()).getTimezoneOffset();
+
+var xhr = new XMLHttpRequest();
+xhr.onreadystatechange = function () {
+    // Redirect.
+    window.location = dest_url;
+};
+xhr.open("POST", tz_url);
+xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+xhr.send('offset=' + offset);
+    </script>
+</head>
+<body>
+    Logging in&hellip;
+</body>
+</html>
+`;
+
 
 /**
  * The configuration for `OPALBot`, which is passed to its constructor.
@@ -80,11 +119,14 @@ class OPALBot {
     }
     this.setupBot(this.bot, opts.baseURL);
 
+    // Create the Office API client.
     this.client = new Client(
       opts.officeAppId,
       opts.officeAppSecret,
       opts.baseURL + "/authorize"
     );
+
+    // Start the Web server.
     this.server = this.setupServer();
     this.authRequests = {};
   }
@@ -197,6 +239,7 @@ class OPALBot {
     // The Web server.
     let server = restify.createServer();
     server.use(restify.queryParser());
+    server.use(restify.bodyParser());
 
     // The OAuth2 callback.
     server.get('/authorize', (req, res, next) => {
@@ -223,13 +266,29 @@ class OPALBot {
       return next();
     });
 
-    // Authentication redirect. This lets us put cleaner URLs into chat
-    // messages.
+    // Authentication redirect.
     server.get('/login/:state', (req, res, next) => {
       let state = req.params['state'];
       console.log("redirecting for login: state", state);
+
+      // Format the HTML redirect page.
       let authurl = this.client.getAuthUrl(state);
-      res.redirect(authurl, next);
+      let tzurl = "/tz/" + state;
+      let out = LOGIN_HTML.replace('DEST_URL', JSON.stringify(authurl));
+      out = out.replace('TZ_URL', JSON.stringify(tzurl));
+
+      res.contentType = 'text/html';
+      res.end(out);
+      return next();
+    });
+
+    // Receive time zone callback.
+    server.post('/tz/:state', (req, res, next) => {
+      let state = req.params['state'];
+      let offset = parseInt(req.params['offset']);
+      this.gotTimezone(state, offset);
+      res.send("Got it.");
+      return next();
     });
 
     // If we're using the Bot Connector, set up its API endpoint.
@@ -280,6 +339,17 @@ class OPALBot {
       return true;
     } else {
       return false;
+    }
+  }
+
+  /**
+   * Called when the client reports its time zone
+   */
+  private gotTimezone(state: string, offset: number) {
+    let session = this.authRequests[state];
+    if (session) {
+      console.log("recording user's time zone:", offset);
+      session.userData['tzoffset'] = offset;
     }
   }
 
