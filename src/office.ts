@@ -31,7 +31,12 @@ function dateToOffice(d: Date): string {
     ':' + pad0(d.getSeconds());
 }
 
-export function dateToOfficeUTC(d: Date) {
+/**
+ * Given a JavaScript `Date`, create an Office 365 REST API object consisting
+ * of a `DateTime` value and a `TimeZone` string. This makes a time value in
+ * UTC, which is always correct but loses the time zone information.
+ */
+function dateToOfficeUTC(d: Date) {
   let s = d.getUTCFullYear() +
     '-' + pad0(d.getUTCMonth() + 1) +
     '-' + pad0(d.getUTCDate()) +
@@ -39,6 +44,26 @@ export function dateToOfficeUTC(d: Date) {
     ':' + pad0(d.getUTCMinutes()) +
     ':' + pad0(d.getUTCSeconds());
   return { DateTime: s, TimeZone: 'UTC' };
+}
+
+/**
+ * Turn a JavaScript `Date` in to an Office value, like `dateToOfficeUTC` but
+ * preserving the local time zone. Because it's shockingly hard to determine
+ * the right time zone, this may sometimes generate an incorrect time zone
+ * string.
+ */
+export function dateToOfficeLocal(d: Date) {
+  let s = dateToOffice(d);
+
+  // Get the long name of the date's time zone, e.g., "Pacific Daylight Time."
+  let z = d.toLocaleString('en', {timeZoneName: 'long'}).
+    split(' ').slice(3).join(' ');
+
+  // Windows wants the *standard* variant, identifying just the geography, so
+  // just replace "Daylight" with "Standard."
+  z = z.replace("Daylight", "Standard");
+
+  return { DateTime: s, TimeZone: z };
 }
 
 function dateToOfficeDateTimeTimezone(d: Date): any {

@@ -1,7 +1,7 @@
 import * as PSet from './pset';
 import {ExternalCollection, Context} from './opal';
 import * as office from './office';
-import {dateToOfficeUTC} from './office';
+import {dateToOfficeLocal} from './office';
 
 // The Windows time zone names.
 import timezones from './timezones';
@@ -74,8 +74,8 @@ export class Event {
         'ContentType': 'HTML',
         'Content': '',  // TODO
       },
-      'Start': dateToOfficeUTC(this.start),
-      'End': dateToOfficeUTC(this.end),
+      'Start': dateToOfficeLocal(this.start),
+      'End': dateToOfficeLocal(this.end),
       // i am a bad person -- should distinguish required from optional attendees
       'Attendees': this.attendees
     };
@@ -119,10 +119,10 @@ function changeToOffice(change: EventChange): { [key: string]: any } {
     out['Subject'] = change.subject;
   }
   if (change.start) {
-    out['Start'] = dateToOfficeUTC(change.start);
+    out['Start'] = dateToOfficeLocal(change.start);
   }
   if (change.end) {
-    out['End'] = dateToOfficeUTC(change.end);
+    out['End'] = dateToOfficeLocal(change.end);
   }
   return out;
 }
