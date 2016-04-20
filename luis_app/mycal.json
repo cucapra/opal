@@ -1,0 +1,214 @@
+{
+  "luis_schema_version": "1.2.0",
+  "name": "mycal",
+  "desc": "",
+  "culture": "en-us",
+  "intents": [
+    {
+      "Name": "new_meeting",
+      "Children": []
+    },
+    {
+      "Name": "show_calendar",
+      "Children": []
+    },
+    {
+      "Name": "None",
+      "Children": []
+    }
+  ],
+  "entities": [
+    {
+      "Name": "attendee",
+      "Children": []
+    },
+    {
+      "Name": "start_time",
+      "Children": []
+    },
+    {
+      "Name": "subject",
+      "Children": []
+    }
+  ],
+  "bing_entities": [
+    "datetime"
+  ],
+  "actions": [
+    {
+      "actionName": "new_meeting",
+      "intentName": "new_meeting",
+      "actionParameters": [
+        {
+          "parameterName": "start_time",
+          "entityName": "start_time",
+          "required": false
+        },
+        {
+          "parameterName": "attendees",
+          "entityName": "attendee",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "model_features": [],
+  "regex_features": [],
+  "utterances": [
+    {
+      "text": "i want to schedule a meeting at noon",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 7,
+          "endPos": 7
+        }
+      ]
+    },
+    {
+      "text": "schedule something at 1 pm",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 3,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "add an appointment at 11am",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "show me my calendar for tomorrow",
+      "intent": "show_calendar",
+      "entities": []
+    },
+    {
+      "text": "tomorrow morning's calendar",
+      "intent": "show_calendar",
+      "entities": []
+    },
+    {
+      "text": "make a meeting with sarah for tomorrow evening",
+      "intent": "show_calendar",
+      "entities": [
+        {
+          "entity": "attendee",
+          "startPos": 4,
+          "endPos": 4
+        },
+        {
+          "entity": "start_time",
+          "startPos": 6,
+          "endPos": 7
+        }
+      ]
+    },
+    {
+      "text": "meet about the remodel on thursday with adrian",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "attendee",
+          "startPos": 7,
+          "endPos": 7
+        },
+        {
+          "entity": "start_time",
+          "startPos": 5,
+          "endPos": 5
+        },
+        {
+          "entity": "subject",
+          "startPos": 2,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "mycal",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "appointment with charles at 2:30",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "attendee",
+          "startPos": 2,
+          "endPos": 2
+        },
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 6
+        }
+      ]
+    },
+    {
+      "text": "schedule something tomorrow at noon with charles",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "attendee",
+          "startPos": 6,
+          "endPos": 6
+        },
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "schedule something tomorrow at noon with sarah",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "attendee",
+          "startPos": 6,
+          "endPos": 6
+        },
+        {
+          "entity": "start_time",
+          "startPos": 2,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "schedule something tomorrow at noon",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 2,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "what's going on later today",
+      "intent": "show_calendar",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 6,
+          "endPos": 6
+        }
+      ]
+    }
+  ]
+}
