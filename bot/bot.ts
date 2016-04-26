@@ -55,6 +55,22 @@ xhr.send('offset=' + offset);
 
 
 /**
+ * Get a date from a LUIS response.
+ */
+function dateFromLUIS(luis: any): Date {
+  // Get the date from the LUIS response.
+  let dateEntities = botbuilder.EntityRecognizer.findAllEntities(
+    luis.entities, "builtin.datetime.date"
+  );
+  if (dateEntities.length >= 1) {
+    return botbuilder.EntityRecognizer.resolveTime(dateEntities);
+  } else {
+    return new Date();
+  }
+}
+
+
+/**
  * The configuration for `OPALBot`, which is passed to its constructor.
  */
 interface Options {
@@ -188,22 +204,17 @@ class OPALBot {
       bot.add('/command', luisDialog);
 
       luisDialog.on("new_meeting", (session, luis) => {
-        console.log(luis.intents);
-        console.log(luis.entities);
+        let date = dateFromLUIS(luis);
+        let title = "Appointment";  // For now.
+        this.ensureUser(session).then((user) => {
+          this.schedule(new BotSession(session), user, date, title).then(
+            (reply) => { session.send(reply); }
+          );
+        });
       });
 
       luisDialog.on("show_calendar", (session, luis) => {
-        // Get the date from the LUIS response.
-        let dateEntities = botbuilder.EntityRecognizer.findAllEntities(
-          luis.entities, "builtin.datetime.date"
-        );
-        let date: Date;
-        if (dateEntities.length >= 1) {
-          date = botbuilder.EntityRecognizer.resolveTime(dateEntities);
-        } else {
-          date = new Date();
-        }
-
+        let date = dateFromLUIS(luis);
         this.ensureUser(session).then((user) => {
           this.view(user, date).then((reply) => {
             session.send(reply);
