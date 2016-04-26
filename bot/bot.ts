@@ -184,20 +184,34 @@ class OPALBot {
     // Main command menu.
     if (luisURL) {
       // LUIS parser.
-      let cmdDialog = new botbuilder.LuisDialog(luisURL);
-      bot.add('/command', cmdDialog);
+      let luisDialog = new botbuilder.LuisDialog(luisURL);
+      bot.add('/command', luisDialog);
 
-      cmdDialog.on("new_meeting", (session, luis) => {
+      luisDialog.on("new_meeting", (session, luis) => {
         console.log(luis.intents);
         console.log(luis.entities);
       });
 
-      cmdDialog.on("show_calendar", (session, luis) => {
-        console.log(luis.intents);
-        console.log(luis.entities);
+      luisDialog.on("show_calendar", (session, luis) => {
+        // Get the date from the LUIS response.
+        let dateEntities = botbuilder.EntityRecognizer.findAllEntities(
+          luis.entities, "builtin.datetime.date"
+        );
+        let date: Date;
+        if (dateEntities.length >= 1) {
+          date = botbuilder.EntityRecognizer.resolveTime(dateEntities);
+        } else {
+          date = new Date();
+        }
+
+        this.ensureUser(session).then((user) => {
+          this.view(user, date).then((reply) => {
+            session.send(reply);
+          });
+        });
       });
 
-      cmdDialog.onDefault(
+      luisDialog.onDefault(
         botbuilder.DialogAction.send("I'm sorry; I didn't understand.")
       );
 
@@ -214,16 +228,44 @@ class OPALBot {
       cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
         this.ensureUser(session).then((user) => {
           let arg = args.matches[2];
-          this.schedule(new BotSession(session), user, arg).then((reply) => {
-            session.send(reply);
-          });
+
+          let parsed = chrono.parse(arg)[0];
+          if (parsed === undefined) {
+            session.send("Please tell me when you want the meeting.");
+            return;
+          }
+
+          let date: Date = parsed.start.date();
+
+          // Use the remaining (non-date) text as the event title.
+          let beforeDate = arg.slice(0, parsed.index);
+          let afterDate = arg.slice(parsed.index + parsed.text.length);
+          let title = beforeDate + ' ' + afterDate;
+          title = title.replace(/\s+/g, ' ').trim();
+          if (title.length <= 1) {
+            title = "Appointment";
+          }
+
+          this.schedule(new BotSession(session), user, date, title).then(
+            (reply) => { session.send(reply); }
+          );
         });
       });
 
       cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
         this.ensureUser(session).then((user) => {
           let when = args.matches[2] || "";
-          this.view(user, when).then((reply) => {
+
+          // Get the specified date, or today if unspecified.
+          let parsed = chrono.parse(when)[0];
+          let date: Date;
+          if (parsed === undefined) {
+            date = new Date();
+          } else {
+            date = parsed.start.date();
+          }
+
+          this.view(user, date).then((reply) => {
             session.send(reply);
           });
         });
@@ -418,22 +460,7 @@ class OPALBot {
   /**
    * Schedule a meeting based on a user request.
    */
-  async schedule(session: BotSession, user: User, request: string) {
-    let parsed = chrono.parse(request)[0];
-    if (parsed === undefined) {
-      return "Please tell me when you want the meeting.";
-    }
-
-    let date: Date = parsed.start.date();
-
-    // Use the remaining (non-date) text as the event title.
-    let beforeDate = request.slice(0, parsed.index);
-    let afterDate = request.slice(parsed.index + parsed.text.length);
-    let title = beforeDate + ' ' + afterDate;
-    title = title.replace(/\s+/g, ' ').trim();
-    if (title.length <= 1) {
-      title = "Appointment";
-    }
+  async schedule(session: BotSession, user: User, date: Date, title: string) {
 
     console.log("scheduling", title, "on", date);
 
@@ -443,16 +470,7 @@ class OPALBot {
   /**
    * Get events from a user's calendar.
    */
-  async view(user: User, request: string) {
-    // Get the specified date, or today if unspecified.
-    let parsed = chrono.parse(request)[0];
-    let date: Date;
-    if (parsed === undefined) {
-      date = new Date();
-    } else {
-      date = parsed.start.date();
-    }
-
+  async view(user: User, date: Date) {
     let reply = await viewEvents(user, date);
     if (reply.length) {
       return "Here's what's on your calendar: " + reply;
@@ -531,11 +549,9 @@ function main() {
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
     baseURL,
     terminal,
-    /*
     luisURL: "https://api.projectoxford.ai/luis/v1/application?" +
       "id=777cac00-d704-428b-90d2-19b48b112b0f" +
       "&subscription-key=78e2149ffcd84ed898deb35ce81fceb4",
-    */
   });
   opalbot.run();
 }
