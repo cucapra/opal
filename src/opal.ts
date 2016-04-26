@@ -548,23 +548,7 @@ export class Context {
    * @param limit    Optionally, the maximum number of worlds to consider.
    */
   async minimize(worlds: Iterable<World>, weight: Weight<number>, limit?: number) {
-    let count = 0;
-    let min_weight: number = null;
-    let min_world: World = null;
-    for (let world of worlds) {
-      let w = await this.get(weight, world);
-      if (min_weight === null || w < min_weight) {
-        min_weight = w;
-        min_world = world;
-      }
-
-      ++count;
-      if (limit && count >= limit) {
-        break;
-      }
-    }
-
-    return min_world;
+    return (await this.minimize_k(worlds, weight, 1, limit))[0];
   }
 
   /**
