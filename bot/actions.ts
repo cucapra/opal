@@ -2,7 +2,7 @@
  * OPAL actions for the bot.
  */
 
-import {opal, Context, orderBy, World} from '../src/opal';
+import {opal, Context, orderBy, World, Weight} from '../src/opal';
 import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
@@ -24,6 +24,31 @@ function getSadness(prefStart: number, prefEnd: number, evt: Event): number {
     // In range.
     return 0.0;
   }
+}
+
+/**
+ * Ask the user to choose from the best *k* worlds.
+ *
+ * @param ctx      The OPAL context.
+ * @param session  The bot session to use for interaction.
+ * @param worlds   The set of worlds to choose between.
+ * @param score    The number weight that ranks the best worlds.
+ * @param summary  The string weight that summarizes each world.
+ * @param limit    The maximum number of options to show the user.
+ * @returns        The chosen world.
+ */
+async function choose_world(ctx: Context, session: BotSession,
+                            worlds: Iterable<World>, score: Weight<number>,
+                            summary: Weight<string>,
+                            limit: number)
+{
+  let topk = await ctx.minimize_k(worlds, score, 3);
+  let options: string[] = [];
+  for (let world of topk) {
+    options.push(await ctx.get(summary, world));
+  }
+  let choice = await session.choose(options);
+  return topk[choice];
 }
 
 /**
@@ -72,17 +97,8 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
                    distFromPref * prefCost);
   });
 
-  // Find the best options.
-  let topk = await ctx.minimize_k(worlds, score, 3);
-
-  // TODO
-  let options: string[] = [];
-  for (let world of topk) {
-    options.push(await ctx.get(summary, world));
-  }
-  let choice = await session.choose(options);
-
-  return topk[choice];
+  // Ask the user for the best among the top 3 options.
+  return choose_world(ctx, session, worlds, score, summary, 3);
 }
 
 function clearTime(date: Date): Date {

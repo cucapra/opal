@@ -54,7 +54,7 @@ class PromiseJar<T> {
  * A child world can write to a weight using `ctx.set` and its parent can
  * read that value using `ctx.get`.
  */
-class Weight<T> {
+export class Weight<T> {
   jars: Map<World, PromiseJar<T>>;
 
   /**
