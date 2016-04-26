@@ -2,7 +2,7 @@
  * OPAL actions for the bot.
  */
 
-import {opal, Context, orderBy} from '../src/opal';
+import {opal, Context, orderBy, World} from '../src/opal';
 import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
@@ -66,8 +66,10 @@ async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
                    distFromPref * prefCost);
   });
 
-  // Find the best time.
-  return await ctx.minimize(worlds, score);
+  // Find the best options.
+  let topk = await ctx.minimize_k(worlds, score, 3);
+
+  return topk[0];
 }
 
 function clearTime(date: Date): Date {
