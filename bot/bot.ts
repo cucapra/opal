@@ -88,6 +88,11 @@ interface Options {
    * Connector bot?
    */
   terminal?: boolean,
+
+  /**
+   * The LUIS endpoint URL, if this bot should use natural language.
+   */
+  luisURL?: string,
 }
 
 /**
@@ -117,7 +122,7 @@ class OPALBot {
         minSendDelay: 100,
       });
     }
-    this.setupBot(this.bot, opts.baseURL);
+    this.setupBot(this.bot, opts.baseURL, opts.luisURL);
 
     // Create the Office API client.
     this.client = new Client(
@@ -169,7 +174,7 @@ class OPALBot {
   /**
    * Create the Bot Framework bot object.
    */
-  private setupBot(bot: AnyBot, baseURL: string) {
+  private setupBot(bot: AnyBot, baseURL: string, luisURL?: string) {
     // The default dialog (the entry point). Makes sure the user is
     // authenticated before doing anything.
     bot.add('/', (session) => {
@@ -177,34 +182,57 @@ class OPALBot {
     });
 
     // Main command menu.
-    let cmdDialog = new botbuilder.CommandDialog();
-    bot.add('/command', cmdDialog);
+    if (luisURL) {
+      // LUIS parser.
+      let cmdDialog = new botbuilder.LuisDialog(luisURL);
+      bot.add('/command', cmdDialog);
 
-    cmdDialog.matches('^hi', (session) => {
-      session.send('Hello there! Let me know if you want to schedule a meeting.');
-    });
+      cmdDialog.on("new_meeting", (session, luis) => {
+        console.log(luis.intents);
+        console.log(luis.entities);
+      });
 
-    cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
-      this.ensureUser(session).then((user) => {
-        let arg = args.matches[2];
-        this.schedule(new BotSession(session), user, arg).then((reply) => {
-          session.send(reply);
+      cmdDialog.on("show_calendar", (session, luis) => {
+        console.log(luis.intents);
+        console.log(luis.entities);
+      });
+
+      cmdDialog.onDefault(
+        botbuilder.DialogAction.send("I'm sorry; I didn't understand.")
+      );
+
+    } else {
+
+      // Basic regex-based command interface.
+      let cmdDialog = new botbuilder.CommandDialog();
+      bot.add('/command', cmdDialog);
+
+      cmdDialog.matches('^hi', (session) => {
+        session.send('Hello there! Let me know if you want to schedule a meeting.');
+      });
+
+      cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
+        this.ensureUser(session).then((user) => {
+          let arg = args.matches[2];
+          this.schedule(new BotSession(session), user, arg).then((reply) => {
+            session.send(reply);
+          });
         });
       });
-    });
 
-    cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
-      this.ensureUser(session).then((user) => {
-        let when = args.matches[2] || "";
-        this.view(user, when).then((reply) => {
-          session.send(reply);
+      cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
+        this.ensureUser(session).then((user) => {
+          let when = args.matches[2] || "";
+          this.view(user, when).then((reply) => {
+            session.send(reply);
+          });
         });
       });
-    });
 
-    cmdDialog.onDefault(
-      botbuilder.DialogAction.send("Let me know if you need anything.")
-    );
+      cmdDialog.onDefault(
+        botbuilder.DialogAction.send("Try saying \"add\" or \"get\".")
+      );
+    }
 
     // A dialog for requesting authorization.
     bot.add('/login', (session) => {
@@ -503,6 +531,11 @@ function main() {
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
     baseURL,
     terminal,
+    /*
+    luisURL: "https://api.projectoxford.ai/luis/v1/application?" +
+      "id=777cac00-d704-428b-90d2-19b48b112b0f" +
+      "&subscription-key=78e2149ffcd84ed898deb35ce81fceb4",
+    */
   });
   opalbot.run();
 }
