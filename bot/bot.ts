@@ -445,6 +445,30 @@ export class BotSession {
       this.session.beginDialog('/prompt', [resolve, text]);
     });
   }
+
+  choose(options: String[]): Promise<number> {
+    let prompt_parts = [];
+    for (let i = 0; i < options.length; ++i) {
+      prompt_parts.push(`(${i + 1}) ${options[i]}`);
+    }
+    let prompt = "Please choose one of: " + prompt_parts.join(", ");
+
+    return new Promise<string>((resolve, reject) => {
+      this.session.beginDialog('/prompt', [resolve, prompt]);
+    }).then((response) => {
+      let index = parseInt(response.trim());
+      if (isNaN(index)) {
+        // Just choose the first by default if this was a non-number.
+        return 0;
+      } else if (index <= 0 || index >= options.length) {
+        // Out of range. Again, choose a default.
+        return 0;
+      } else {
+        // A valid selection.
+        return index - 1;
+      }
+    });
+  }
 }
 
 /**

@@ -71,7 +71,15 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
   // Find the best options.
   let topk = await ctx.minimize_k(worlds, score, 3);
 
-  return topk[0];
+  // TODO
+  let options: string[] = [];
+  for (let world of topk) {
+    options.push("a world");
+  }
+  let choice = await session.choose(options);
+  console.log(choice);
+
+  return topk[choice];
 }
 
 function clearTime(date: Date): Date {
