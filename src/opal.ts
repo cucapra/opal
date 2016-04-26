@@ -579,7 +579,7 @@ export class Context {
     }
 
     // Sort by weight and return the prefix.
-    worlds_flat.sort(orderBy((p: { world: World, value: number}) => p.value));
+    worlds_flat.sort(orderBy((p: { world: World, value: number }) => p.value));
     return worlds_flat.slice(0, count).map((p) => p.world);
   }
 }
