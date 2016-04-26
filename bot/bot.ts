@@ -187,7 +187,7 @@ class OPALBot {
     cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
       this.ensureUser(session).then((user) => {
         let arg = args.matches[2];
-        this.schedule(user, arg).then((reply) => {
+        this.schedule(new BotSession(session), user, arg).then((reply) => {
           session.send(reply);
         });
       });
@@ -220,6 +220,24 @@ class OPALBot {
         session.userData['email'] + ".");
       session.beginDialog('/command');
     });
+
+    // A generic prompt dialog. This really seems to break the "dialog"
+    // abstraction from Bot Framework... this is just a workaround for the
+    // lack of a direct way to query and wait for a response.
+    bot.add('/prompt', [
+      (session, args) => {
+        let callback: (a: string) => void = args[0];
+        let prompt: string = args[1];
+        session.dialogData.callback = callback;
+        botbuilder.Prompts.text(session, prompt);
+      },
+      (session, results) => {
+        let res: string = results.response;
+        let callback: (a: string) => void = session.dialogData.callback;
+        callback(res);
+        session.endDialog();
+      },
+    ]);
 
     // Log some events.
     bot.on('error', (evt) => {
@@ -372,7 +390,7 @@ class OPALBot {
   /**
    * Schedule a meeting based on a user request.
    */
-  async schedule(user: User, request: string) {
+  async schedule(session: BotSession, user: User, request: string) {
     let parsed = chrono.parse(request)[0];
     if (parsed === undefined) {
       return "Please tell me when you want the meeting.";
@@ -391,7 +409,7 @@ class OPALBot {
 
     console.log("scheduling", title, "on", date);
 
-    return await scheduleMeeting(user, date, title);
+    return await scheduleMeeting(session, user, date, title);
   }
 
   /**
@@ -413,6 +431,19 @@ class OPALBot {
     } else {
       return "There's nothing on your calendar.";
     }
+  }
+}
+
+/**
+ * A wrapper for Session that lets OPAL programs interact with the user.
+ */
+export class BotSession {
+  constructor(public session: botbuilder.Session) {}
+
+  prompt(text: String): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.session.beginDialog('/prompt', [resolve, text]);
+    });
   }
 }
 

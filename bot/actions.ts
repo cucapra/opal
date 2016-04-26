@@ -7,6 +7,7 @@ import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
 import {User} from '../src/office';
+import {BotSession} from './bot';
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -37,7 +38,8 @@ function getSadness(prefStart: number, prefEnd: number, evt: Event): number {
  * @param minutes   The duration of the new event in minutes.
  * @returns         An OPAL `World` where the event has been scheduled.
  */
-async function schedule(ctx: Context, cal: Calendar, range: Iterable<Date>,
+async function schedule(ctx: Context, session: BotSession, cal: Calendar,
+                        range: Iterable<Date>,
                         prefStart: number, prefEnd: number,
                         title: string, minutes: number)
 {
@@ -93,7 +95,7 @@ function dateRange(date: Date): [Date, Date] {
 /**
  * Schedule a new meeting for a user.
  */
-export async function scheduleMeeting(user: User, date: Date, title: string) {
+export async function scheduleMeeting(session: BotSession, user: User, date: Date, title: string) {
   let pair = dateRange(date);
   let rangeStart = pair[0];
   let rangeEnd = pair[1];
@@ -110,6 +112,7 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
     // Schedule a meeting.
     let world = await schedule(
       ctx,
+      session,
       events,
       slots(
         rangeStart,
