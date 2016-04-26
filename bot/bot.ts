@@ -208,7 +208,9 @@ class OPALBot {
         let title = "Appointment";  // For now.
         this.ensureUser(session).then((user) => {
           this.schedule(new BotSession(session), user, date, title).then(
-            (reply) => { session.send(reply); }
+            (reply) => {
+              session.send(reply);
+            }
           );
         });
       });
@@ -316,7 +318,6 @@ class OPALBot {
         let res: string = results.response;
         let callback: (a: string) => void = session.dialogData.callback;
         callback(res);
-        session.endDialog();
       },
     ]);
 
