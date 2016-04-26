@@ -44,6 +44,7 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
                         title: string, minutes: number)
 {
   let score = ctx.weight<number>();
+  let summary = ctx.weight<string>();
 
   // Constants used to weight the two ranking factors.
   const conflictCost = 2.0;  // Cost per conflict.
@@ -53,6 +54,9 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
     // Try adding the event to the calendar.
     let evt = new Event(title, start, dateAdd(start, minutes));
     ctx.add(cal, evt);
+
+    // Summarize this change as a string.
+    ctx.set(summary, humanTime(start));
 
     // To compute the weighting factors, we need the unmodified calendar and
     // the modifications we want to make to it.
@@ -74,10 +78,9 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
   // TODO
   let options: string[] = [];
   for (let world of topk) {
-    options.push("a world");
+    options.push(await ctx.get(summary, world));
   }
   let choice = await session.choose(options);
-  console.log(choice);
 
   return topk[choice];
 }
