@@ -322,8 +322,8 @@ class OPALBot {
     ]);
 
     // Log some events.
-    bot.on('error', (evt) => {
-      console.log('bot error:', evt);
+    bot.on('error', (exc) => {
+      console.error(exc.stack);
     });
     bot.on('Message', (evt) => {
       console.log('received:', evt.text);
