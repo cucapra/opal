@@ -2,7 +2,7 @@
  * OPAL actions for the bot.
  */
 
-import {opal, Context} from '../src/opal';
+import {opal, Context, orderBy} from '../src/opal';
 import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
@@ -139,28 +139,6 @@ export async function scheduleMeeting(user: User, date: Date, title: string) {
 
   return out;
 };
-
-/**
- * Create a JavaScript ordering function given a function that looks up an
- * element's key. For example, use:
- *
- *     array.sort(orderBy((o) => o.f));
- *
- * to sort by an object's `f` field.
- */
-function orderBy<S, T>(f: (v: S) => T) {
-  return (a: S, b: S) => {
-    let aKey = f(a);
-    let bKey = f(b);
-    if (aKey < bKey) {
-      return -1;
-    } else if (aKey > bKey) {
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-}
 
 /**
  * Get a summary of events on the user's calendar.

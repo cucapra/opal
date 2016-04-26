@@ -3,6 +3,29 @@
 import * as PSet from './pset';
 
 /**
+ * Create a JavaScript ordering function given a function that looks up an
+ * element's key. For example, use:
+ *
+ *     array.sort(orderBy((o) => o.f));
+ *
+ * to sort by an object's `f` field.
+ */
+export function orderBy<S, T>(f: (v: S) => T) {
+  return (a: S, b: S) => {
+    let aKey = f(a);
+    let bKey = f(b);
+    if (aKey < bKey) {
+      return -1;
+    } else if (aKey > bKey) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+}
+
+
+/**
  * A promise utility for delayed resolution.
  *
  * This is useful when you want to call `then` on a promise but you don't know
@@ -520,13 +543,9 @@ export class Context {
   /**
    * Find the `World` that minimizes a given weight.
    *
-   * @param worlds   The sequence of `World`s to search. Could be produced
-   *                 by `explore`, for example.
+   * @param worlds   The sequence of `World`s to search.
    * @param weight   The numerical weight to minimize.
    * @param limit    Optionally, the maximum number of worlds to consider.
-   *                 Otherwise, all worlds are searched. If the `worlds`
-   *                 sequence is infinite, you definitely want to provide
-   *                 a limit.
    */
   async minimize(worlds: Iterable<World>, weight: Weight<number>, limit?: number) {
     let count = 0;
@@ -546,6 +565,38 @@ export class Context {
     }
 
     return min_world;
+  }
+
+  /**
+   * Find *k* worlds that minimize a weight.
+   *
+   * @param worlds   The sequence of `World`s to search. Could be produced
+   *                 by `explore`, for example.
+   * @param weight   The numerical weight to minimize.
+   * @param count    Return at most `count` worlds.
+   * @param limit    Optionally, the maximum number of worlds to consider.
+   *                 Otherwise, all worlds are searched. If the `worlds`
+   *                 sequence is infinite, you definitely want to provide
+   *                 a limit.
+   */
+  async minimize_k(worlds: Iterable<World>, weight: Weight<number>,
+                   count: number, limit?: number)
+  {
+    // Get the worlds and their weights.
+    let worlds_flat: { world: World, value: number }[] = [];
+    for (let world of worlds) {
+      worlds_flat.push({
+        world,
+        value: await this.get(weight, world),
+      });
+      if (limit && worlds_flat.length >= limit) {
+        break;
+      }
+    }
+
+    // Sort by weight and return the prefix.
+    worlds_flat.sort(orderBy((p: { world: World, value: number}) => p.value));
+    return worlds_flat.slice(0, count).map((p) => p.world);
   }
 }
 
