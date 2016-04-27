@@ -5,6 +5,7 @@
 const restify = require('restify');
 const msrest = require('ms-rest');
 const botconnector = require('botconnector');
+const basicauth = require('basic-auth');
 
 interface Response {
   text: string;
@@ -47,7 +48,6 @@ export class Bot {
   constructor(appId: string, appSecret: string, secure?: boolean) {
     // Set up the HTTP server.
     this.server = restify.createServer();
-    this.server.use(restify.authorizationParser());
     this.server.use(restify.bodyParser());
 
     // Set up the Bot Connector client.
@@ -71,9 +71,10 @@ export class Bot {
    * Connector.
    */
   private verifyRequest(req, res, next) {
-    if (req.authorization && req.authorization.basic &&
-        req.authorization.basic.username === this.credentials.userName &&
-        req.authorization.basic.password === this.credentials.password) {
+    let auth = basicauth(req);
+    if (auth &&
+        auth.username === this.credentials.userName &&
+        auth.password === this.credentials.password) {
       // Success.
       next();
     } else {
