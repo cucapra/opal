@@ -3,7 +3,7 @@
  */
 
 const restify = require('restify');
-const msrest = require('msrest');
+const msrest = require('ms-rest');
 const botconnector = require('botconnector');
 
 interface Response {
