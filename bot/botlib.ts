@@ -20,7 +20,7 @@ interface Message {
 /**
  * A controller that interacts with the Bot Connector API.
  */
-class Bot {
+export class Bot {
   /**
    * A Restify server.
    */
