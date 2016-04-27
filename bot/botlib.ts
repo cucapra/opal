@@ -98,3 +98,9 @@ class Bot {
     });
   }
 }
+
+// TODO Just a test.
+let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
+bot.server.listen(4700, () => {
+  console.log("listening on %s", bot.server.url);
+});
