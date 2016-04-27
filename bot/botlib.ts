@@ -24,11 +24,6 @@ interface Message {
  */
 export class Bot {
   /**
-   * A Restify server.
-   */
-  server: any;
-
-  /**
    * Microsoft API REST credentials.
    */
   credentials: { userName: string, password: string };
@@ -48,25 +43,17 @@ export class Bot {
   /**
    * @param appId      The Bot Connector application ID.
    * @param appSecret  The Bot Connector secret.
-   * @param secure     Whether this bot is running on an HTTPS sever. If it
+   * @param secure     Whether this bot is running on an HTTPS server. If it
    *                   is, we can verify that requests actually come from Bot
    *                   Connector. Otherwise, BC does not include credentials
    *                   in its requests.
    */
   constructor(appId: string, appSecret: string, secure?: boolean) {
-    // Set up the HTTP server.
-    this.server = restify.createServer();
+    this.secure = !!secure;
 
     // Set up the Bot Connector client.
     this.credentials = new msrest.BasicAuthenticationCredentials(appId, appSecret);
     this.client = new botconnector(this.credentials);
-
-    this.secure = !!secure;
-
-    // Handle requests from Bot Connector.
-    // TODO Don't hard-wire this to an endpoint so we can integrate with
-    // larger application.
-    this.server.post('/api/messages', this.handle);
   }
 
   /**
@@ -91,7 +78,7 @@ export class Bot {
   /**
    * Handle incoming messages from Bot Connector.
    */
-  private handle(req: http.IncomingMessage, res: http.ServerResponse, next) {
+  handle(req: http.IncomingMessage, res: http.ServerResponse, next) {
     // If we're on a secure connection, verify the request's credentials.
     if (this.secure && !this.checkAuth(req, res)) {
       return next();
@@ -147,6 +134,8 @@ export class Bot {
 
 // TODO Just a test.
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
-bot.server.listen(4700, () => {
-  console.log("listening on %s", bot.server.url);
+let server = restify.createServer();
+server.post('/api/messages', bot.handle);
+server.listen(4700, () => {
+  console.log("listening on %s", server.url);
 });
