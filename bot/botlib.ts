@@ -47,7 +47,7 @@ export class Bot {
   /**
    * @param appId      The Bot Connector application ID.
    * @param appSecret  The Bot Connector secret.
-   * @param secure     Whether this bot is runnong on an HTTPS sever. If it
+   * @param secure     Whether this bot is running on an HTTPS sever. If it
    *                   is, we can verify that requests actually come from Bot
    *                   Connector. Otherwise, BC does not include credentials
    *                   in its requests.
@@ -55,7 +55,6 @@ export class Bot {
   constructor(appId: string, appSecret: string, secure?: boolean) {
     // Set up the HTTP server.
     this.server = restify.createServer();
-    this.server.use(restify.bodyParser());
 
     // Set up the Bot Connector client.
     this.credentials = new msrest.BasicAuthenticationCredentials(appId, appSecret);
@@ -66,7 +65,7 @@ export class Bot {
     // Handle requests from Bot Connector.
     // TODO Don't hard-wire this to an endpoint so we can integrate with
     // larger application.
-    this.server.post('/api/messages', this.handleMessage);
+    this.server.post('/api/messages', this.handle);
   }
 
   /**
@@ -91,14 +90,30 @@ export class Bot {
   /**
    * Handle incoming messages from Bot Connector.
    */
-  private handleMessage(req, res, next) {
+  private handle(req, res, next) {
     // If we're on a secure connection, verify the request's credentials.
     if (this.secure && !this.checkAuth(req, res)) {
       return next();
     }
 
-    var msg: Message = req.body;
-    console.log(msg.text);
+    // Parse the JSON request body.
+    if (!req.body) {
+      console.error("Request missing body.");
+      res.statusCode = 400;
+      res.end("Missing body.");
+      return next();
+    }
+    let msg: Message;
+    try {
+      msg = JSON.parse(req.body);
+    } catch (e) {
+      console.error("Invalid request body:", e);
+      res.statusCode = 400;
+      res.end("Invalid body.");
+      return next();
+    }
+
+    console.log(msg);
     res.send({ text: "This is a test!" });
     next();
   }
