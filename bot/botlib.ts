@@ -38,6 +38,13 @@ export class Bot {
   client: any;
 
   /**
+   * Indicates whether the server is reached via an HTTPS endpoint. If so, we
+   * can verify that requests come from Bot Connector. Otherwise, BC doesn't
+   * include credentials.
+   */
+  secure: boolean;
+
+  /**
    * @param appId      The Bot Connector application ID.
    * @param appSecret  The Bot Connector secret.
    * @param secure     Whether this bot is runnong on an HTTPS sever. If it
@@ -54,33 +61,30 @@ export class Bot {
     this.credentials = new msrest.BasicAuthenticationCredentials(appId, appSecret);
     this.client = new botconnector(this.credentials);
 
+    this.secure = !!secure;
+
     // Handle requests from Bot Connector.
     // TODO Don't hard-wire this to an endpoint so we can integrate with
     // larger application.
-    if (secure) {
-      // Is this application running on HTTPS? If so, we'll check to make sure
-      // requests actually come from Bot Connector.
-      this.server.post('/api/messages', this.verifyRequest, this.handleMessage);
-    } else {
-      this.server.post('/api/messages', this.handleMessage);
-    }
+    this.server.post('/api/messages', this.handleMessage);
   }
 
   /**
    * "Middleware" function that verifies that requests come from Bot
    * Connector.
    */
-  private verifyRequest(req, res, next) {
+  private checkAuth(req, res) {
     let auth = basicauth(req);
     if (auth &&
         auth.username === this.credentials.userName &&
         auth.password === this.credentials.password) {
-      // Success.
-      next();
+      return true;
     } else {
       // Failure.
       console.error("Authorization failed.");
-      res.send(403);
+      res.statusCode = 401;
+      res.end('Missing authorization.');
+      return false;
     }
   }
 
@@ -88,6 +92,11 @@ export class Bot {
    * Handle incoming messages from Bot Connector.
    */
   private handleMessage(req, res, next) {
+    // If we're on a secure connection, verify the request's credentials.
+    if (this.secure && !this.checkAuth(req, res)) {
+      return next();
+    }
+
     var msg: Message = req.body;
     console.log(msg.text);
     res.send({ text: "This is a test!" });
