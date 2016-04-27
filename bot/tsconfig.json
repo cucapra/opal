@@ -7,6 +7,7 @@
   "files": [
     "bot.ts",
     "actions.ts",
+    "botlib.ts",
     "typings/main.d.ts"
   ]
 }
