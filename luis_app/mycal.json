@@ -1,25 +1,65 @@
 {
   "luis_schema_version": "1.2.0",
-  "name": "mycal",
+  "name": "OPAL Luis Cal",
   "desc": "",
   "culture": "en-us",
   "intents": [
-    {
-      "Name": "new_meeting",
-      "Children": []
-    },
     {
       "Name": "show_calendar",
       "Children": []
     },
     {
+      "Name": "chit_chat",
+      "Children": []
+    },
+    {
       "Name": "None",
+      "Children": []
+    },
+    {
+      "Name": "greeting",
+      "Children": []
+    },
+    {
+      "Name": "new_meeting",
+      "Children": []
+    },
+    {
+      "Name": "reschedule_meeting",
+      "Children": []
+    },
+    {
+      "Name": "check_availability",
+      "Children": []
+    },
+    {
+      "Name": "help",
+      "Children": []
+    },
+    {
+      "Name": "cancel_meeting",
       "Children": []
     }
   ],
   "entities": [
     {
-      "Name": "attendee",
+      "Name": "location",
+      "Children": []
+    },
+    {
+      "Name": "subject",
+      "Children": []
+    },
+    {
+      "Name": "duration",
+      "Children": []
+    },
+    {
+      "Name": "date_range",
+      "Children": []
+    },
+    {
+      "Name": "time_window",
       "Children": []
     },
     {
@@ -27,7 +67,15 @@
       "Children": []
     },
     {
-      "Name": "subject",
+      "Name": "meeting_type",
+      "Children": []
+    },
+    {
+      "Name": "attendee",
+      "Children": []
+    },
+    {
+      "Name": "end_time",
       "Children": []
     }
   ],
@@ -35,6 +83,74 @@
     "datetime"
   ],
   "actions": [
+    {
+      "actionName": "check_availability",
+      "intentName": "check_availability",
+      "actionParameters": [
+        {
+          "parameterName": "meeting_time",
+          "entityName": "start_time",
+          "required": false
+        },
+        {
+          "parameterName": "attendee",
+          "entityName": "attendee",
+          "required": false
+        },
+        {
+          "parameterName": "meeting_name",
+          "entityName": "subject",
+          "required": false
+        }
+      ]
+    },
+    {
+      "actionName": "reschedule_meeting",
+      "intentName": "reschedule_meeting",
+      "actionParameters": [
+        {
+          "parameterName": "meeting_time",
+          "entityName": "start_time",
+          "required": false
+        },
+        {
+          "parameterName": "attendee",
+          "entityName": "attendee",
+          "required": false
+        },
+        {
+          "parameterName": "date",
+          "entityName": "datetime",
+          "required": false
+        },
+        {
+          "parameterName": "meeting_name",
+          "entityName": "subject",
+          "required": false
+        }
+      ]
+    },
+    {
+      "actionName": "cancel_meeting",
+      "intentName": "cancel_meeting",
+      "actionParameters": [
+        {
+          "parameterName": "meeting_name",
+          "entityName": "subject",
+          "required": false
+        },
+        {
+          "parameterName": "meeting_time",
+          "entityName": "start_time",
+          "required": false
+        },
+        {
+          "parameterName": "attendee",
+          "entityName": "attendee",
+          "required": false
+        }
+      ]
+    },
     {
       "actionName": "new_meeting",
       "intentName": "new_meeting",
@@ -48,6 +164,16 @@
           "parameterName": "attendees",
           "entityName": "attendee",
           "required": false
+        },
+        {
+          "parameterName": "meeting_name",
+          "entityName": "subject",
+          "required": false
+        },
+        {
+          "parameterName": "time_window",
+          "entityName": "time_window",
+          "required": false
         }
       ]
     }
@@ -56,26 +182,51 @@
   "regex_features": [],
   "utterances": [
     {
-      "text": "i want to schedule a meeting at noon",
+      "text": "hey, what's up?",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "cook me up a meeting at 10am tomorrow",
       "intent": "new_meeting",
       "entities": [
         {
           "entity": "start_time",
+          "startPos": 6,
+          "endPos": 6
+        },
+        {
+          "entity": "date_range",
           "startPos": 7,
           "endPos": 7
         }
       ]
     },
     {
-      "text": "schedule something at 1 pm",
+      "text": "schedule a one-on-one for tomorrow at noon",
       "intent": "new_meeting",
       "entities": [
         {
           "entity": "start_time",
-          "startPos": 3,
-          "endPos": 4
+          "startPos": 10,
+          "endPos": 10
+        },
+        {
+          "entity": "date_range",
+          "startPos": 8,
+          "endPos": 8
+        },
+        {
+          "entity": "meeting_type",
+          "startPos": 2,
+          "endPos": 6
         }
       ]
+    },
+    {
+      "text": "what are my choices?",
+      "intent": "help",
+      "entities": []
     },
     {
       "text": "add an appointment at 11am",
@@ -89,28 +240,125 @@
       ]
     },
     {
-      "text": "show me my calendar for tomorrow",
-      "intent": "show_calendar",
+      "text": "is chris available at 3 pm?",
+      "intent": "check_availability",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 5
+        },
+        {
+          "entity": "attendee",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "length",
+      "intent": "None",
       "entities": []
     },
     {
-      "text": "tomorrow morning's calendar",
-      "intent": "show_calendar",
+      "text": "schedule something at 1 pm",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 3,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "i want to schedule a meeting at noon",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 7,
+          "endPos": 7
+        }
+      ]
+    },
+    {
+      "text": "how does this work?",
+      "intent": "None",
       "entities": []
     },
     {
-      "text": "make a meeting with sarah for tomorrow evening",
-      "intent": "show_calendar",
+      "text": "reschedule my meeting with jennifer",
+      "intent": "reschedule_meeting",
       "entities": [
         {
           "entity": "attendee",
           "startPos": 4,
           "endPos": 4
-        },
+        }
+      ]
+    },
+    {
+      "text": "cancel my 3 pm meeting",
+      "intent": "cancel_meeting",
+      "entities": [
         {
           "entity": "start_time",
+          "startPos": 2,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "what's going on later today",
+      "intent": "show_calendar",
+      "entities": [
+        {
+          "entity": "time_window",
+          "startPos": 5,
+          "endPos": 5
+        },
+        {
+          "entity": "date_range",
           "startPos": 6,
-          "endPos": 7
+          "endPos": 6
+        }
+      ]
+    },
+    {
+      "text": "schedule something tomorrow at noon with charles",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 4
+        },
+        {
+          "entity": "date_range",
+          "startPos": 2,
+          "endPos": 2
+        },
+        {
+          "entity": "attendee",
+          "startPos": 6,
+          "endPos": 6
+        }
+      ]
+    },
+    {
+      "text": "schedule something tomorrow at noon",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 4
+        },
+        {
+          "entity": "date_range",
+          "startPos": 2,
+          "endPos": 2
         }
       ]
     },
@@ -118,11 +366,6 @@
       "text": "meet about the remodel on thursday with adrian",
       "intent": "new_meeting",
       "entities": [
-        {
-          "entity": "attendee",
-          "startPos": 7,
-          "endPos": 7
-        },
         {
           "entity": "start_time",
           "startPos": 5,
@@ -132,6 +375,11 @@
           "entity": "subject",
           "startPos": 2,
           "endPos": 3
+        },
+        {
+          "entity": "attendee",
+          "startPos": 7,
+          "endPos": 7
         }
       ]
     },
@@ -145,68 +393,198 @@
       "intent": "new_meeting",
       "entities": [
         {
-          "entity": "attendee",
-          "startPos": 2,
-          "endPos": 2
-        },
-        {
           "entity": "start_time",
           "startPos": 4,
           "endPos": 6
+        },
+        {
+          "entity": "attendee",
+          "startPos": 2,
+          "endPos": 2
         }
       ]
     },
     {
-      "text": "schedule something tomorrow at noon with charles",
-      "intent": "new_meeting",
-      "entities": [
-        {
-          "entity": "attendee",
-          "startPos": 6,
-          "endPos": 6
-        },
-        {
-          "entity": "start_time",
-          "startPos": 4,
-          "endPos": 4
-        }
-      ]
+      "text": "greetings",
+      "intent": "greeting",
+      "entities": []
     },
     {
       "text": "schedule something tomorrow at noon with sarah",
       "intent": "new_meeting",
       "entities": [
         {
+          "entity": "start_time",
+          "startPos": 4,
+          "endPos": 4
+        },
+        {
+          "entity": "date_range",
+          "startPos": 2,
+          "endPos": 2
+        },
+        {
           "entity": "attendee",
+          "startPos": 6,
+          "endPos": 6
+        }
+      ]
+    },
+    {
+      "text": "make a meeting with sarah for tomorrow evening",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "time_window",
+          "startPos": 7,
+          "endPos": 7
+        },
+        {
+          "entity": "date_range",
           "startPos": 6,
           "endPos": 6
         },
         {
-          "entity": "start_time",
-          "startPos": 2,
+          "entity": "attendee",
+          "startPos": 4,
           "endPos": 4
         }
       ]
     },
     {
-      "text": "schedule something tomorrow at noon",
-      "intent": "new_meeting",
-      "entities": [
-        {
-          "entity": "start_time",
-          "startPos": 2,
-          "endPos": 4
-        }
-      ]
-    },
-    {
-      "text": "what's going on later today",
+      "text": "show me my calendar for tomorrow",
       "intent": "show_calendar",
       "entities": [
         {
-          "entity": "start_time",
+          "entity": "date_range",
+          "startPos": 5,
+          "endPos": 5
+        }
+      ]
+    },
+    {
+      "text": "yo",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "view",
+      "intent": "show_calendar",
+      "entities": []
+    },
+    {
+      "text": "hello",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "schedule meeting tomorrow",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "date_range",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "hi",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "tomorrow morning's calendar",
+      "intent": "show_calendar",
+      "entities": [
+        {
+          "entity": "time_window",
+          "startPos": 1,
+          "endPos": 1
+        },
+        {
+          "entity": "date_range",
+          "startPos": 0,
+          "endPos": 0
+        }
+      ]
+    },
+    {
+      "text": "tell me a joke",
+      "intent": "chit_chat",
+      "entities": []
+    },
+    {
+      "text": "what can you do?",
+      "intent": "help",
+      "entities": []
+    },
+    {
+      "text": "schedule a meeting with adrian tomorrow afternoon",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "time_window",
           "startPos": 6,
           "endPos": 6
+        },
+        {
+          "entity": "date_range",
+          "startPos": 5,
+          "endPos": 5
+        },
+        {
+          "entity": "attendee",
+          "startPos": 4,
+          "endPos": 4
+        }
+      ]
+    },
+    {
+      "text": "guten tag",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "meet with sarah tomorrow",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "date_range",
+          "startPos": 3,
+          "endPos": 3
+        },
+        {
+          "entity": "attendee",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "hola",
+      "intent": "greeting",
+      "entities": []
+    },
+    {
+      "text": "add a meeting tomorrow",
+      "intent": "new_meeting",
+      "entities": [
+        {
+          "entity": "date_range",
+          "startPos": 3,
+          "endPos": 3
+        }
+      ]
+    },
+    {
+      "text": "show tomorrow",
+      "intent": "show_calendar",
+      "entities": [
+        {
+          "entity": "date_range",
+          "startPos": 1,
+          "endPos": 1
         }
       ]
     }
