@@ -76,7 +76,7 @@ export class Bot {
   }
 
   /**
-   * Handle incoming messages from Bot Connector.
+   * Handle incoming requests from Bot Connector.
    */
   handle(req: http.IncomingMessage, res: http.ServerResponse, next) {
     // If we're on a secure connection, verify the request's credentials.
@@ -84,12 +84,13 @@ export class Bot {
       return next();
     }
 
-    // Parse the JSON request body.
+    // Read the request body.
     let bodyChunks = [];
     req.on('data', (chunk) => bodyChunks.push(chunk));
     req.on('end', () => {
       let body = Buffer.concat(bodyChunks).toString();
 
+      // Parse the JSON request body.
       let msg: Message;
       try {
         msg = JSON.parse(body);
@@ -100,12 +101,31 @@ export class Bot {
         return next();
       }
 
-      console.log(msg);
+      // Dispatch the message.
+      let reply: Response;
+      try {
+        reply = this.message(msg);
+      } catch (e) {
+        console.error(e.stack);
+        res.statusCode = 500;
+        res.end("Internal bot error.");
+        return next();
+      }
+
+      // Send a response.
       res.setHeader('Content-Type', 'application/json');
-      res.write(JSON.stringify({ text: "This is a test!" }));
+      res.write(JSON.stringify(reply));
       res.end();
       next();
     });
+  }
+
+  /**
+   * A new message was received.
+   */
+  message(msg: Message): Response {
+    console.log(msg);
+    return { text: "This is a test!" };
   }
 
   /**
