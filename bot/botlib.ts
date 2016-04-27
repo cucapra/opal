@@ -31,9 +31,20 @@ export class Bot {
    */
   credentials: { userName: string, password: string };
 
+  /**
+   * The Bot Connector client object.
+   */
   client: any;
 
-  constructor(appId: string, appSecret: string) {
+  /**
+   * @param appId      The Bot Connector application ID.
+   * @param appSecret  The Bot Connector secret.
+   * @param secure     Whether this bot is runnong on an HTTPS sever. If it
+   *                   is, we can verify that requests actually come from Bot
+   *                   Connector. Otherwise, BC does not include credentials
+   *                   in its requests.
+   */
+  constructor(appId: string, appSecret: string, secure?: boolean) {
     // Set up the HTTP server.
     this.server = restify.createServer();
     this.server.use(restify.authorizationParser());
@@ -46,7 +57,13 @@ export class Bot {
     // Handle requests from Bot Connector.
     // TODO Don't hard-wire this to an endpoint so we can integrate with
     // larger application.
-    this.server.post('/api/messages', this.verifyRequest, this.handle);
+    if (secure) {
+      // Is this application running on HTTPS? If so, we'll check to make sure
+      // requests actually come from Bot Connector.
+      this.server.post('/api/messages', this.verifyRequest, this.handle);
+    } else {
+      this.server.post('/api/messages', this.handle);
+    }
   }
 
   /**
@@ -61,6 +78,7 @@ export class Bot {
       next();
     } else {
       // Failure.
+      console.error("Authorization failed.");
       res.send(403);
     }
   }
