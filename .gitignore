@@ -3,9 +3,14 @@ typings/
 docs/build/
 build/
 
-# Visual studio crud.
+# Visual Studio crud.
 .vs/
 .ntvs_analysis.dat
 .ntvs_analysis.dat.tmp
 bin/
 obj/
+opal.v2.suo
+UpgradeLog*.htm
+
+# Sometimes crated by VS.
+opal.js
