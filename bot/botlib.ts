@@ -6,6 +6,7 @@ const restify = require('restify');
 const msrest = require('ms-rest');
 const botconnector = require('botconnector');
 const basicauth = require('basic-auth');
+import http = require('http');
 
 interface Response {
   text: string;
@@ -72,7 +73,7 @@ export class Bot {
    * "Middleware" function that verifies that requests come from Bot
    * Connector.
    */
-  private checkAuth(req, res) {
+  private checkAuth(req: http.IncomingMessage, res: http.ServerResponse) {
     let auth = basicauth(req);
     if (auth &&
         auth.username === this.credentials.userName &&
@@ -90,32 +91,34 @@ export class Bot {
   /**
    * Handle incoming messages from Bot Connector.
    */
-  private handle(req, res, next) {
+  private handle(req: http.IncomingMessage, res: http.ServerResponse, next) {
     // If we're on a secure connection, verify the request's credentials.
     if (this.secure && !this.checkAuth(req, res)) {
       return next();
     }
 
     // Parse the JSON request body.
-    if (!req.body) {
-      console.error("Request missing body.");
-      res.statusCode = 400;
-      res.end("Missing body.");
-      return next();
-    }
-    let msg: Message;
-    try {
-      msg = JSON.parse(req.body);
-    } catch (e) {
-      console.error("Invalid request body:", e);
-      res.statusCode = 400;
-      res.end("Invalid body.");
-      return next();
-    }
+    let bodyChunks = [];
+    req.on('data', (chunk) => bodyChunks.push(chunk));
+    req.on('end', () => {
+      let body = Buffer.concat(bodyChunks).toString();
 
-    console.log(msg);
-    res.send({ text: "This is a test!" });
-    next();
+      let msg: Message;
+      try {
+        msg = JSON.parse(body);
+      } catch (e) {
+        console.error("Invalid request body:", e);
+        res.statusCode = 400;
+        res.end("Invalid body.");
+        return next();
+      }
+
+      console.log(msg);
+      res.setHeader('Content-Type', 'application/json');
+      res.write(JSON.stringify({ text: "This is a test!" }));
+      res.end();
+      next();
+    });
   }
 
   /**
