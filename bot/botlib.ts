@@ -60,9 +60,9 @@ export class Bot {
     if (secure) {
       // Is this application running on HTTPS? If so, we'll check to make sure
       // requests actually come from Bot Connector.
-      this.server.post('/api/messages', this.verifyRequest, this.handle);
+      this.server.post('/api/messages', this.verifyRequest, this.handleMessage);
     } else {
-      this.server.post('/api/messages', this.handle);
+      this.server.post('/api/messages', this.handleMessage);
     }
   }
 
@@ -86,7 +86,7 @@ export class Bot {
   /**
    * Handle incoming messages from Bot Connector.
    */
-  private handle(req, res, next) {
+  private handleMessage(req, res, next) {
     var msg: Message = req.body;
     console.log(msg.text);
     res.send({ text: "This is a test!" });
