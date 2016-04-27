@@ -561,7 +561,7 @@ function main() {
     officeAppSecret: "CkcqfFRAAFejeyBcZbdc0Xr",
     baseURL,
     terminal,
-    luisURL: "https://api.projectoxford.ai/luis/v1/application?id=c9c401d7-ac5d-4aef-8dfe-1e9089dcc01f&subscription-key=25bb3fb8af324f24a889d573ea1d1d7f",
+    luisURL: "https://api.projectoxford.ai/luis/v1/application?id=a6aa3cf6-8166-48f7-820c-f4a4e3aa7909&subscription-key=0f76f69291cc4b3783a8689b83622d27",
   });
   opalbot.run();
 }
