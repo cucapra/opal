@@ -8,11 +8,11 @@ const basicauth = require('basic-auth');
 import http = require('http');
 import events = require('events');
 
-interface Message {
+export interface Message {
   text: string;
 }
 
-interface User {
+export interface User {
   name: string;
   channelId: string;
   address: string;
@@ -20,7 +20,7 @@ interface User {
   isBot: boolean;
 }
 
-interface ReceivedMessage extends Message {
+export interface ReceivedMessage extends Message {
   id: string;
   conversationId: string;
   created: string;  // An ISO 8601 date string.
@@ -35,6 +35,15 @@ interface ReceivedMessage extends Message {
   attachments: any[];
   mentions: any[];
   hashtags: any[];
+}
+
+/**
+ * Send JSON data in a response and close the connection.
+ */
+function send(res: http.ServerResponse, json: any) {
+  res.setHeader('Content-Type', 'application/json');
+  res.write(JSON.stringify(json));
+  res.end();
 }
 
 /**
@@ -127,9 +136,7 @@ export class Bot extends events.EventEmitter {
       let cbk = (reply: Message) => {
         if (!replied) {
           // Send the response.
-          res.setHeader('Content-Type', 'application/json');
-          res.write(JSON.stringify(reply));
-          res.end();
+          send(res, reply);
 
           // Prevent further replies;
           replied = true;
@@ -148,9 +155,7 @@ export class Bot extends events.EventEmitter {
       }
 
       // If no one replied, send a null response.
-      res.setHeader('Content-Type', 'application/json');
-      res.write(JSON.stringify({}));
-      res.end();
+      send(res, {});
     });
   }
 
