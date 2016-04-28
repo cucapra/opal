@@ -4,7 +4,9 @@
 
 const basicauth = require('basic-auth');
 import http = require('http');
+import https = require('https');
 import events = require('events');
+import url = require('url');
 
 export interface Message {
   text: string;
@@ -33,6 +35,13 @@ export interface ReceivedMessage extends Message {
   attachments: any[];
   mentions: any[];
   hashtags: any[];
+}
+
+export interface OutgoingMessage extends Message {
+  from: User;
+  to: User;
+  replyToMessageId?: string;
+  channelConversationId?: string;
 }
 
 /**
@@ -169,14 +178,18 @@ export class Bot extends events.EventEmitter {
   /**
    * Unilaterally send a message to a user.
    */
-  send(msg: Message): Promise<any> {
+  send(msg: OutgoingMessage): Promise<any> {
+    let parts = url.parse('https://api.botframework.com/bot/v1.0/messages');
     let body = JSON.stringify(msg);
 
     return new Promise((resolve, reject) => {
       // Send the request.
-      let req = http.request({
+      let req = https.request({
+        hostname: parts.hostname,
+        path: parts.path,
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Content-Length': body.length,  // TODO Check for Unicode safety.
           'Ocp-Apim-Subscription-Key': this.appSecret,
         },
@@ -199,6 +212,15 @@ export class Bot extends events.EventEmitter {
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 bot.on('message', (message: ReceivedMessage, reply) => {
   console.log(message.text);
+  bot.send({
+    text: "Something!",
+    from: message.to,
+    to: message.from,
+    replyToMessageId: message.id,
+    channelConversationId: message.channelConversationId,
+  }).then(resp => {
+    console.log(resp);
+  });
   reply({ text: "Another test!" });
 });
 bot.on('error', (err: any) => {
