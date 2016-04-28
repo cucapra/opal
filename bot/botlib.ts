@@ -169,11 +169,15 @@ export class BCBot extends events.EventEmitter {
       // Set up the reply callback. *One* handler is allowed to use a callback
       // to issue an immediate reply.
       let replied = false;
-      let cbk = (reply: Message) => {
+      let cbk = (reply?: Message) => {
         if (!replied) {
-          // Send the response.
-          this.emit('send', reply);
-          send(res, reply);
+          // Send the response, if any.
+          if (reply) {
+            this.emit('send', reply);
+            send(res, reply);
+          } else {
+            send(res, {});
+          }
 
           // Prevent further replies;
           replied = true;
@@ -300,9 +304,11 @@ export class TextBot extends events.EventEmitter {
         hashtags: [],
       };
 
-      this.emit('message', msg, (reply: Message) => {
-        this.emit('send', msg);
-        console.log(msg.text);
+      this.emit('message', msg, (reply?: Message) => {
+        if (reply) {
+          this.emit('send', msg);
+          console.log(msg.text);
+        }
       });
     });
   }
