@@ -199,9 +199,13 @@ export class Bot extends events.EventEmitter {
       req.end();
 
       // Handle the response.
-      req.on('response', function (res: http.IncomingMessage) {
+      req.on('response', (res: http.IncomingMessage) => {
         read(res).then((data) => {
-          resolve(data);  // TODO error handling
+          if (res.statusCode === 200) {
+            resolve(data);
+          } else {
+            reject(data);
+          }
         });
       });
     });
@@ -218,8 +222,6 @@ bot.on('message', (message: ReceivedMessage, reply) => {
     to: message.from,
     replyToMessageId: message.id,
     channelConversationId: message.channelConversationId,
-  }).then(resp => {
-    console.log(resp);
   });
   reply({ text: "Another test!" });
 });
