@@ -202,7 +202,7 @@ export class Bot extends events.EventEmitter {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Content-Length': body.length,  // TODO Check for Unicode safety.
+          'Content-Length': Buffer.byteLength(body),
           'Ocp-Apim-Subscription-Key': this.appSecret,
         },
         auth: `${this.appId}:${this.appSecret}`,
