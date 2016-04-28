@@ -83,6 +83,9 @@ function read(msg: http.IncomingMessage): Promise<string> {
   });
 }
 
+const API_DEFAULT_HOST = 'api.botframework.com';
+const API_BASE = '/bot/v1.0';
+
 /**
  * A controller that interacts with the Bot Connector API.
  */
@@ -118,7 +121,7 @@ export class Bot extends events.EventEmitter {
               secure?: boolean, bhost?: string) {
     super();
     this.secure = !!secure;
-    this.bchost = bhost || 'api.botframework.com';
+    this.bchost = bhost || API_DEFAULT_HOST;
   }
 
   /**
@@ -202,7 +205,17 @@ export class Bot extends events.EventEmitter {
    * Unilaterally send a message to a user.
    */
   send(msg: OutgoingMessage): Promise<string> {
-    return this.request('/bot/v1.0/messages', JSON.stringify(msg));
+    return this.request('/messages', JSON.stringify(msg));
+  }
+
+  /**
+   * Save a user's stored data.
+   */
+  setUserData(userId: string, data: any): Promise<string> {
+    let path = `/bots/${this.appId}/users/${userId}`;
+    return this.request(path, JSON.stringify(data)).catch((res) => {
+      console.error("saving failed: %s", res);
+    });
   }
 
   /**
@@ -213,7 +226,7 @@ export class Bot extends events.EventEmitter {
       // Send the request.
       let req = https.request({
         hostname: this.bchost,
-        path: path,
+        path: API_BASE + path,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,6 +256,9 @@ export class Bot extends events.EventEmitter {
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 bot.on('message', (message: ReceivedMessage, reply) => {
   console.log(message.text);
+  bot.setUserData(message.from.id, { foo: message.text }).then((resp) => {
+    console.log(resp);
+  });
   bot.send(makeReply(message, "Something!"));
   reply({ text: "Another test!" });
 });
