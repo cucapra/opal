@@ -306,8 +306,7 @@ export class TextBot extends events.EventEmitter {
 
       this.emit('message', msg, (reply?: Message) => {
         if (reply) {
-          this.emit('send', msg);
-          console.log(msg.text);
+          this.emit('send', reply);
         }
       });
     });

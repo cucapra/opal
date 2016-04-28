@@ -117,6 +117,8 @@ interface Options {
  */
 type AnyBot = botlib.BCBot | botlib.TextBot;
 
+type HandleMessage = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => void;
+
 /**
  * All the machinery for an OPAL chat bot instance.
  */
@@ -126,14 +128,28 @@ class OPALBot {
   client: Client;
   server: any;  // A Restify server.
 
+  userContinuations: { [id: string]: HandleMessage };
+
   constructor(opts: Options) {
-    // The Bot Builder bot object.
     if (opts.terminal) {
       this.bot = new botlib.TextBot();
     } else {
       this.bot = new botlib.BCBot(opts.bcAppId, opts.bcAppSecret);
     }
-    this.setupBot(this.bot, opts.baseURL, opts.luisURL);
+
+    this.bot.on('message', (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
+      if (!opts.terminal) {
+        console.log(msg.text);
+      }
+
+      // Find and execute the continuation for this user.
+      let k = this.userContinuations[msg.from.id] || this.defaultContinuation;
+      k(msg, reply);
+    });
+
+    this.bot.on('send', (msg: botlib.Message) => {
+      console.log('-> %s', msg.text);
+    });
 
     // Create the Office API client.
     this.client = new Client(
@@ -145,6 +161,8 @@ class OPALBot {
     // Start the Web server.
     this.server = this.setupServer();
     this.authRequests = {};
+
+    this.userContinuations = {};
   }
 
   /**
@@ -186,16 +204,13 @@ class OPALBot {
    * Create the Bot Framework bot object.
    */
   private setupBot(bot: AnyBot, baseURL: string, luisURL?: string) {
-    bot.on('message', (msg: botlib.ReceivedMessage, reply: (m: botlib.Message) => void) => {
-      console.log(msg.text);
-    });
-
-    bot.on('send', (msg: botlib.Message) => {
-      console.log('-> %s', msg.text);
-    });
 
     return bot;
   }
+
+  defaultContinuation = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
+    reply({ text: "Hello!" });
+  };
 
   /**
    * Create the web server.
