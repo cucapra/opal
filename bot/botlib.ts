@@ -2,8 +2,6 @@
  * A composable alternative to Bot Builder.
  */
 
-const msrest = require('ms-rest');
-const botconnector = require('botconnector');
 const basicauth = require('basic-auth');
 import http = require('http');
 import events = require('events');
@@ -51,11 +49,6 @@ function send(res: http.ServerResponse, json: any) {
  */
 export class Bot extends events.EventEmitter {
   /**
-   * Microsoft API REST credentials.
-   */
-  credentials: { userName: string, password: string };
-
-  /**
    * The Bot Connector client object.
    */
   client: any;
@@ -75,13 +68,9 @@ export class Bot extends events.EventEmitter {
    *                   Connector. Otherwise, BC does not include credentials
    *                   in its requests.
    */
-  constructor(appId: string, appSecret: string, secure?: boolean) {
+  constructor(public appId: string, public appSecret: string, secure?: boolean) {
     super();
     this.secure = !!secure;
-
-    // Set up the Bot Connector client.
-    this.credentials = new msrest.BasicAuthenticationCredentials(appId, appSecret);
-    this.client = new botconnector(this.credentials);
   }
 
   /**
@@ -91,8 +80,8 @@ export class Bot extends events.EventEmitter {
   private checkAuth(req: http.IncomingMessage, res: http.ServerResponse) {
     let auth = basicauth(req);
     if (auth &&
-        auth.username === this.credentials.userName &&
-        auth.password === this.credentials.password) {
+        auth.username === this.appId &&
+        auth.password === this.appSecret) {
       return true;
     } else {
       // Failure.
@@ -169,22 +158,30 @@ export class Bot extends events.EventEmitter {
    * Unilaterally send a message to a user.
    */
   send(msg: Message): Promise<any> {
+    let body = JSON.stringify(msg);
+
     return new Promise((resolve, reject) => {
-      this.client.messages.sendMessage(
-        msg,
-        {
-          customHeaders: {
-            'Ocp-Apim-Subscription-Key': this.credentials.password
-          }
+      // Send the request.
+      let req = http.request({
+        method: 'POST',
+        headers: {
+          'Content-Length': body.length,  // TODO Check for Unicode safety.
+          'Ocp-Apim-Subscription-Key': this.appSecret,
         },
-        (err, result, request, response) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(response);
-          }
-        }
-      );
+        auth: `${this.appId}:${this.appSecret}`,
+      });
+      req.write(body);
+      req.end();
+
+      // Handle the response.
+      req.on('response', function (res: http.IncomingMessage) {
+        let dataChunks = [];
+        req.on('data', (chunk) => dataChunks.push(chunk));
+        req.on('end', () => {
+          let data = Buffer.concat(dataChunks).toString();
+          resolve(data);  // TODO error handling
+        });
+      });
     });
   }
 }
