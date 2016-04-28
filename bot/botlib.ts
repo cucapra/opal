@@ -121,10 +121,10 @@ export class Bot extends events.EventEmitter {
         return;
       }
 
-      // Dispatch the message. *One* handler is allowed to use a callback to
-      // issue an immediate reply.
+      // Set up the reply callback. *One* handler is allowed to use a callback
+      // to issue an immediate reply.
       let replied = false;
-      this.emit('message', msg, (reply: Message) => {
+      let cbk = (reply: Message) => {
         if (!replied) {
           // Send the response.
           res.setHeader('Content-Type', 'application/json');
@@ -137,7 +137,20 @@ export class Bot extends events.EventEmitter {
         } else {
           return false;
         }
-      });
+      };
+
+      // Dispatch the message.
+      let handled = false;
+      try {
+        handled = this.emit('message', msg, cbk);
+      } catch (e) {
+        this.emit('error', e);
+      }
+
+      // If no one replied, send a null response.
+      res.setHeader('Content-Type', 'application/json');
+      res.write(JSON.stringify({}));
+      res.end();
     });
   }
 
@@ -176,6 +189,13 @@ let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 bot.on('message', (message: ReceivedMessage, reply) => {
   console.log(message.text);
   reply({ text: "Another test!" });
+});
+bot.on('error', (err: any) => {
+  if (err.stack) {
+    console.error(err.stack);
+  } else {
+    console.error(err);
+  }
 });
 
 const restify = require('restify');
