@@ -6,6 +6,7 @@ const basicauth = require('basic-auth');
 import http = require('http');
 import https = require('https');
 import events = require('events');
+import readline = require('readline');
 
 export interface Message {
   text: string;
@@ -27,7 +28,6 @@ export interface ReceivedMessage extends Message {
   from: User;
   to: User;
   participants: User[];
-  totalParticipants: number;
   channelConversationId: string;
 
   // I'm not yet sure what these are used for.
@@ -89,7 +89,7 @@ const API_BASE = '/bot/v1.0';
 /**
  * A controller that interacts with the Bot Connector API.
  */
-export class Bot extends events.EventEmitter {
+export class BCBot extends events.EventEmitter {
   /**
    * The Bot Connector client object.
    */
@@ -258,5 +258,57 @@ export class Bot extends events.EventEmitter {
         });
       });
     });
+  }
+}
+
+/**
+ * A bot that you can type to in the console.
+ */
+export class TextBot extends events.EventEmitter {
+  run() {
+    let rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    rl.on('line', (text: string) => {
+      // Construct a message structure.
+      let msg: ReceivedMessage = {
+        text,
+        id: "message",
+        conversationId: "conversation",
+        channelConversationId: "channelConversation",
+        created: (new Date()).toISOString(),
+        language: "en",
+        from: {
+          name: "name",
+          channelId: "channel",
+          address: "address",
+          id: "user",
+          isBot: false,
+        },
+        to: {
+          name: "botname",
+          channelId: "channel",
+          address: "address",
+          id: "bot",
+          isBot: true,
+        },
+        participants: [],
+        attachments: [],
+        mentions: [],
+        hashtags: [],
+      };
+
+      this.emit('message', msg, (reply: Message) => {
+        this.emit('send', msg);
+        console.log(msg.text);
+      });
+    });
+  }
+
+  send(msg: OutgoingMessage) {
+    this.emit('send', msg);
+    console.log(msg.text);
   }
 }

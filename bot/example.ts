@@ -4,7 +4,7 @@
 import * as botlib from './botlib';
 const restify = require('restify');
 
-let bot = new botlib.Bot("botlib", "b60b01fab9424fccaed5072a995055da");
+let bot = new botlib.BCBot("botlib", "b60b01fab9424fccaed5072a995055da");
 
 bot.on('message', (message: botlib.ReceivedMessage, reply) => {
   console.log(message.text);
