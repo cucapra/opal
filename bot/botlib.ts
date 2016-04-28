@@ -85,16 +85,25 @@ export class Bot extends events.EventEmitter {
   secure: boolean;
 
   /**
+   * The Bot Connector API hostname.
+   */
+  bchost: string;
+
+  /**
    * @param appId      The Bot Connector application ID.
    * @param appSecret  The Bot Connector secret.
    * @param secure     Whether this bot is running on an HTTPS server. If it
    *                   is, we can verify that requests actually come from Bot
    *                   Connector. Otherwise, BC does not include credentials
    *                   in its requests.
+   * @param bchost     The hostname to use for BC API requests instead of the
+   *                   default, public server.
    */
-  constructor(public appId: string, public appSecret: string, secure?: boolean) {
+  constructor(public appId: string, public appSecret: string,
+              secure?: boolean, bhost?: string) {
     super();
     this.secure = !!secure;
+    this.bchost = bhost || 'api.botframework.com';
   }
 
   /**
@@ -188,7 +197,7 @@ export class Bot extends events.EventEmitter {
     return new Promise((resolve, reject) => {
       // Send the request.
       let req = https.request({
-        hostname: 'api.botframework.com',
+        hostname: this.bchost,
         path: path,
         method: 'POST',
         headers: {
