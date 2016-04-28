@@ -210,10 +210,17 @@ export class Bot extends events.EventEmitter {
 
   /**
    * Save a user's stored data.
+   *
+   * This seems to be broken---even following the documentation exactly, this
+   * gets a "bad request" error every time.
    */
   setUserData(userId: string, data: any): Promise<string> {
     let path = `/bots/${this.appId}/users/${userId}`;
-    return this.request(path, JSON.stringify(data)).catch((res) => {
+    let botdata = {
+      data,
+      eTag: "string",
+    };
+    return this.request(path, JSON.stringify(botdata)).catch((res) => {
       console.error("saving failed: %s", res);
     });
   }
@@ -256,9 +263,6 @@ export class Bot extends events.EventEmitter {
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 bot.on('message', (message: ReceivedMessage, reply) => {
   console.log(message.text);
-  bot.setUserData(message.from.id, { foo: message.text }).then((resp) => {
-    console.log(resp);
-  });
   bot.send(makeReply(message, "Something!"));
   reply({ text: "Another test!" });
 });

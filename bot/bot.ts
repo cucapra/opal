@@ -567,3 +567,4 @@ function main() {
 }
 
 main();
+console.log(Object.keys(require.cache));
