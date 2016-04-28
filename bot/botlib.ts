@@ -6,7 +6,6 @@ const basicauth = require('basic-auth');
 import http = require('http');
 import https = require('https');
 import events = require('events');
-import url = require('url');
 
 export interface Message {
   text: string;
@@ -178,15 +177,19 @@ export class Bot extends events.EventEmitter {
   /**
    * Unilaterally send a message to a user.
    */
-  send(msg: OutgoingMessage): Promise<any> {
-    let parts = url.parse('https://api.botframework.com/bot/v1.0/messages');
-    let body = JSON.stringify(msg);
+  send(msg: OutgoingMessage): Promise<string> {
+    return this.request('/bot/v1.0/messages', JSON.stringify(msg));
+  }
 
+  /**
+   * Send an API request to Bot Connector.
+   */
+  private request(path: string, body: string): Promise<string> {
     return new Promise((resolve, reject) => {
       // Send the request.
       let req = https.request({
-        hostname: parts.hostname,
-        path: parts.path,
+        hostname: 'api.botframework.com',
+        path: path,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
