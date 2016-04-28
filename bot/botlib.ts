@@ -121,6 +121,12 @@ export class Bot {
   }
 
   /**
+   * Get a bound handler method. This exists because ES6 class semantics are
+   * broken. :cry:
+   */
+  handler = () => this.handle.bind(this);
+
+  /**
    * A new message was received.
    */
   message(msg: Message): Response {
@@ -155,7 +161,7 @@ export class Bot {
 // TODO Just a test.
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 let server = restify.createServer();
-server.post('/api/messages', bot.handle);
+server.post('/api/messages', bot.handler());
 server.listen(4700, () => {
   console.log("listening on %s", server.url);
 });
