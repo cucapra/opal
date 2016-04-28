@@ -44,6 +44,21 @@ export interface OutgoingMessage extends Message {
 }
 
 /**
+ * Create a reply message for an original, incoming message.
+ */
+export function makeReply(original: ReceivedMessage,
+                          text: string): OutgoingMessage
+{
+  return {
+    text,
+    from: original.to,
+    to: original.from,
+    replyToMessageId: original.id,
+    channelConversationId: original.channelConversationId,
+  };
+}
+
+/**
  * Send JSON data in a response and close the connection.
  */
 function send(res: http.ServerResponse, json: any) {
@@ -228,13 +243,7 @@ export class Bot extends events.EventEmitter {
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
 bot.on('message', (message: ReceivedMessage, reply) => {
   console.log(message.text);
-  bot.send({
-    text: "Something!",
-    from: message.to,
-    to: message.from,
-    replyToMessageId: message.id,
-    channelConversationId: message.channelConversationId,
-  });
+  bot.send(makeReply(message, "Something!"));
   reply({ text: "Another test!" });
 });
 bot.on('error', (err: any) => {
