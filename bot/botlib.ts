@@ -2,11 +2,11 @@
  * A composable alternative to Bot Builder.
  */
 
-const restify = require('restify');
 const msrest = require('ms-rest');
 const botconnector = require('botconnector');
 const basicauth = require('basic-auth');
 import http = require('http');
+import events = require('events');
 
 interface Message {
   text: string;
@@ -20,7 +20,7 @@ interface User {
   isBot: boolean;
 }
 
-interface IncomingMessage extends Message {
+interface ReceivedMessage extends Message {
   id: string;
   conversationId: string;
   created: string;  // An ISO 8601 date string.
@@ -40,7 +40,7 @@ interface IncomingMessage extends Message {
 /**
  * A controller that interacts with the Bot Connector API.
  */
-export class Bot {
+export class Bot extends events.EventEmitter {
   /**
    * Microsoft API REST credentials.
    */
@@ -67,6 +67,7 @@ export class Bot {
    *                   in its requests.
    */
   constructor(appId: string, appSecret: string, secure?: boolean) {
+    super();
     this.secure = !!secure;
 
     // Set up the Bot Connector client.
@@ -75,8 +76,8 @@ export class Bot {
   }
 
   /**
-   * "Middleware" function that verifies that requests come from Bot
-   * Connector.
+   * Verify that requests come from Bot Connector. Send a rejection if not.
+   * Return a Boolean indicating whether authorization succeeded.
    */
   private checkAuth(req: http.IncomingMessage, res: http.ServerResponse) {
     let auth = basicauth(req);
@@ -94,12 +95,13 @@ export class Bot {
   }
 
   /**
-   * Handle incoming requests from Bot Connector.
+   * Handle incoming requests from Bot Connector. Issue a `message` event with
+   * each incoming message.
    */
-  handle(req: http.IncomingMessage, res: http.ServerResponse, next) {
+  handle(req: http.IncomingMessage, res: http.ServerResponse) {
     // If we're on a secure connection, verify the request's credentials.
     if (this.secure && !this.checkAuth(req, res)) {
-      return next();
+      return;
     }
 
     // Read the request body.
@@ -109,32 +111,33 @@ export class Bot {
       let body = Buffer.concat(bodyChunks).toString();
 
       // Parse the JSON request body.
-      let msg: IncomingMessage;
+      let msg: ReceivedMessage;
       try {
         msg = JSON.parse(body);
       } catch (e) {
         console.error("Invalid request body:", e);
         res.statusCode = 400;
         res.end("Invalid body.");
-        return next();
+        return;
       }
 
-      // Dispatch the message.
-      let reply: Message;
-      try {
-        reply = this.message(msg);
-      } catch (e) {
-        console.error(e.stack);
-        res.statusCode = 500;
-        res.end("Internal bot error.");
-        return next();
-      }
+      // Dispatch the message. *One* handler is allowed to use a callback to
+      // issue an immediate reply.
+      let replied = false;
+      this.emit('message', msg, (reply: Message) => {
+        if (!replied) {
+          // Send the response.
+          res.setHeader('Content-Type', 'application/json');
+          res.write(JSON.stringify(reply));
+          res.end();
 
-      // Send a response.
-      res.setHeader('Content-Type', 'application/json');
-      res.write(JSON.stringify(reply));
-      res.end();
-      next();
+          // Prevent further replies;
+          replied = true;
+          return true;
+        } else {
+          return false;
+        }
+      });
     });
   }
 
@@ -143,14 +146,6 @@ export class Bot {
    * broken. :cry:
    */
   handler = () => this.handle.bind(this);
-
-  /**
-   * A new message was received.
-   */
-  message(msg: Message): Message {
-    console.log(msg);
-    return { text: "This is a test!" };
-  }
 
   /**
    * Unilaterally send a message to a user.
@@ -178,6 +173,12 @@ export class Bot {
 
 // TODO Just a test.
 let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
+bot.on('message', (message: ReceivedMessage, reply) => {
+  console.log(message.text);
+  reply({ text: "Another test!" });
+});
+
+const restify = require('restify');
 let server = restify.createServer();
 server.post('/api/messages', bot.handler());
 server.listen(4700, () => {
