@@ -7,6 +7,7 @@ const chrono = require('chrono-node');
 import {scheduleMeeting, viewEvents} from './actions';
 import * as fs from 'fs';
 import * as botlib from './botlib';
+const request = require('request');
 
 /**
  * Generate a random, URL-safe slug.
@@ -127,6 +128,7 @@ class OPALBot {
   authRequests: { [key: string]: any };
   client: Client;
   server: any;  // A Restify server.
+  luisURL: string;  // Or null to disable LUIS.
 
   userContinuations: { [id: string]: HandleMessage };
 
@@ -147,9 +149,11 @@ class OPALBot {
       k(msg, reply);
     });
 
-    this.bot.on('send', (msg: botlib.Message) => {
-      console.log('-> %s', msg.text);
-    });
+    if (!opts.terminal) {
+      this.bot.on('send', (msg: botlib.Message) => {
+        console.log('-> %s', msg.text);
+      });
+    }
 
     // Create the Office API client.
     this.client = new Client(
@@ -163,6 +167,7 @@ class OPALBot {
     this.authRequests = {};
 
     this.userContinuations = {};
+    this.luisURL = opts.luisURL;
   }
 
   /**
@@ -201,7 +206,43 @@ class OPALBot {
   }
 
   defaultContinuation = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
-    reply({ text: "Hello!" });
+    // TODO Make LUIS optional.
+    let queryURL = this.luisURL + '&q=' + encodeURIComponent(msg.text);
+    request(queryURL, (err, res, body) => {
+      let luis = JSON.parse(body);
+
+      // Get the most likely intent.
+      let max_intent: any;
+      let max_score: number;
+      for (let intent of luis.intents) {
+        if (!max_intent || intent.score > max_score) {
+          max_intent = intent;
+          max_score = intent.score;
+        }
+      }
+
+      // Max score too low?
+      if (max_score < 0.1) {
+        this.bot.send(botlib.makeReply(msg, "I'm sorry; I didn't understand."));
+        return;
+      }
+
+      console.log(max_intent);
+      console.log(luis.entities);
+
+      // Choose an action.
+      let name: string = max_intent.intent;
+      if (name === "greeting") {
+        this.bot.send(botlib.makeReply(msg, 'Hello there! Let me know if you want to schedule a meeting.'));
+      } else if (name === "new_meeting") {
+        this.bot.send(botlib.makeReply(msg, 'Here is where I would schedule a new meeting.'));
+      } else if (name === "show_calendar") {
+        this.bot.send(botlib.makeReply(msg, 'I should show your calendar.'));
+      } else {
+        this.bot.send(botlib.makeReply(msg, `I don't handle the ${name} intent yet.`));
+      }
+    });
+    reply();
   };
 
   /**
