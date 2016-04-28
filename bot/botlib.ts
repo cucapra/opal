@@ -172,6 +172,7 @@ export class Bot extends events.EventEmitter {
       let cbk = (reply: Message) => {
         if (!replied) {
           // Send the response.
+          this.emit('send', reply);
           send(res, reply);
 
           // Prevent further replies;
@@ -205,6 +206,7 @@ export class Bot extends events.EventEmitter {
    * Unilaterally send a message to a user.
    */
   send(msg: OutgoingMessage): Promise<string> {
+    this.emit('send', msg);
     return this.request('/messages', JSON.stringify(msg));
   }
 
@@ -272,6 +274,9 @@ bot.on('error', (err: any) => {
   } else {
     console.error(err);
   }
+});
+bot.on('send', (msg: Message) => {
+  console.log('-> %s', msg.text);
 });
 
 const restify = require('restify');
