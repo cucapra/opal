@@ -200,14 +200,6 @@ class OPALBot {
     });
   }
 
-  /**
-   * Create the Bot Framework bot object.
-   */
-  private setupBot(bot: AnyBot, baseURL: string, luisURL?: string) {
-
-    return bot;
-  }
-
   defaultContinuation = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
     reply({ text: "Hello!" });
   };
