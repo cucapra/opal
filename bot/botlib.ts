@@ -45,6 +45,22 @@ function send(res: http.ServerResponse, json: any) {
 }
 
 /**
+ * Wait for the entire body of an incoming HTTP message to be received and
+ * invoke a callback.
+ */
+function read(msg: http.IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let chunks = [];
+    msg.on('data', (chunk) => chunks.push(chunk));
+    msg.on('end', () => {
+      let body = Buffer.concat(chunks).toString();
+      resolve(body);
+    });
+    msg.on('error', reject);
+  });
+}
+
+/**
  * A controller that interacts with the Bot Connector API.
  */
 export class Bot extends events.EventEmitter {
@@ -103,11 +119,7 @@ export class Bot extends events.EventEmitter {
     }
 
     // Read the request body.
-    let bodyChunks = [];
-    req.on('data', (chunk) => bodyChunks.push(chunk));
-    req.on('end', () => {
-      let body = Buffer.concat(bodyChunks).toString();
-
+    read(req).then((body) => {
       // Parse the JSON request body.
       let msg: ReceivedMessage;
       try {
@@ -175,10 +187,7 @@ export class Bot extends events.EventEmitter {
 
       // Handle the response.
       req.on('response', function (res: http.IncomingMessage) {
-        let dataChunks = [];
-        req.on('data', (chunk) => dataChunks.push(chunk));
-        req.on('end', () => {
-          let data = Buffer.concat(dataChunks).toString();
+        read(res).then((data) => {
           resolve(data);  // TODO error handling
         });
       });
