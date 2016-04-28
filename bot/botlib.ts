@@ -8,15 +8,33 @@ const botconnector = require('botconnector');
 const basicauth = require('basic-auth');
 import http = require('http');
 
-interface Response {
+interface Message {
   text: string;
 }
 
-interface Message {
-  replyToMessageId?: string;
-  to: string;
-  from: string;
-  text: string;
+interface User {
+  name: string;
+  channelId: string;
+  address: string;
+  id: string;
+  isBot: boolean;
+}
+
+interface IncomingMessage extends Message {
+  id: string;
+  conversationId: string;
+  created: string;  // An ISO 8601 date string.
+  language: string;  // A two-letter language code.
+  from: User;
+  to: User;
+  participants: User[];
+  totalParticipants: number;
+  channelConversationId: string;
+
+  // I'm not yet sure what these are used for.
+  attachments: any[];
+  mentions: any[];
+  hashtags: any[];
 }
 
 /**
@@ -91,7 +109,7 @@ export class Bot {
       let body = Buffer.concat(bodyChunks).toString();
 
       // Parse the JSON request body.
-      let msg: Message;
+      let msg: IncomingMessage;
       try {
         msg = JSON.parse(body);
       } catch (e) {
@@ -102,7 +120,7 @@ export class Bot {
       }
 
       // Dispatch the message.
-      let reply: Response;
+      let reply: Message;
       try {
         reply = this.message(msg);
       } catch (e) {
@@ -129,7 +147,7 @@ export class Bot {
   /**
    * A new message was received.
    */
-  message(msg: Message): Response {
+  message(msg: Message): Message {
     console.log(msg);
     return { text: "This is a test!" };
   }
