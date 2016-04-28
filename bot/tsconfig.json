@@ -8,6 +8,7 @@
     "bot.ts",
     "actions.ts",
     "botlib.ts",
+    "example.ts",
     "typings/main.d.ts"
   ]
 }

@@ -260,28 +260,3 @@ export class Bot extends events.EventEmitter {
     });
   }
 }
-
-// TODO Just a test.
-let bot = new Bot("botlib", "b60b01fab9424fccaed5072a995055da");
-bot.on('message', (message: ReceivedMessage, reply) => {
-  console.log(message.text);
-  bot.send(makeReply(message, "Something!"));
-  reply({ text: "Another test!" });
-});
-bot.on('error', (err: any) => {
-  if (err.stack) {
-    console.error(err.stack);
-  } else {
-    console.error(err);
-  }
-});
-bot.on('send', (msg: Message) => {
-  console.log('-> %s', msg.text);
-});
-
-const restify = require('restify');
-let server = restify.createServer();
-server.post('/api/messages', bot.handler());
-server.listen(4700, () => {
-  console.log("listening on %s", server.url);
-});
