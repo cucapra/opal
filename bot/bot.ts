@@ -6,6 +6,7 @@ import * as minimist from 'minimist';
 const chrono = require('chrono-node');
 import {scheduleMeeting, viewEvents} from './actions';
 import * as fs from 'fs';
+import * as botlib from './botlib';
 
 /**
  * Generate a random, URL-safe slug.
@@ -112,9 +113,9 @@ interface Options {
 }
 
 /**
- * A supertype of Bot Builder bot types.
+ * A supertype of botlib bot types.
  */
-type AnyBot = botbuilder.BotConnectorBot | botbuilder.TextBot;
+type AnyBot = botlib.BCBot | botlib.TextBot;
 
 /**
  * All the machinery for an OPAL chat bot instance.
@@ -128,15 +129,9 @@ class OPALBot {
   constructor(opts: Options) {
     // The Bot Builder bot object.
     if (opts.terminal) {
-      this.bot = new botbuilder.TextBot({
-        minSendDelay: 100,
-      });
+      this.bot = new botlib.TextBot();
     } else {
-      this.bot = new botbuilder.BotConnectorBot({
-        appId: opts.bcAppId,
-        appSecret: opts.bcAppSecret,
-        minSendDelay: 100,
-      });
+      this.bot = new botlib.BCBot(opts.bcAppId, opts.bcAppSecret);
     }
     this.setupBot(this.bot, opts.baseURL, opts.luisURL);
 
@@ -191,142 +186,12 @@ class OPALBot {
    * Create the Bot Framework bot object.
    */
   private setupBot(bot: AnyBot, baseURL: string, luisURL?: string) {
-    // The default dialog (the entry point). Makes sure the user is
-    // authenticated before doing anything.
-    bot.add('/', (session) => {
-      session.beginDialog('/command');
+    bot.on('message', (msg: botlib.ReceivedMessage, reply: (m: botlib.Message) => void) => {
+      console.log(msg.text);
     });
 
-    // Main command menu.
-    if (luisURL) {
-      // LUIS parser.
-      let luisDialog = new botbuilder.LuisDialog(luisURL);
-      bot.add('/command', luisDialog);
-
-      luisDialog.on("new_meeting", (session, luis) => {
-        let date = dateFromLUIS(luis);
-        let title = "Appointment";  // For now.
-        this.ensureUser(session).then((user) => {
-          this.schedule(new BotSession(session), user, date, title).then(
-            (reply) => {
-              session.send(reply);
-            }
-          );
-        });
-      });
-
-      luisDialog.on("show_calendar", (session, luis) => {
-        let date = dateFromLUIS(luis);
-        this.ensureUser(session).then((user) => {
-          this.view(user, date).then((reply) => {
-            session.send(reply);
-          });
-        });
-      });
-
-      luisDialog.onDefault(
-        botbuilder.DialogAction.send("I'm sorry; I didn't understand.")
-      );
-
-    } else {
-
-      // Basic regex-based command interface.
-      let cmdDialog = new botbuilder.CommandDialog();
-      bot.add('/command', cmdDialog);
-
-      cmdDialog.matches('^hi', (session) => {
-        session.send('Hello there! Let me know if you want to schedule a meeting.');
-      });
-
-      cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
-        this.ensureUser(session).then((user) => {
-          let arg = args.matches[2];
-
-          let parsed = chrono.parse(arg)[0];
-          if (parsed === undefined) {
-            session.send("Please tell me when you want the meeting.");
-            return;
-          }
-
-          let date: Date = parsed.start.date();
-
-          // Use the remaining (non-date) text as the event title.
-          let beforeDate = arg.slice(0, parsed.index);
-          let afterDate = arg.slice(parsed.index + parsed.text.length);
-          let title = beforeDate + ' ' + afterDate;
-          title = title.replace(/\s+/g, ' ').trim();
-          if (title.length <= 1) {
-            title = "Appointment";
-          }
-
-          this.schedule(new BotSession(session), user, date, title).then(
-            (reply) => { session.send(reply); }
-          );
-        });
-      });
-
-      cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
-        this.ensureUser(session).then((user) => {
-          let when = args.matches[2] || "";
-
-          // Get the specified date, or today if unspecified.
-          let parsed = chrono.parse(when)[0];
-          let date: Date;
-          if (parsed === undefined) {
-            date = new Date();
-          } else {
-            date = parsed.start.date();
-          }
-
-          this.view(user, date).then((reply) => {
-            session.send(reply);
-          });
-        });
-      });
-
-      cmdDialog.onDefault(
-        botbuilder.DialogAction.send("Try saying \"add\" or \"get\".")
-      );
-    }
-
-    // A dialog for requesting authorization.
-    bot.add('/login', (session) => {
-      let authKey = randomString();
-      this.authRequests[authKey] = session;
-      let loginUrl = baseURL + "/login/" + authKey;
-      session.send("Please follow this URL: " + loginUrl);
-    });
-
-    // When authorization succeeds.
-    bot.add('/loggedin', (session) => {
-      session.send("That worked! You're now signed in as " +
-        session.userData['email'] + ".");
-      session.beginDialog('/command');
-    });
-
-    // A generic prompt dialog. This really seems to break the "dialog"
-    // abstraction from Bot Framework... this is just a workaround for the
-    // lack of a direct way to query and wait for a response.
-    bot.add('/prompt', [
-      (session, args) => {
-        let callback: (a: string) => void = args[0];
-        let prompt: string = args[1];
-        session.dialogData.callback = callback;
-        botbuilder.Prompts.text(session, prompt);
-      },
-      (session, results) => {
-        let res: string = results.response;
-        let callback: (a: string) => void = session.dialogData.callback;
-        callback(res);
-      },
-    ]);
-
-    // Log some events.
-    bot.on('error', (exc) => {
-      console.error(exc.stack);
-    });
-    bot.on('Message', (evt) => {
-      console.log('received:', evt.text);
+    bot.on('send', (msg: botlib.Message) => {
+      console.log('-> %s', msg.text);
     });
 
     return bot;
@@ -393,8 +258,8 @@ class OPALBot {
 
     // If we're using the Bot Connector, set up its API endpoint.
     let bot = this.bot;
-    if (bot instanceof botbuilder.BotConnectorBot) {
-      server.post('/api/messages', bot.verifyBotFramework(), bot.listen());
+    if (bot instanceof botlib.BCBot) {
+      server.post('/api/messages', bot.handler());
     }
 
     // Log requests.
@@ -460,8 +325,8 @@ class OPALBot {
   run() {
     // If we're running a terminal bot, connect it to stdin/stdout.
     let bot = this.bot;
-    if (bot instanceof botbuilder.TextBot) {
-      bot.listenStdin();
+    if (bot instanceof botlib.TextBot) {
+      bot.run();
     }
 
     this.server.listen(8191, () => {
@@ -567,4 +432,3 @@ function main() {
 }
 
 main();
-console.log(Object.keys(require.cache));
