@@ -206,8 +206,10 @@ export class BCBot extends events.EventEmitter {
         this.emit('error', e);
       }
 
-      // If no one replied, send a null response.
-      send(res, {});
+      // If no one replied, send a null response and close the connection.
+      if (!handled) {
+        send(res, {});
+      }
     });
   }
 
