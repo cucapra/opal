@@ -8,6 +8,7 @@ import {scheduleMeeting, viewEvents} from './actions';
 import * as fs from 'fs';
 import * as botlib from './botlib';
 const request = require('request');
+import util = require('util');
 
 /**
  * Generate a random, URL-safe slug.
@@ -85,6 +86,29 @@ function queryLUIS(endpoint: string, text: string): Promise<any> {
       }
     });
   });
+}
+
+/**
+ * Get the most likely intent object from a LUIS response, or `null` if none
+ * seems likely.
+ */
+function likelyIntent(luis: any): any {
+  // Get the most likely intent.
+  let max_intent: any;
+  let max_score: number;
+  for (let intent of luis.intents) {
+    if (!max_intent || intent.score > max_score) {
+      max_intent = intent;
+      max_score = intent.score;
+    }
+  }
+
+  // Max score too low?
+  if (max_score < 0.1) {
+    return null;
+  } else {
+    return max_intent;
+  }
 }
 
 
@@ -236,25 +260,13 @@ class OPALBot {
   converse = async (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
     // TODO Make LUIS optional.
     let luis = await queryLUIS(this.luisURL, msg.text);
-
-    // Get the most likely intent.
-    let max_intent: any;
-    let max_score: number;
-    for (let intent of luis.intents) {
-      if (!max_intent || intent.score > max_score) {
-        max_intent = intent;
-        max_score = intent.score;
-      }
-    }
-
-    // Max score too low?
-    if (max_score < 0.1) {
+    let max_intent = likelyIntent(luis);
+    if (!max_intent) {
       conv.reply(msg, "I'm sorry; I didn't understand.");
       return;
     }
-
-    console.log(max_intent);
-    console.log(luis.entities);
+    console.log("intent:",
+                util.inspect(max_intent, { depth: null, colors: true }));
 
     // Choose an action.
     let name: string = max_intent.intent;
