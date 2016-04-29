@@ -227,53 +227,53 @@ class OPALBot {
     });
   }
 
-  converse = (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
+  /**
+   * The handler for each newly initiated interaction. This gets called every
+   * time a new conversation starts, or when we receive a new message after
+   * this handler as completely finished. It is asynchronous, so it can be
+   * long-running (or loop infinitely).
+   */
+  converse = async (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
     // TODO Make LUIS optional.
-    queryLUIS(this.luisURL, msg.text).then((luis) => {
-      // Get the most likely intent.
-      let max_intent: any;
-      let max_score: number;
-      for (let intent of luis.intents) {
-        if (!max_intent || intent.score > max_score) {
-          max_intent = intent;
-          max_score = intent.score;
-        }
-      }
+    let luis = await queryLUIS(this.luisURL, msg.text);
 
-      // Max score too low?
-      if (max_score < 0.1) {
-        conv.reply(msg, "I'm sorry; I didn't understand.");
-        return;
+    // Get the most likely intent.
+    let max_intent: any;
+    let max_score: number;
+    for (let intent of luis.intents) {
+      if (!max_intent || intent.score > max_score) {
+        max_intent = intent;
+        max_score = intent.score;
       }
+    }
 
-      console.log(max_intent);
-      console.log(luis.entities);
+    // Max score too low?
+    if (max_score < 0.1) {
+      conv.reply(msg, "I'm sorry; I didn't understand.");
+      return;
+    }
 
-      // Choose an action.
-      let name: string = max_intent.intent;
-      if (name === "greeting") {
-        conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
-      } else if (name === "new_meeting") {
-        let date = dateFromLUIS(luis);
-        let title = "Appointment";  // For now.
-        this.ensureUser(conv).then((user) => {
-          this.schedule(conv, user, date, title).then(
-            (reply) => {
-              conv.reply(msg, reply);
-            }
-          );
-        });
-      } else if (name === "show_calendar") {
-        let date = dateFromLUIS(luis);
-        this.ensureUser(conv).then((user) => {
-          this.view(user, date).then((reply) => {
-            conv.reply(msg, reply);
-          });
-        });
-      } else {
-        conv.reply(msg, `I don't handle the ${name} intent yet.`);
-      }
-    });
+    console.log(max_intent);
+    console.log(luis.entities);
+
+    // Choose an action.
+    let name: string = max_intent.intent;
+    if (name === "greeting") {
+      conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
+    } else if (name === "new_meeting") {
+      let date = dateFromLUIS(luis);
+      let title = "Appointment";  // For now.
+      let user = await this.ensureUser(conv);
+      let reply = await this.schedule(conv, user, date, title);
+      conv.reply(msg, reply);
+    } else if (name === "show_calendar") {
+      let date = dateFromLUIS(luis);
+      let user = await this.ensureUser(conv);
+      let reply = await this.view(user, date);
+      conv.reply(msg, reply);
+    } else {
+      conv.reply(msg, `I don't handle the ${name} intent yet.`);
+    }
   };
 
   /**
