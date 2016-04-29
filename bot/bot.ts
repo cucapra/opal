@@ -490,4 +490,13 @@ function main() {
   opalbot.run();
 }
 
+// Show sensible errors in promise/async code.
+process.on('unhandledRejection', (err, p) => {
+  if (err.stack) {
+    console.error(err.stack);
+  } else {
+    console.error(err);
+  }
+});
+
 main();
