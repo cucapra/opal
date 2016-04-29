@@ -83,6 +83,48 @@ function read(msg: http.IncomingMessage): Promise<string> {
   });
 }
 
+export type Bot = BCBot | TextBot;
+
+/**
+ * A conversation between a bot and a human user.
+ */
+export class Conversation {
+  constructor (
+    public bot: Bot,
+    public user: User,
+    public botUser: User,
+    public conversationId: string,
+    public channelConversationId: string
+  ) {}
+
+  /**
+   * Construct a conversation from an incoming message in the conversation.
+   */
+  static fromMessage(bot: Bot, msg: ReceivedMessage) {
+    return new Conversation(bot, msg.from, msg.to, msg.conversationId,
+                            msg.channelConversationId);
+  }
+
+  /**
+   * Send a message to the user.
+   */
+  send(text: string) {
+    this.bot.send({
+      text,
+      from: this.botUser,
+      to: this.user,
+      channelConversationId: this.channelConversationId,
+    });
+  }
+
+  /**
+   * Send a reply to a message from the user.
+   */
+  reply(msg: ReceivedMessage, text: string) {
+    this.bot.send(makeReply(msg, text));
+  }
+}
+
 const API_DEFAULT_HOST = 'api.botframework.com';
 const API_BASE = '/bot/v1.0';
 

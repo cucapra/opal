@@ -206,6 +206,9 @@ class OPALBot {
   }
 
   defaultContinuation = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
+    let conv = botlib.Conversation.fromMessage(this.bot, msg);
+    reply();  // No immediate reply.
+
     // TODO Make LUIS optional.
     let queryURL = this.luisURL + '&q=' + encodeURIComponent(msg.text);
     request(queryURL, (err, res, body) => {
@@ -223,7 +226,7 @@ class OPALBot {
 
       // Max score too low?
       if (max_score < 0.1) {
-        this.bot.send(botlib.makeReply(msg, "I'm sorry; I didn't understand."));
+        conv.reply(msg, "I'm sorry; I didn't understand.");
         return;
       }
 
@@ -233,16 +236,15 @@ class OPALBot {
       // Choose an action.
       let name: string = max_intent.intent;
       if (name === "greeting") {
-        this.bot.send(botlib.makeReply(msg, 'Hello there! Let me know if you want to schedule a meeting.'));
+        conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
       } else if (name === "new_meeting") {
-        this.bot.send(botlib.makeReply(msg, 'Here is where I would schedule a new meeting.'));
+        conv.reply(msg, 'Here is where I would schedule a new meeting.');
       } else if (name === "show_calendar") {
-        this.bot.send(botlib.makeReply(msg, 'I should show your calendar.'));
+        conv.reply(msg, 'I should show your calendar.');
       } else {
-        this.bot.send(botlib.makeReply(msg, `I don't handle the ${name} intent yet.`));
+        conv.reply(msg, `I don't handle the ${name} intent yet.`);
       }
     });
-    reply();
   };
 
   /**
