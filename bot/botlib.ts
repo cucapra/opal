@@ -93,7 +93,7 @@ export class Conversation {
     public bot: Bot,
     public user: User,
     public botUser: User,
-    public conversationId: string,
+    public id: string,  // i.e., conversationId
     public channelConversationId: string
   ) {}
 

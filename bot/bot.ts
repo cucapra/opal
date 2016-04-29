@@ -125,12 +125,14 @@ type HandleMessage = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) =
  */
 class OPALBot {
   bot: AnyBot;
-  authRequests: { [key: string]: any };
   client: Client;
   server: any;  // A Restify server.
   luisURL: string;  // Or null to disable LUIS.
+  baseURL: string;
 
   userContinuations: { [id: string]: HandleMessage };
+  authRequests: { [key: string]: (token: string, email: string) => void };
+  officeUsers: { [convId: string]: User };
 
   constructor(opts: Options) {
     if (opts.terminal) {
@@ -168,40 +170,47 @@ class OPALBot {
 
     this.userContinuations = {};
     this.luisURL = opts.luisURL;
+    this.baseURL = opts.baseURL;
   }
 
   /**
    * Get the currently logged-in Office user, if any.
    */
-  getUser(session: botbuilder.Session): User {
-    let token = session.userData['token'];
-    let email = session.userData['email'];
-    if (token) {
-      return new User(token, email);
-    } else {
-      return null;
-    }
+  getUser(conv: botlib.Conversation): User {
+    return this.officeUsers[conv.id];
   }
 
   /**
    * Ensure we have a logged-in user.
    */
-  ensureUser(session: botbuilder.Session): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
-      let user = this.getUser(session);
-      if (user) {
-        user.checkCredentials().then((valid) => {
-          if (valid) {
-            resolve(user);
-          } else {
-            session.send("Welcome back! Your login seems to have expired.");
-            session.beginDialog('/login');
-          }
-        });
+  async ensureUser(conv: botlib.Conversation): Promise<User> {
+    let user = this.getUser(conv);
+    if (user) {
+      let valid = await user.checkCredentials();
+      if (valid) {
+        return user;
       } else {
-        session.send("Let's get you signed in.");
-        session.beginDialog('/login');
+        conv.send("Welcome back! Your login seems to have expired.");
+        return await this.logIn(conv);
       }
+    } else {
+      conv.send("Let's get you signed in.");
+      return await this.logIn(conv);
+    }
+  }
+
+  logIn(conv: botlib.Conversation): Promise<User> {
+    return new Promise((resolve, reject) => {
+      let authKey = randomString();
+      this.authRequests[authKey] = (token, email) => {
+        conv.send(`That worked! You're now signed in as ${email}.`);
+        let user = new User(token, email);
+        this.officeUsers[conv.id] = user;
+        resolve(user);
+      };
+
+      let loginUrl = this.baseURL + "/login/" + authKey;
+      conv.send("Please follow this URL: " + loginUrl);
     });
   }
 
@@ -238,7 +247,9 @@ class OPALBot {
       if (name === "greeting") {
         conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
       } else if (name === "new_meeting") {
-        conv.reply(msg, 'Here is where I would schedule a new meeting.');
+        this.ensureUser(conv).then((user) => {
+          conv.reply(msg, 'Here is where I would schedule a new meeting.');
+        });
       } else if (name === "show_calendar") {
         conv.reply(msg, 'I should show your calendar.');
       } else {
@@ -330,27 +341,16 @@ class OPALBot {
   }
 
   /**
-   * Called when a chat session becomes authenticated with the Office API.
-   */
-  private sessionAuthenticated(session: botbuilder.Session,
-    token: string, email: string)
-  {
-    session.userData['token'] = token;
-    session.userData['email'] = email;
-    session.beginDialog('/loggedin');
-  }
-
-  /**
    * Called with every authentication callback. Return a Boolean indicating
    * whether the request should succeed.
    */
   private authenticated(token: string, email: string, state: string) {
     // TODO Eventually, we should time out entries in this `authRequests`
     // thing to avoid exposing very old, unused requests.
-    let session = this.authRequests[state];
-    if (session) {
+    let cbk = this.authRequests[state];
+    if (cbk) {
       delete this.authRequests[state];
-      this.sessionAuthenticated(session, token, email);
+      cbk(token, email);
       return true;
     } else {
       return false;
@@ -363,8 +363,7 @@ class OPALBot {
   private gotTimezone(state: string, offset: number) {
     let session = this.authRequests[state];
     if (session) {
-      console.log("recording user's time zone:", offset);
-      session.userData['tzoffset'] = offset;
+      console.log("got user's time zone:", offset);
     }
   }
 
