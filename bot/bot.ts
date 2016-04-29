@@ -130,7 +130,6 @@ class OPALBot {
   luisURL: string;  // Or null to disable LUIS.
   baseURL: string;
 
-  continuations: { [convId: string]: HandleMessage };
   authRequests: { [key: string]: (token: string, email: string) => void };
   officeUsers: { [convId: string]: User };
 
@@ -141,30 +140,19 @@ class OPALBot {
       this.bot = new botlib.BCBot(opts.bcAppId, opts.bcAppSecret);
     }
 
-    this.bot.on('message', (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
-      if (!opts.terminal) {
-        console.log(msg.text);
-      }
+    // Set up our main interaction.
+    this.bot.on('message', botlib.converse(this.bot, this.converse));
 
-      // Find and execute the continuation for this user.
-      let k = this.continuations[msg.conversationId] ||
-        this.defaultContinuation;
-      k(msg, reply);
-    });
-
+    // Unless we're running in the terminal, log incoming and outgoing
+    // messages.
     if (!opts.terminal) {
+      this.bot.on('message', (msg, reply) => {
+        console.log('<- %s', msg.text);
+      });
       this.bot.on('send', (msg: botlib.Message) => {
         console.log('-> %s', msg.text);
       });
     }
-
-    this.bot.on('error', (err) => {
-      if (err.stack) {
-        console.error(err.stack);
-      } else {
-        console.error(err);
-      }
-    });
 
     // Create the Office API client.
     this.client = new Client(
@@ -177,7 +165,6 @@ class OPALBot {
     this.server = this.setupServer();
     this.authRequests = {};
 
-    this.continuations = {};
     this.luisURL = opts.luisURL;
     this.baseURL = opts.baseURL;
     this.officeUsers = {};
@@ -224,10 +211,7 @@ class OPALBot {
     });
   }
 
-  defaultContinuation = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => {
-    let conv = botlib.Conversation.fromMessage(this.bot, msg);
-    reply();  // No immediate reply.
-
+  converse = (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
     // TODO Make LUIS optional.
     let queryURL = this.luisURL + '&q=' + encodeURIComponent(msg.text);
     request(queryURL, (err, res, body) => {
@@ -260,7 +244,7 @@ class OPALBot {
         let date = dateFromLUIS(luis);
         let title = "Appointment";  // For now.
         this.ensureUser(conv).then((user) => {
-          this.schedule(new BotSession(this, conv), user, date, title).then(
+          this.schedule(new BotSession(conv), user, date, title).then(
             (reply) => {
               conv.reply(msg, reply);
             }
@@ -431,18 +415,16 @@ class OPALBot {
  * A wrapper for Session that lets OPAL programs interact with the user.
  */
 export class BotSession {
-  constructor(public bot: OPALBot, public conv: botlib.Conversation) {}
+  constructor(public conv: botlib.Conversation) {}
 
   prompt(text: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       if (text) {
         this.conv.send(text);
       }
-      this.bot.continuations[this.conv.id] = (msg, reply) => {
-        reply();
-        delete this.bot.continuations[this.conv.id];  // Return to main menu.
+      this.conv.receive().then((msg) => {
         resolve(msg.text);
-      };
+      });
     });
   }
 

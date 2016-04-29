@@ -85,46 +85,6 @@ function read(msg: http.IncomingMessage): Promise<string> {
 
 export type Bot = BCBot | TextBot;
 
-/**
- * A conversation between a bot and a human user.
- */
-export class Conversation {
-  constructor (
-    public bot: Bot,
-    public user: User,
-    public botUser: User,
-    public id: string,  // i.e., conversationId
-    public channelConversationId: string
-  ) {}
-
-  /**
-   * Construct a conversation from an incoming message in the conversation.
-   */
-  static fromMessage(bot: Bot, msg: ReceivedMessage) {
-    return new Conversation(bot, msg.from, msg.to, msg.conversationId,
-                            msg.channelConversationId);
-  }
-
-  /**
-   * Send a message to the user.
-   */
-  send(text: string) {
-    this.bot.send({
-      text,
-      from: this.botUser,
-      to: this.user,
-      channelConversationId: this.channelConversationId,
-    });
-  }
-
-  /**
-   * Send a reply to a message from the user.
-   */
-  reply(msg: ReceivedMessage, text: string) {
-    this.bot.send(makeReply(msg, text));
-  }
-}
-
 const API_DEFAULT_HOST = 'api.botframework.com';
 const API_BASE = '/bot/v1.0';
 
@@ -358,4 +318,91 @@ export class TextBot extends events.EventEmitter {
     this.emit('send', msg);
     console.log(msg.text);
   }
+}
+
+/**
+ * A conversation between a bot and a human user.
+ */
+export class Conversation {
+  constructor (
+    public cist: Conversationalist,
+    public user: User,
+    public botUser: User,
+    public id: string,  // i.e., conversationId
+    public channelConversationId: string
+  ) {}
+
+  /**
+   * Construct a conversation from an incoming message in the conversation.
+   */
+  static fromMessage(cist: Conversationalist, msg: ReceivedMessage) {
+    return new Conversation(cist, msg.from, msg.to, msg.conversationId,
+                            msg.channelConversationId);
+  }
+
+  /**
+   * Send a message to the user.
+   */
+  send(text: string) {
+    this.cist.bot.send({
+      text,
+      from: this.botUser,
+      to: this.user,
+      channelConversationId: this.channelConversationId,
+    });
+  }
+
+  /**
+   * Send a reply to a message from the user.
+   */
+  reply(msg: ReceivedMessage, text: string) {
+    this.cist.bot.send(makeReply(msg, text));
+  }
+
+  /**
+   * Wait for a message in the conversation.
+   */
+  receive(): Promise<ReceivedMessage> {
+    return new Promise((resolve, reject) => {
+      this.cist.continuations[this.id] = (msg) => {
+        delete this.cist.continuations[this.id];
+        resolve(msg);
+      };
+    });
+  }
+}
+
+/**
+ * The type for initial conversation handlers.
+ */
+type ConversationHandler = (conv: Conversation, msg: ReceivedMessage) => void;
+
+/**
+ * A Conversationalist holds the state for continuing conversations
+ * asynchronously.
+ */
+interface Conversationalist {
+  bot: Bot;
+  continuations: { [convId: string]: (msg: ReceivedMessage) => void };
+};
+
+/**
+ * An asynchronous conversation handler for a bot's `message` event.
+ */
+export function converse(bot: Bot, handler: ConversationHandler) {
+  let cist: Conversationalist = { bot, continuations: {} };
+  return (msg: ReceivedMessage, reply: (m?: OutgoingMessage) => void) => {
+    // Don't reply immediately.
+    reply();
+
+    // Either resume a continuation or invoke the initial handler to get
+    // things started.
+    let k = cist.continuations[msg.conversationId];
+    if (k) {
+      k(msg);
+    } else {
+      let conv = Conversation.fromMessage(cist, msg);
+      handler(conv, msg);
+    }
+  };
 }
