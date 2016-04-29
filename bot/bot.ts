@@ -294,11 +294,10 @@ class OPALBot {
   private setupServer() {
     // The Web server.
     let server = restify.createServer();
-    server.use(restify.queryParser());
-    server.use(restify.bodyParser());
 
     // The OAuth2 callback.
-    server.get('/authorize', (req, res, next) => {
+    server.get('/authorize', restify.queryParser(), restify.bodyParser(),
+               (req, res, next) => {
       let code = req.params['code'];
       let state = req.params['state'];
       console.log("authorization request: state", state);
@@ -323,7 +322,8 @@ class OPALBot {
     });
 
     // Authentication redirect.
-    server.get('/login/:state', (req, res, next) => {
+    server.get('/login/:state', restify.queryParser(), restify.bodyParser(),
+               (req, res, next) => {
       let state = req.params['state'];
       console.log("redirecting for login: state", state);
 
@@ -339,7 +339,8 @@ class OPALBot {
     });
 
     // Receive time zone callback.
-    server.post('/tz/:state', (req, res, next) => {
+    server.post('/tz/:state',  restify.queryParser(), restify.bodyParser(),
+                (req, res, next) => {
       let state = req.params['state'];
       let offset = parseInt(req.params['offset']);
       this.gotTimezone(state, offset);
