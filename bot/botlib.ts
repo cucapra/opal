@@ -73,6 +73,15 @@ function send(res: http.ServerResponse, json: any) {
  */
 function read(msg: http.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
+    // Apparently, Restify *sometimes* gathers the body up and assigns it onto
+    // the `IncomingMessage`. We don't get the ordinary Node events. This is
+    // deeply uncomfortable, uncomposable, and unsafe. I almost can't believe
+    // it's real. But we'll deal with it.
+    if ((msg as any).body) {
+      resolve((msg as any).body);
+      return;
+    }
+
     let chunks = [];
     msg.on('data', (chunk) => chunks.push(chunk));
     msg.on('end', () => {
