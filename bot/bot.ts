@@ -71,6 +71,22 @@ function dateFromLUIS(luis: any): Date {
   }
 }
 
+/**
+ * Send a query to LUIS and return its complete API response.
+ */
+function queryLUIS(endpoint: string, text: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let queryURL = endpoint + '&q=' + encodeURIComponent(text);
+    request(queryURL, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(JSON.parse(body));
+      }
+    });
+  });
+}
+
 
 /**
  * The configuration for `OPALBot`, which is passed to its constructor.
@@ -213,10 +229,7 @@ class OPALBot {
 
   converse = (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
     // TODO Make LUIS optional.
-    let queryURL = this.luisURL + '&q=' + encodeURIComponent(msg.text);
-    request(queryURL, (err, res, body) => {
-      let luis = JSON.parse(body);
-
+    queryLUIS(this.luisURL, msg.text).then((luis) => {
       // Get the most likely intent.
       let max_intent: any;
       let max_score: number;
