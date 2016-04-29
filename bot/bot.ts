@@ -157,6 +157,14 @@ class OPALBot {
       });
     }
 
+    this.bot.on('error', (err) => {
+      if (err.stack) {
+        console.error(err.stack);
+      } else {
+        console.error(err);
+      }
+    });
+
     // Create the Office API client.
     this.client = new Client(
       opts.officeAppId,
@@ -251,7 +259,9 @@ class OPALBot {
           conv.reply(msg, 'Here is where I would schedule a new meeting.');
         });
       } else if (name === "show_calendar") {
-        conv.reply(msg, 'I should show your calendar.');
+        this.ensureUser(conv).then((user) => {
+          conv.reply(msg, 'I should show your calendar.');
+        });
       } else {
         conv.reply(msg, `I don't handle the ${name} intent yet.`);
       }
