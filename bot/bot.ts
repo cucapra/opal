@@ -130,7 +130,7 @@ class OPALBot {
   luisURL: string;  // Or null to disable LUIS.
   baseURL: string;
 
-  userContinuations: { [id: string]: HandleMessage };
+  continuations: { [convId: string]: HandleMessage };
   authRequests: { [key: string]: (token: string, email: string) => void };
   officeUsers: { [convId: string]: User };
 
@@ -147,7 +147,8 @@ class OPALBot {
       }
 
       // Find and execute the continuation for this user.
-      let k = this.userContinuations[msg.from.id] || this.defaultContinuation;
+      let k = this.continuations[msg.conversationId] ||
+        this.defaultContinuation;
       k(msg, reply);
     });
 
@@ -176,7 +177,7 @@ class OPALBot {
     this.server = this.setupServer();
     this.authRequests = {};
 
-    this.userContinuations = {};
+    this.continuations = {};
     this.luisURL = opts.luisURL;
     this.baseURL = opts.baseURL;
     this.officeUsers = {};
@@ -256,12 +257,21 @@ class OPALBot {
       if (name === "greeting") {
         conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
       } else if (name === "new_meeting") {
+        let date = dateFromLUIS(luis);
+        let title = "Appointment";  // For now.
         this.ensureUser(conv).then((user) => {
-          conv.reply(msg, 'Here is where I would schedule a new meeting.');
+          this.schedule(new BotSession(this, conv), user, date, title).then(
+            (reply) => {
+              conv.reply(msg, reply);
+            }
+          );
         });
       } else if (name === "show_calendar") {
+        let date = dateFromLUIS(luis);
         this.ensureUser(conv).then((user) => {
-          conv.reply(msg, 'I should show your calendar.');
+          this.view(user, date).then((reply) => {
+            conv.reply(msg, reply);
+          });
         });
       } else {
         conv.reply(msg, `I don't handle the ${name} intent yet.`);
@@ -421,36 +431,40 @@ class OPALBot {
  * A wrapper for Session that lets OPAL programs interact with the user.
  */
 export class BotSession {
-  constructor(public session: botbuilder.Session) {}
+  constructor(public bot: OPALBot, public conv: botlib.Conversation) {}
 
-  prompt(text: String): Promise<string> {
+  prompt(text: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      this.session.beginDialog('/prompt', [resolve, text]);
+      if (text) {
+        this.conv.send(text);
+      }
+      this.bot.continuations[this.conv.id] = (msg, reply) => {
+        reply();
+        delete this.bot.continuations[this.conv.id];  // Return to main menu.
+        resolve(msg.text);
+      };
     });
   }
 
-  choose(options: String[]): Promise<number> {
+  async choose(options: String[]): Promise<number> {
     let prompt_parts = [];
     for (let i = 0; i < options.length; ++i) {
       prompt_parts.push(`(${i + 1}) ${options[i]}`);
     }
     let prompt = "Please choose one of: " + prompt_parts.join(", ");
 
-    return new Promise<string>((resolve, reject) => {
-      this.session.beginDialog('/prompt', [resolve, prompt]);
-    }).then((response) => {
-      let index = parseInt(response.trim());
-      if (isNaN(index)) {
-        // Just choose the first by default if this was a non-number.
-        return 0;
-      } else if (index <= 0 || index >= options.length) {
-        // Out of range. Again, choose a default.
-        return 0;
-      } else {
-        // A valid selection.
-        return index - 1;
-      }
-    });
+    let response = await this.prompt(prompt);
+    let index = parseInt(response.trim());
+    if (isNaN(index)) {
+      // Just choose the first by default if this was a non-number.
+      return 0;
+    } else if (index <= 0 || index >= options.length) {
+      // Out of range. Again, choose a default.
+      return 0;
+    } else {
+      // A valid selection.
+      return index - 1;
+    }
   }
 }
 
