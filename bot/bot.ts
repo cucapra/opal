@@ -179,6 +179,7 @@ class OPALBot {
     this.userContinuations = {};
     this.luisURL = opts.luisURL;
     this.baseURL = opts.baseURL;
+    this.officeUsers = {};
   }
 
   /**
