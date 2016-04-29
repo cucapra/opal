@@ -370,6 +370,46 @@ export class Conversation {
       };
     });
   }
+
+  /**
+   * Wait for a message and get its text.
+   */
+  async read(): Promise<string> {
+    return (await this.receive()).text;
+  }
+
+  /**
+   * Ask a question and return the response.
+   */
+  async prompt(text: string): Promise<string> {
+    this.send(text);
+    return await this.read();
+  }
+
+  /**
+   * Ask for a choice from a list of options. Return the selected index (or
+   * zero if there's no valid choice).
+   */
+  async choose(options: string[]): Promise<number> {
+    let prompt_parts = [];
+    for (let i = 0; i < options.length; ++i) {
+      prompt_parts.push(`(${i + 1}) ${options[i]}`);
+    }
+    let prompt = "Please choose one of: " + prompt_parts.join(", ");
+
+    let response = await this.prompt(prompt);
+    let index = parseInt(response.trim());
+    if (isNaN(index)) {
+      // Just choose the first by default if this was a non-number.
+      return 0;
+    } else if (index <= 0 || index >= options.length) {
+      // Out of range. Again, choose a default.
+      return 0;
+    } else {
+      // A valid selection.
+      return index - 1;
+    }
+  }
 }
 
 /**

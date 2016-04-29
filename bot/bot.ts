@@ -244,7 +244,7 @@ class OPALBot {
         let date = dateFromLUIS(luis);
         let title = "Appointment";  // For now.
         this.ensureUser(conv).then((user) => {
-          this.schedule(new BotSession(conv), user, date, title).then(
+          this.schedule(conv, user, date, title).then(
             (reply) => {
               conv.reply(msg, reply);
             }
@@ -391,11 +391,11 @@ class OPALBot {
   /**
    * Schedule a meeting based on a user request.
    */
-  async schedule(session: BotSession, user: User, date: Date, title: string) {
-
+  async schedule(conv: botlib.Conversation, user: User,
+                 date: Date, title: string)
+  {
     console.log("scheduling", title, "on", date);
-
-    return await scheduleMeeting(session, user, date, title);
+    return await scheduleMeeting(conv, user, date, title);
   }
 
   /**
@@ -407,45 +407,6 @@ class OPALBot {
       return "Here's what's on your calendar: " + reply;
     } else {
       return "There's nothing on your calendar.";
-    }
-  }
-}
-
-/**
- * A wrapper for Session that lets OPAL programs interact with the user.
- */
-export class BotSession {
-  constructor(public conv: botlib.Conversation) {}
-
-  prompt(text: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      if (text) {
-        this.conv.send(text);
-      }
-      this.conv.receive().then((msg) => {
-        resolve(msg.text);
-      });
-    });
-  }
-
-  async choose(options: String[]): Promise<number> {
-    let prompt_parts = [];
-    for (let i = 0; i < options.length; ++i) {
-      prompt_parts.push(`(${i + 1}) ${options[i]}`);
-    }
-    let prompt = "Please choose one of: " + prompt_parts.join(", ");
-
-    let response = await this.prompt(prompt);
-    let index = parseInt(response.trim());
-    if (isNaN(index)) {
-      // Just choose the first by default if this was a non-number.
-      return 0;
-    } else if (index <= 0 || index >= options.length) {
-      // Out of range. Again, choose a default.
-      return 0;
-    } else {
-      // A valid selection.
-      return index - 1;
     }
   }
 }
