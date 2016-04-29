@@ -6,6 +6,9 @@ import * as minimist from 'minimist';
 const chrono = require('chrono-node');
 import {scheduleMeeting, viewEvents} from './actions';
 import * as fs from 'fs';
+import * as botlib from './botlib';
+const request = require('request');
+import util = require('util');
 
 /**
  * Generate a random, URL-safe slug.
@@ -69,6 +72,45 @@ function dateFromLUIS(luis: any): Date {
   }
 }
 
+/**
+ * Send a query to LUIS and return its complete API response.
+ */
+function queryLUIS(endpoint: string, text: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let queryURL = endpoint + '&q=' + encodeURIComponent(text);
+    request(queryURL, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(JSON.parse(body));
+      }
+    });
+  });
+}
+
+/**
+ * Get the most likely intent object from a LUIS response, or `null` if none
+ * seems likely.
+ */
+function likelyIntent(luis: any): any {
+  // Get the most likely intent.
+  let max_intent: any;
+  let max_score: number;
+  for (let intent of luis.intents) {
+    if (!max_intent || intent.score > max_score) {
+      max_intent = intent;
+      max_score = intent.score;
+    }
+  }
+
+  // Max score too low?
+  if (max_score < 0.1) {
+    return null;
+  } else {
+    return max_intent;
+  }
+}
+
 
 /**
  * The configuration for `OPALBot`, which is passed to its constructor.
@@ -112,33 +154,45 @@ interface Options {
 }
 
 /**
- * A supertype of Bot Builder bot types.
+ * A supertype of botlib bot types.
  */
-type AnyBot = botbuilder.BotConnectorBot | botbuilder.TextBot;
+type AnyBot = botlib.BCBot | botlib.TextBot;
+
+type HandleMessage = (msg: botlib.ReceivedMessage, reply: (m?: botlib.Message) => void) => void;
 
 /**
  * All the machinery for an OPAL chat bot instance.
  */
 class OPALBot {
   bot: AnyBot;
-  authRequests: { [key: string]: any };
   client: Client;
   server: any;  // A Restify server.
+  luisURL: string;  // Or null to disable LUIS.
+  baseURL: string;
+
+  authRequests: { [key: string]: (token: string, email: string) => void };
+  officeUsers: { [convId: string]: User };
 
   constructor(opts: Options) {
-    // The Bot Builder bot object.
     if (opts.terminal) {
-      this.bot = new botbuilder.TextBot({
-        minSendDelay: 100,
-      });
+      this.bot = new botlib.TextBot();
     } else {
-      this.bot = new botbuilder.BotConnectorBot({
-        appId: opts.bcAppId,
-        appSecret: opts.bcAppSecret,
-        minSendDelay: 100,
+      this.bot = new botlib.BCBot(opts.bcAppId, opts.bcAppSecret);
+    }
+
+    // Set up our main interaction.
+    this.bot.on('message', botlib.converse(this.bot, this.converse));
+
+    // Unless we're running in the terminal, log incoming and outgoing
+    // messages.
+    if (!opts.terminal) {
+      this.bot.on('message', (msg, reply) => {
+        console.log('<- %s', msg.text);
+      });
+      this.bot.on('send', (msg: botlib.Message) => {
+        console.log('-> %s', msg.text);
       });
     }
-    this.setupBot(this.bot, opts.baseURL, opts.luisURL);
 
     // Create the Office API client.
     this.client = new Client(
@@ -150,187 +204,89 @@ class OPALBot {
     // Start the Web server.
     this.server = this.setupServer();
     this.authRequests = {};
+
+    this.luisURL = opts.luisURL;
+    this.baseURL = opts.baseURL;
+    this.officeUsers = {};
   }
 
   /**
    * Get the currently logged-in Office user, if any.
    */
-  getUser(session: botbuilder.Session): User {
-    let token = session.userData['token'];
-    let email = session.userData['email'];
-    if (token) {
-      return new User(token, email);
-    } else {
-      return null;
-    }
+  getUser(conv: botlib.Conversation): User {
+    return this.officeUsers[conv.id];
   }
 
   /**
    * Ensure we have a logged-in user.
    */
-  ensureUser(session: botbuilder.Session): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
-      let user = this.getUser(session);
-      if (user) {
-        user.checkCredentials().then((valid) => {
-          if (valid) {
-            resolve(user);
-          } else {
-            session.send("Welcome back! Your login seems to have expired.");
-            session.beginDialog('/login');
-          }
-        });
+  async ensureUser(conv: botlib.Conversation): Promise<User> {
+    let user = this.getUser(conv);
+    if (user) {
+      let valid = await user.checkCredentials();
+      if (valid) {
+        return user;
       } else {
-        session.send("Let's get you signed in.");
-        session.beginDialog('/login');
+        conv.send("Welcome back! Your login seems to have expired.");
+        return await this.logIn(conv);
       }
+    } else {
+      conv.send("Let's get you signed in.");
+      return await this.logIn(conv);
+    }
+  }
+
+  logIn(conv: botlib.Conversation): Promise<User> {
+    return new Promise((resolve, reject) => {
+      let authKey = randomString();
+      this.authRequests[authKey] = (token, email) => {
+        conv.send(`That worked! You're now signed in as ${email}.`);
+        let user = new User(token, email);
+        this.officeUsers[conv.id] = user;
+        resolve(user);
+      };
+
+      let loginUrl = this.baseURL + "/login/" + authKey;
+      conv.send("Please follow this URL: " + loginUrl);
     });
   }
 
   /**
-   * Create the Bot Framework bot object.
+   * The handler for each newly initiated interaction. This gets called every
+   * time a new conversation starts, or when we receive a new message after
+   * this handler as completely finished. It is asynchronous, so it can be
+   * long-running (or loop infinitely).
    */
-  private setupBot(bot: AnyBot, baseURL: string, luisURL?: string) {
-    // The default dialog (the entry point). Makes sure the user is
-    // authenticated before doing anything.
-    bot.add('/', (session) => {
-      session.beginDialog('/command');
-    });
-
-    // Main command menu.
-    if (luisURL) {
-      // LUIS parser.
-      let luisDialog = new botbuilder.LuisDialog(luisURL);
-      bot.add('/command', luisDialog);
-
-      luisDialog.on("new_meeting", (session, luis) => {
-        let date = dateFromLUIS(luis);
-        let title = "Appointment";  // For now.
-        this.ensureUser(session).then((user) => {
-          this.schedule(new BotSession(session), user, date, title).then(
-            (reply) => {
-              session.send(reply);
-            }
-          );
-        });
-      });
-
-      luisDialog.on("show_calendar", (session, luis) => {
-        let date = dateFromLUIS(luis);
-        this.ensureUser(session).then((user) => {
-          this.view(user, date).then((reply) => {
-            session.send(reply);
-          });
-        });
-      });
-
-      luisDialog.onDefault(
-        botbuilder.DialogAction.send("I'm sorry; I didn't understand.")
-      );
-
-    } else {
-
-      // Basic regex-based command interface.
-      let cmdDialog = new botbuilder.CommandDialog();
-      bot.add('/command', cmdDialog);
-
-      cmdDialog.matches('^hi', (session) => {
-        session.send('Hello there! Let me know if you want to schedule a meeting.');
-      });
-
-      cmdDialog.matches('^(schedule|add|meet) (.*)', (session, args) => {
-        this.ensureUser(session).then((user) => {
-          let arg = args.matches[2];
-
-          let parsed = chrono.parse(arg)[0];
-          if (parsed === undefined) {
-            session.send("Please tell me when you want the meeting.");
-            return;
-          }
-
-          let date: Date = parsed.start.date();
-
-          // Use the remaining (non-date) text as the event title.
-          let beforeDate = arg.slice(0, parsed.index);
-          let afterDate = arg.slice(parsed.index + parsed.text.length);
-          let title = beforeDate + ' ' + afterDate;
-          title = title.replace(/\s+/g, ' ').trim();
-          if (title.length <= 1) {
-            title = "Appointment";
-          }
-
-          this.schedule(new BotSession(session), user, date, title).then(
-            (reply) => { session.send(reply); }
-          );
-        });
-      });
-
-      cmdDialog.matches('^(view|see|get|show)( .*)?', (session, args) => {
-        this.ensureUser(session).then((user) => {
-          let when = args.matches[2] || "";
-
-          // Get the specified date, or today if unspecified.
-          let parsed = chrono.parse(when)[0];
-          let date: Date;
-          if (parsed === undefined) {
-            date = new Date();
-          } else {
-            date = parsed.start.date();
-          }
-
-          this.view(user, date).then((reply) => {
-            session.send(reply);
-          });
-        });
-      });
-
-      cmdDialog.onDefault(
-        botbuilder.DialogAction.send("Try saying \"add\" or \"get\".")
-      );
+  converse = async (conv: botlib.Conversation, msg: botlib.ReceivedMessage) => {
+    // TODO Make LUIS optional.
+    let luis = await queryLUIS(this.luisURL, msg.text);
+    let max_intent = likelyIntent(luis);
+    if (!max_intent) {
+      conv.reply(msg, "I'm sorry; I didn't understand.");
+      return;
     }
+    console.log("intent:",
+                util.inspect(max_intent, { depth: null, colors: true }));
 
-    // A dialog for requesting authorization.
-    bot.add('/login', (session) => {
-      let authKey = randomString();
-      this.authRequests[authKey] = session;
-      let loginUrl = baseURL + "/login/" + authKey;
-      session.send("Please follow this URL: " + loginUrl);
-    });
-
-    // When authorization succeeds.
-    bot.add('/loggedin', (session) => {
-      session.send("That worked! You're now signed in as " +
-        session.userData['email'] + ".");
-      session.beginDialog('/command');
-    });
-
-    // A generic prompt dialog. This really seems to break the "dialog"
-    // abstraction from Bot Framework... this is just a workaround for the
-    // lack of a direct way to query and wait for a response.
-    bot.add('/prompt', [
-      (session, args) => {
-        let callback: (a: string) => void = args[0];
-        let prompt: string = args[1];
-        session.dialogData.callback = callback;
-        botbuilder.Prompts.text(session, prompt);
-      },
-      (session, results) => {
-        let res: string = results.response;
-        let callback: (a: string) => void = session.dialogData.callback;
-        callback(res);
-      },
-    ]);
-
-    // Log some events.
-    bot.on('error', (exc) => {
-      console.error(exc.stack);
-    });
-    bot.on('Message', (evt) => {
-      console.log('received:', evt.text);
-    });
-
-    return bot;
-  }
+    // Choose an action.
+    let name: string = max_intent.intent;
+    if (name === "greeting") {
+      conv.reply(msg, 'Hello there! Let me know if you want to schedule a meeting.');
+    } else if (name === "new_meeting") {
+      let date = dateFromLUIS(luis);
+      let title = "Appointment";  // For now.
+      let user = await this.ensureUser(conv);
+      let reply = await this.schedule(conv, user, date, title);
+      conv.reply(msg, reply);
+    } else if (name === "show_calendar") {
+      let date = dateFromLUIS(luis);
+      let user = await this.ensureUser(conv);
+      let reply = await this.view(user, date);
+      conv.reply(msg, reply);
+    } else {
+      conv.reply(msg, `I don't handle the ${name} intent yet.`);
+    }
+  };
 
   /**
    * Create the web server.
@@ -393,8 +349,8 @@ class OPALBot {
 
     // If we're using the Bot Connector, set up its API endpoint.
     let bot = this.bot;
-    if (bot instanceof botbuilder.BotConnectorBot) {
-      server.post('/api/messages', bot.verifyBotFramework(), bot.listen());
+    if (bot instanceof botlib.BCBot) {
+      server.post('/api/messages', bot.handler());
     }
 
     // Log requests.
@@ -415,27 +371,16 @@ class OPALBot {
   }
 
   /**
-   * Called when a chat session becomes authenticated with the Office API.
-   */
-  private sessionAuthenticated(session: botbuilder.Session,
-    token: string, email: string)
-  {
-    session.userData['token'] = token;
-    session.userData['email'] = email;
-    session.beginDialog('/loggedin');
-  }
-
-  /**
    * Called with every authentication callback. Return a Boolean indicating
    * whether the request should succeed.
    */
   private authenticated(token: string, email: string, state: string) {
     // TODO Eventually, we should time out entries in this `authRequests`
     // thing to avoid exposing very old, unused requests.
-    let session = this.authRequests[state];
-    if (session) {
+    let cbk = this.authRequests[state];
+    if (cbk) {
       delete this.authRequests[state];
-      this.sessionAuthenticated(session, token, email);
+      cbk(token, email);
       return true;
     } else {
       return false;
@@ -448,8 +393,7 @@ class OPALBot {
   private gotTimezone(state: string, offset: number) {
     let session = this.authRequests[state];
     if (session) {
-      console.log("recording user's time zone:", offset);
-      session.userData['tzoffset'] = offset;
+      console.log("got user's time zone:", offset);
     }
   }
 
@@ -460,8 +404,8 @@ class OPALBot {
   run() {
     // If we're running a terminal bot, connect it to stdin/stdout.
     let bot = this.bot;
-    if (bot instanceof botbuilder.TextBot) {
-      bot.listenStdin();
+    if (bot instanceof botlib.TextBot) {
+      bot.run();
     }
 
     this.server.listen(8191, () => {
@@ -472,11 +416,11 @@ class OPALBot {
   /**
    * Schedule a meeting based on a user request.
    */
-  async schedule(session: BotSession, user: User, date: Date, title: string) {
-
+  async schedule(conv: botlib.Conversation, user: User,
+                 date: Date, title: string)
+  {
     console.log("scheduling", title, "on", date);
-
-    return await scheduleMeeting(session, user, date, title);
+    return await scheduleMeeting(conv, user, date, title);
   }
 
   /**
@@ -489,43 +433,6 @@ class OPALBot {
     } else {
       return "There's nothing on your calendar.";
     }
-  }
-}
-
-/**
- * A wrapper for Session that lets OPAL programs interact with the user.
- */
-export class BotSession {
-  constructor(public session: botbuilder.Session) {}
-
-  prompt(text: String): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      this.session.beginDialog('/prompt', [resolve, text]);
-    });
-  }
-
-  choose(options: String[]): Promise<number> {
-    let prompt_parts = [];
-    for (let i = 0; i < options.length; ++i) {
-      prompt_parts.push(`(${i + 1}) ${options[i]}`);
-    }
-    let prompt = "Please choose one of: " + prompt_parts.join(", ");
-
-    return new Promise<string>((resolve, reject) => {
-      this.session.beginDialog('/prompt', [resolve, prompt]);
-    }).then((response) => {
-      let index = parseInt(response.trim());
-      if (isNaN(index)) {
-        // Just choose the first by default if this was a non-number.
-        return 0;
-      } else if (index <= 0 || index >= options.length) {
-        // Out of range. Again, choose a default.
-        return 0;
-      } else {
-        // A valid selection.
-        return index - 1;
-      }
-    });
   }
 }
 
@@ -566,5 +473,13 @@ function main() {
   opalbot.run();
 }
 
+// Show sensible errors in promise/async code.
+process.on('unhandledRejection', (err, p) => {
+  if (err.stack) {
+    console.error(err.stack);
+  } else {
+    console.error(err);
+  }
+});
+
 main();
-console.log(Object.keys(require.cache));

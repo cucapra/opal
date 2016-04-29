@@ -7,7 +7,7 @@ import {Event, Calendar, getEventRange} from '../src/calendar';
 import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
 import {User} from '../src/office';
-import {BotSession} from './bot';
+import {Conversation} from './botlib';
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -30,14 +30,14 @@ function getSadness(prefStart: number, prefEnd: number, evt: Event): number {
  * Ask the user to choose from the best *k* worlds.
  *
  * @param ctx      The OPAL context.
- * @param session  The bot session to use for interaction.
+ * @param conv     The bot session to use for interaction.
  * @param worlds   The set of worlds to choose between.
  * @param score    The number weight that ranks the best worlds.
  * @param summary  The string weight that summarizes each world.
  * @param limit    The maximum number of options to show the user.
  * @returns        The chosen world.
  */
-async function choose_world(ctx: Context, session: BotSession,
+async function choose_world(ctx: Context, conv: Conversation,
                             worlds: Iterable<World>, score: Weight<number>,
                             summary: Weight<string>,
                             limit: number)
@@ -47,7 +47,7 @@ async function choose_world(ctx: Context, session: BotSession,
   for (let world of topk) {
     options.push(await ctx.get(summary, world));
   }
-  let choice = await session.choose(options);
+  let choice = await conv.choose(options);
   return topk[choice];
 }
 
@@ -63,7 +63,7 @@ async function choose_world(ctx: Context, session: BotSession,
  * @param minutes   The duration of the new event in minutes.
  * @returns         An OPAL `World` where the event has been scheduled.
  */
-async function schedule(ctx: Context, session: BotSession, cal: Calendar,
+async function schedule(ctx: Context, conv: Conversation, cal: Calendar,
                         range: Iterable<Date>,
                         prefStart: number, prefEnd: number,
                         title: string, minutes: number)
@@ -98,7 +98,7 @@ async function schedule(ctx: Context, session: BotSession, cal: Calendar,
   });
 
   // Ask the user for the best among the top 3 options.
-  return choose_world(ctx, session, worlds, score, summary, 3);
+  return choose_world(ctx, conv, worlds, score, summary, 3);
 }
 
 function clearTime(date: Date): Date {
@@ -122,7 +122,8 @@ function dateRange(date: Date): [Date, Date] {
 /**
  * Schedule a new meeting for a user.
  */
-export async function scheduleMeeting(session: BotSession, user: User, date: Date, title: string) {
+export async function scheduleMeeting(conv: Conversation, user: User,
+                                      date: Date, title: string) {
   let pair = dateRange(date);
   let rangeStart = pair[0];
   let rangeEnd = pair[1];
@@ -139,7 +140,7 @@ export async function scheduleMeeting(session: BotSession, user: User, date: Dat
     // Schedule a meeting.
     let world = await schedule(
       ctx,
-      session,
+      conv,
       events,
       slots(
         rangeStart,

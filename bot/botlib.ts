@@ -83,6 +83,8 @@ function read(msg: http.IncomingMessage): Promise<string> {
   });
 }
 
+export type Bot = BCBot | TextBot;
+
 const API_DEFAULT_HOST = 'api.botframework.com';
 const API_BASE = '/bot/v1.0';
 
@@ -169,11 +171,15 @@ export class BCBot extends events.EventEmitter {
       // Set up the reply callback. *One* handler is allowed to use a callback
       // to issue an immediate reply.
       let replied = false;
-      let cbk = (reply: Message) => {
+      let cbk = (reply?: Message) => {
         if (!replied) {
-          // Send the response.
-          this.emit('send', reply);
-          send(res, reply);
+          // Send the response, if any.
+          if (reply) {
+            this.emit('send', reply);
+            send(res, reply);
+          } else {
+            send(res, {});
+          }
 
           // Prevent further replies;
           replied = true;
@@ -300,9 +306,10 @@ export class TextBot extends events.EventEmitter {
         hashtags: [],
       };
 
-      this.emit('message', msg, (reply: Message) => {
-        this.emit('send', msg);
-        console.log(msg.text);
+      this.emit('message', msg, (reply?: Message) => {
+        if (reply) {
+          this.emit('send', reply);
+        }
       });
     });
   }
@@ -311,4 +318,131 @@ export class TextBot extends events.EventEmitter {
     this.emit('send', msg);
     console.log(msg.text);
   }
+}
+
+/**
+ * A conversation between a bot and a human user.
+ */
+export class Conversation {
+  constructor (
+    public cist: Conversationalist,
+    public user: User,
+    public botUser: User,
+    public id: string,  // i.e., conversationId
+    public channelConversationId: string
+  ) {}
+
+  /**
+   * Construct a conversation from an incoming message in the conversation.
+   */
+  static fromMessage(cist: Conversationalist, msg: ReceivedMessage) {
+    return new Conversation(cist, msg.from, msg.to, msg.conversationId,
+                            msg.channelConversationId);
+  }
+
+  /**
+   * Send a message to the user.
+   */
+  send(text: string) {
+    this.cist.bot.send({
+      text,
+      from: this.botUser,
+      to: this.user,
+      channelConversationId: this.channelConversationId,
+    });
+  }
+
+  /**
+   * Send a reply to a message from the user.
+   */
+  reply(msg: ReceivedMessage, text: string) {
+    this.cist.bot.send(makeReply(msg, text));
+  }
+
+  /**
+   * Wait for a message in the conversation.
+   */
+  receive(): Promise<ReceivedMessage> {
+    return new Promise((resolve, reject) => {
+      this.cist.continuations[this.id] = (msg) => {
+        delete this.cist.continuations[this.id];
+        resolve(msg);
+      };
+    });
+  }
+
+  /**
+   * Wait for a message and get its text.
+   */
+  async read(): Promise<string> {
+    return (await this.receive()).text;
+  }
+
+  /**
+   * Ask a question and return the response.
+   */
+  async prompt(text: string): Promise<string> {
+    this.send(text);
+    return await this.read();
+  }
+
+  /**
+   * Ask for a choice from a list of options. Return the selected index (or
+   * zero if there's no valid choice).
+   */
+  async choose(options: string[]): Promise<number> {
+    let prompt_parts = [];
+    for (let i = 0; i < options.length; ++i) {
+      prompt_parts.push(`(${i + 1}) ${options[i]}`);
+    }
+    let prompt = "Please choose one of: " + prompt_parts.join(", ");
+
+    let response = await this.prompt(prompt);
+    let index = parseInt(response.trim());
+    if (isNaN(index)) {
+      // Just choose the first by default if this was a non-number.
+      return 0;
+    } else if (index <= 0 || index >= options.length) {
+      // Out of range. Again, choose a default.
+      return 0;
+    } else {
+      // A valid selection.
+      return index - 1;
+    }
+  }
+}
+
+/**
+ * The type for initial conversation handlers.
+ */
+type ConversationHandler = (conv: Conversation, msg: ReceivedMessage) => void;
+
+/**
+ * A Conversationalist holds the state for continuing conversations
+ * asynchronously.
+ */
+interface Conversationalist {
+  bot: Bot;
+  continuations: { [convId: string]: (msg: ReceivedMessage) => void };
+};
+
+/**
+ * An asynchronous conversation handler for a bot's `message` event.
+ */
+export function converse(bot: Bot, handler: ConversationHandler) {
+  let cist: Conversationalist = { bot, continuations: {} };
+  return (msg: ReceivedMessage, reply: (m?: OutgoingMessage) => void) => {
+    // Don't reply immediately.
+    reply();
+
+    // Either resume a continuation or invoke the initial handler to get
+    // things started.
+    let k = cist.continuations[msg.conversationId];
+    if (k) {
+      k(msg);
+    } else {
+      let conv = Conversation.fromMessage(cist, msg);
+      handler(conv, msg);
+    }
+  };
 }
