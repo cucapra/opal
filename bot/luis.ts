@@ -146,10 +146,18 @@ export function likelyParams(action: Action): { [name: string]: any } {
 export function parseDate(s: string): Date {
   let parts = s.split('-');
 
+  let year = parseInt(parts[0]);
+  let month = parseInt(parts[1]);
+  let day = parseInt(parts[2]);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    console.error("invalid date:", s);
+    return new Date();
+  }
+
   let d = new Date();
-  d.setFullYear(parseInt(parts[0]));
-  d.setMonth(parseInt(parts[1]) - 1);
-  d.setDate(parseInt(parts[2]));
+  d.setFullYear(year);
+  d.setMonth(month - 1);
+  d.setDate(day);
   return d;
 }
 
