@@ -148,7 +148,7 @@ export function parseDate(s: string): Date {
 
   let d = new Date();
   d.setFullYear(parseInt(parts[0]));
-  d.setMonth(parseInt(parts[1]));
+  d.setMonth(parseInt(parts[1]) - 1);
   d.setDate(parseInt(parts[2]));
   return d;
 }
