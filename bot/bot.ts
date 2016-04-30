@@ -259,6 +259,13 @@ class OPALBot {
     server.get('/login/:state', restify.queryParser(), restify.bodyParser(),
                (req, res, next) => {
       let state = req.params['state'];
+      if (!this.authRequests[state]) {
+        console.log("invalid login redirect request: state", state);
+        res.contentType = 'text/plain';
+        res.end("This doesn't look like a valid login URL. Perhaps it " +
+                "has already been used, or it copied and pasted wrong?");
+        return;
+      }
       console.log("redirecting for login: state", state);
 
       // Format the HTML redirect page.
