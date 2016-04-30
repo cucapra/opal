@@ -347,28 +347,6 @@ class OPALBot {
       console.log('server listening at %s', this.server.url);
     });
   }
-
-  /**
-   * Schedule a meeting based on a user request.
-   */
-  async schedule(conv: botlib.Conversation, user: User,
-                 date: Date, title: string)
-  {
-    console.log("scheduling", title, "on", date);
-    return await scheduleMeeting(conv, user, date, title);
-  }
-
-  /**
-   * Get events from a user's calendar.
-   */
-  async view(user: User, date: Date) {
-    let reply = await viewEvents(user, date);
-    if (reply.length) {
-      return "Here's what's on your calendar: " + reply;
-    } else {
-      return "There's nothing on your calendar.";
-    }
-  }
 }
 
 /**
@@ -407,7 +385,8 @@ let Interactions: { [key: string]: IntentHandler } = {
 
     // Schedule the meeting.
     let user = await bot.ensureUser(conv);
-    let reply = await bot.schedule(conv, user, date, title);
+    console.log("scheduling", title, "on", date);
+    let reply = await scheduleMeeting(conv, user, date, title);
     conv.reply(msg, reply);
   },
 
@@ -417,7 +396,12 @@ let Interactions: { [key: string]: IntentHandler } = {
   {
     let date = new Date();  // TODO
     let user = await this.ensureUser(conv);
-    let reply = await this.view(user, date);
+    let reply = await viewEvents(user, date);
+    if (reply.length) {
+      reply = "Here's what's on your calendar: " + reply;
+    } else {
+      reply = "There's nothing on your calendar.";
+    }
     conv.reply(msg, reply);
   },
 }
