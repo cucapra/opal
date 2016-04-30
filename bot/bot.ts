@@ -214,9 +214,10 @@ class OPALBot {
 
     // Dispatch to the right intent handler.
     let name = max_intent.intent;
-    let handler = Interactions[name];
+    let handler = interactions(this, conv, msg, max_intent,
+                               luisres.entities)[name];
     if (handler) {
-      await handler(this, conv, msg, max_intent, luisres.entities);
+      await handler();
     } else {
       conv.reply(msg, `I don't handle the ${name} intent yet.`);
     }
@@ -350,60 +351,50 @@ class OPALBot {
 }
 
 /**
- * The type for action handlers.
- */
-type IntentHandler =
-  (bot: OPALBot, conv: botlib.Conversation, msg: botlib.ReceivedMessage,
-   intent: luis.Intent, entities: luis.Entity[]) => Promise<void>;
-
-/**
  * The async handlers for each LUIS intent.
  */
-let Interactions: { [key: string]: IntentHandler } = {
-  async greeting(bot: OPALBot, conv: botlib.Conversation,
-    msg: botlib.ReceivedMessage, intent: luis.Intent,
-    entities: luis.Entity[])
-  {
-    conv.reply(msg, 'Hello there! Let me know if you want ' +
-                    'to schedule a meeting.');
-  },
+function interactions(bot: OPALBot, conv: botlib.Conversation,
+  msg: botlib.ReceivedMessage, intent: luis.Intent,
+  entities: luis.Entity[]):
+  { [name: string]: () => Promise<void> }
+{
+  return {
+    async greeting() {
+      conv.reply(msg, 'Hello there! Let me know if you want ' +
+                      'to schedule a meeting.');
+    },
 
-  async new_meeting(bot: OPALBot, conv: botlib.Conversation,
-    msg: botlib.ReceivedMessage, intent: luis.Intent,
-    entities: luis.Entity[])
-  {
-    // Get the parameters from LUIS.
-    let action = luis.triggered(intent, "new_meeting");
-    if (!action) {
-      console.log("new_meeting action not triggered");
-      conv.reply(msg, "I'm sorry; I couldn't schedule your meeting.");
-      return;
-    }
-    let params = luis.likelyParams(action);
-    let title = params['meeting_name'] || "Appointment";
-    let date = new Date();  // TODO
+    async new_meeting() {
+      // Get the parameters from LUIS.
+      let action = luis.triggered(intent, "new_meeting");
+      if (!action) {
+        console.log("new_meeting action not triggered");
+        conv.reply(msg, "I'm sorry; I couldn't schedule your meeting.");
+        return;
+      }
+      let params = luis.likelyParams(action);
+      let title = params['meeting_name'] || "Appointment";
+      let date = new Date();  // TODO
 
-    // Schedule the meeting.
-    let user = await bot.ensureUser(conv);
-    console.log("scheduling", title, "on", date);
-    let reply = await scheduleMeeting(conv, user, date, title);
-    conv.reply(msg, reply);
-  },
+      // Schedule the meeting.
+      let user = await bot.ensureUser(conv);
+      console.log("scheduling", title, "on", date);
+      let reply = await scheduleMeeting(conv, user, date, title);
+      conv.reply(msg, reply);
+    },
 
-  async show_calendar(bot: OPALBot, conv: botlib.Conversation,
-    msg: botlib.ReceivedMessage, intent: luis.Intent,
-    entities: luis.Entity[])
-  {
-    let date = new Date();  // TODO
-    let user = await this.ensureUser(conv);
-    let reply = await viewEvents(user, date);
-    if (reply.length) {
-      reply = "Here's what's on your calendar: " + reply;
-    } else {
-      reply = "There's nothing on your calendar.";
-    }
-    conv.reply(msg, reply);
-  },
+    async show_calendar() {
+      let date = new Date();  // TODO
+      let user = await this.ensureUser(conv);
+      let reply = await viewEvents(user, date);
+      if (reply.length) {
+        reply = "Here's what's on your calendar: " + reply;
+      } else {
+        reply = "There's nothing on your calendar.";
+      }
+      conv.reply(msg, reply);
+    },
+  };
 }
 
 /**
