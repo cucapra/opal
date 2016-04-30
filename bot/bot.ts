@@ -369,10 +369,16 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
     async new_meeting() {
       // Get the parameters from LUIS.
       let action = luis.triggered(intent, "new_meeting");
-
       let params = luis.likelyParams(action);
       let title = params['meeting_name'] || "Appointment";
       let date = luis.dateParam(action, 'start_time');
+
+      // For now, we use any other attendees in the title. Eventually, we will
+      // use it to actually send invitations.
+      let attendee = params['attendees'];
+      if (attendee) {
+        title += " with " + attendee;
+      }
 
       // Schedule the meeting.
       let user = await bot.ensureUser(conv);
