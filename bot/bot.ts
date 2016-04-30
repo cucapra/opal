@@ -384,7 +384,7 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
 
     async show_calendar() {
       let date = new Date();  // TODO
-      let user = await this.ensureUser(conv);
+      let user = await bot.ensureUser(conv);
       let reply = await viewEvents(user, date);
       if (reply.length) {
         reply = "Here's what's on your calendar: " + reply;
