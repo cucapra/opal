@@ -5,12 +5,48 @@ import * as botbuilder from 'botbuilder';
 const request = require('request');
 
 /**
+ * The response from a LUIS query.
+ */
+export interface Response {
+  query: string;
+  intents: Intent[];
+  entities: Entity[];
+}
+
+export interface Intent {
+  intent: string;
+  score: number;
+  actions?: Action[];
+}
+
+export interface Action {
+  triggered: boolean;
+  name: string;
+  parameters: Parameter[];
+}
+
+export interface Parameter {
+  name: string;
+  required: boolean;
+  value: any;
+}
+
+export interface Entity {
+  entity: string;
+  type: string;
+  startIndex: number;
+  endIndex: number;
+  score: number;
+  resolution?: any;
+}
+
+/**
  * Get a date from a LUIS response.
  */
-export function getDate(luisdata: any): Date {
+export function getDate(res: Response): Date {
   // Get the date from the LUIS response.
   let dateEntities = botbuilder.EntityRecognizer.findAllEntities(
-    luisdata.entities, "builtin.datetime.date"
+    res.entities, "builtin.datetime.date"
   );
   if (dateEntities.length >= 1) {
     return botbuilder.EntityRecognizer.resolveTime(dateEntities);
@@ -22,7 +58,7 @@ export function getDate(luisdata: any): Date {
 /**
  * Send a query to LUIS and return its complete API response.
  */
-export function query(endpoint: string, text: string): Promise<any> {
+export function query(endpoint: string, text: string): Promise<Response> {
   return new Promise((resolve, reject) => {
     let queryURL = endpoint + '&q=' + encodeURIComponent(text);
     request(queryURL, (err, res, body) => {
@@ -39,11 +75,11 @@ export function query(endpoint: string, text: string): Promise<any> {
  * Get the most likely intent object from a LUIS response, or `null` if none
  * seems likely.
  */
-export function likelyIntent(luisdata: any): any {
+export function likelyIntent(res: Response): Intent {
   // Get the most likely intent.
-  let max_intent: any;
+  let max_intent: Intent;
   let max_score: number;
-  for (let intent of luisdata.intents) {
+  for (let intent of res.intents) {
     if (!max_intent || intent.score > max_score) {
       max_intent = intent;
       max_score = intent.score;
@@ -57,5 +93,3 @@ export function likelyIntent(luisdata: any): any {
     return max_intent;
   }
 }
-
-
