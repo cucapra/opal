@@ -383,7 +383,17 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
     },
 
     async show_calendar() {
-      let date = new Date();  // TODO
+      let action = luis.triggered(intent, "show_calendar");
+      let whenParam = luis.params(action)['when'];
+
+      // Parse the date from LUIS.
+      let date = new Date();
+      if (whenParam) {
+        date = luis.parseDate(whenParam[0].resolution.date);
+      }
+
+      console.log("viewing calendar on", date);
+
       let user = await bot.ensureUser(conv);
       let reply = await viewEvents(user, date);
       if (reply.length) {

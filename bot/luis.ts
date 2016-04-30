@@ -34,6 +34,7 @@ export interface ParamValue {
   entity: string;
   type: string;
   score: number;
+  resolution?: any;
 }
 
 export interface Entity {
@@ -137,4 +138,17 @@ export function likelyParams(action: Action): { [name: string]: any } {
     }
   }
   return out;
+}
+
+/**
+ * Parse a YYYY-MM-DD date from a LUIS entity resolution.
+ */
+export function parseDate(s: string): Date {
+  let parts = s.split('-');
+
+  let d = new Date();
+  d.setFullYear(parseInt(parts[0]));
+  d.setMonth(parseInt(parts[1]));
+  d.setDate(parseInt(parts[2]));
+  return d;
 }
