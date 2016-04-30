@@ -152,3 +152,15 @@ export function parseDate(s: string): Date {
   d.setDate(parseInt(parts[2]));
   return d;
 }
+
+/**
+ * Get the `Date` specified by a LUIS datetime parameter. If no date is
+ * specified, return the current date.
+ */
+export function dateParam(action: Action, name: string): Date {
+  let param = params(action)[name];
+  if (!param) {
+    return new Date();
+  }
+  return parseDate(param[0].resolution.date);
+}

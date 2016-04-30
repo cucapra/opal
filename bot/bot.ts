@@ -351,6 +351,9 @@ class OPALBot {
 
 /**
  * The async handlers for each LUIS intent.
+ *
+ * Each key in the object is the name of a different LUIS intent in our
+ * application.
  */
 function interactions(bot: OPALBot, conv: botlib.Conversation,
   msg: botlib.ReceivedMessage, intent: luis.Intent,
@@ -366,14 +369,10 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
     async new_meeting() {
       // Get the parameters from LUIS.
       let action = luis.triggered(intent, "new_meeting");
-      if (!action) {
-        console.log("new_meeting action not triggered");
-        conv.reply(msg, "I'm sorry; I couldn't schedule your meeting.");
-        return;
-      }
+
       let params = luis.likelyParams(action);
       let title = params['meeting_name'] || "Appointment";
-      let date = new Date();  // TODO
+      let date = luis.dateParam(action, 'start_time');
 
       // Schedule the meeting.
       let user = await bot.ensureUser(conv);
@@ -384,16 +383,9 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
 
     async show_calendar() {
       let action = luis.triggered(intent, "show_calendar");
-      let whenParam = luis.params(action)['when'];
-
-      // Parse the date from LUIS.
-      let date = new Date();
-      if (whenParam) {
-        date = luis.parseDate(whenParam[0].resolution.date);
-      }
+      let date = luis.dateParam(action, 'when');
 
       console.log("viewing calendar on", date);
-
       let user = await bot.ensureUser(conv);
       let reply = await viewEvents(user, date);
       if (reply.length) {
