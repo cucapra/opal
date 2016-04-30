@@ -218,11 +218,23 @@ class OPALBot {
       conv.reply(msg, 'Hello there! Let me know if you want ' +
                       'to schedule a meeting.');
     } else if (name === "new_meeting") {
+
+      // Get the parameters from LUIS.
+      let action = luis.triggered(max_intent, "new_meeting");
+      if (!action) {
+        console.log("new_meeting action not triggered");
+        conv.reply(msg, "I'm sorry; I couldn't schedule your meeting.");
+        return;
+      }
+      let params = luis.likelyParams(action);
+      let title = params['meeting_name'] || "Appointment";
       let date = luis.getDate(luisres);
-      let title = "Appointment";  // For now.
+
+      // Schedule the meeting.
       let user = await this.ensureUser(conv);
       let reply = await this.schedule(conv, user, date, title);
       conv.reply(msg, reply);
+
     } else if (name === "show_calendar") {
       let date = luis.getDate(luisres);
       let user = await this.ensureUser(conv);
