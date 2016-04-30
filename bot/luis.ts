@@ -1,7 +1,6 @@
 /**
  * Utilities for interacting with LUIS.
  */
-import * as botbuilder from 'botbuilder';
 const request = require('request');
 
 /**
@@ -44,21 +43,6 @@ export interface Entity {
   endIndex: number;
   score: number;
   resolution?: any;
-}
-
-/**
- * Get a date from a LUIS response.
- */
-export function getDate(res: Response): Date {
-  // Get the date from the LUIS response.
-  let dateEntities = botbuilder.EntityRecognizer.findAllEntities(
-    res.entities, "builtin.datetime.date"
-  );
-  if (dateEntities.length >= 1) {
-    return botbuilder.EntityRecognizer.resolveTime(dateEntities);
-  } else {
-    return new Date();
-  }
 }
 
 /**

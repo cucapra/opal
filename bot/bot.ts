@@ -2,7 +2,6 @@ import {Client, User} from '../src/office';
 const restify = require('restify');
 import * as crypto from 'crypto';
 import * as minimist from 'minimist';
-const chrono = require('chrono-node');
 import {scheduleMeeting, viewEvents} from './actions';
 import * as fs from 'fs';
 import * as botlib from './botlib';
