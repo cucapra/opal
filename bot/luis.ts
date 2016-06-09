@@ -1,3 +1,5 @@
+import {PartialDate} from '../examples/resolve_day';
+
 /**
  * Utilities for interacting with LUIS.
  */
@@ -162,13 +164,46 @@ export function parseDate(s: string): Date {
 }
 
 /**
- * Get the `Date` specified by a LUIS datetime parameter. If no date is
- * specified, return the current date.
+ * Parse a date as returned by LUIS, which appears to use the "SUTime"
+ * tool's format for incomplete date evidence (but this is undocumented,
+ * I think?).
  */
-export function dateParam(action: Action, name: string): Date {
+export function parsePartialDate(s: string): PartialDate {
+  // Try a specific date.
+  let parts = s.split('-');
+  let year = parseInt(parts[0]);
+  let month = parseInt(parts[1]);
+  let day = parseInt(parts[2]);
+  if (!(isNaN(year) || isNaN(month) || isNaN(day))) {
+    return {
+      base: new Date(),
+      month: month - 1,
+      dayOfMonth: day,
+    };
+  }
+
+  // Try parsing as a weekday specifier.
+  if (s.startsWith("XXXX-WXX-")) {
+    let dayOfWeek = parseInt(s.split("-")[2]);
+    return {
+      base: new Date(),
+      dayOfWeek,
+    }
+  }
+
+  // We give up!
+  console.log("unparseable date evidence", s);
+  return { base: new Date() };
+}
+
+/**
+ * Get the partial date specified by a LUIS datetime parameter.If no date is
+ * specified, return null evidence.
+ */
+export function dateParam(action: Action, name: string): PartialDate {
   let param = params(action)[name];
   if (!param) {
-    return new Date();
+    return { base: new Date() };
   }
-  return parseDate(param[0].resolution.date);
+  return parsePartialDate(param[0].resolution.date);
 }

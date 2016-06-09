@@ -8,6 +8,7 @@ import {dateAdd, slots, showChanges, copyDate,
   countConflicts, humanTime} from '../examples/schedutil';
 import {User} from '../src/office';
 import {Conversation} from './botlib';
+import {PartialDate, resolveDate} from '../examples/resolve_day';
 
 /**
  * Check whether the event is in the user's preferred range and, if not, how
@@ -123,13 +124,16 @@ function dateRange(date: Date): [Date, Date] {
  * Schedule a new meeting for a user.
  */
 export async function scheduleMeeting(conv: Conversation, user: User,
-                                      date: Date, title: string) {
-  let pair = dateRange(date);
-  let rangeStart = pair[0];
-  let rangeEnd = pair[1];
-
+                                      pdate: PartialDate, title: string) {
   let out: string;
   await opal(async function (ctx) {
+    let date = await resolveDate(ctx, pdate);
+    console.log("resolved date as", date);
+
+    let pair = dateRange(date);
+    let rangeStart = pair[0];
+    let rangeEnd = pair[1];
+
     // Get my calendar.
     let events: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
 
@@ -176,13 +180,16 @@ export async function scheduleMeeting(conv: Conversation, user: User,
 /**
  * Get a summary of events on the user's calendar.
  */
-export async function viewEvents(user: User, date: Date) {
-  let pair = dateRange(date);
-  let rangeStart = pair[0];
-  let rangeEnd = pair[1];
-
+export async function viewEvents(user: User, pdate: PartialDate) {
   let res: string;
   await opal(async function (ctx) {
+    let date = await resolveDate(ctx, pdate);
+    console.log("resolved date as", date);
+
+    let pair = dateRange(date);
+    let rangeStart = pair[0];
+    let rangeEnd = pair[1];
+
     let cal: Calendar = await getEventRange(ctx, user, rangeStart, rangeEnd);
 
     // Sort the events by time.

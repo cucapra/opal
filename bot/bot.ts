@@ -378,7 +378,7 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
       let action = luis.triggered(intent, "new_meeting");
       let params = luis.likelyParams(action);
       let title = params['meeting_name'] || "Appointment";
-      let date = luis.dateParam(action, 'start_time');
+      let pdate = luis.dateParam(action, 'start_time');
 
       // For now, we use any other attendees in the title. Eventually, we will
       // use it to actually send invitations.
@@ -389,18 +389,18 @@ function interactions(bot: OPALBot, conv: botlib.Conversation,
 
       // Schedule the meeting.
       let user = await bot.ensureUser(conv);
-      console.log("scheduling", title, "on", date);
-      let reply = await scheduleMeeting(conv, user, date, title);
+      console.log("scheduling", title, "on", pdate);
+      let reply = await scheduleMeeting(conv, user, pdate, title);
       conv.reply(msg, reply);
     },
 
     async show_calendar() {
       let action = luis.triggered(intent, "show_calendar");
-      let date = luis.dateParam(action, 'when');
+      let pdate = luis.dateParam(action, 'when');
 
-      console.log("viewing calendar on", date);
+      console.log("viewing calendar on", pdate);
       let user = await bot.ensureUser(conv);
-      let reply = await viewEvents(user, date);
+      let reply = await viewEvents(user, pdate);
       if (reply.length) {
         reply = "Here's what's on your calendar: " + reply;
       } else {

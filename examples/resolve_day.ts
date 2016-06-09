@@ -19,7 +19,7 @@ const DAY = 1000 * 60 * 60 * 24;
 /**
  * Partial evidence about a date.
  */
-interface PartialDate {
+export interface PartialDate {
   /**
    * The base for relative statements (i.e., the date on which the evidence
    * was uttered).
@@ -81,8 +81,8 @@ function dateMatch(date: Date, evidence: PartialDate): number {
  * @param window   The number of days to look ahead an behind of the 
  *                 current date. (By defualt, 7.)
  */
-async function resolveDate(ctx: Context, evidence: PartialDate,
-                           window?: number)
+export async function resolveDate(ctx: Context, evidence: PartialDate,
+                                  window?: number)
 {
   window = window || 7;
 
@@ -103,14 +103,17 @@ async function resolveDate(ctx: Context, evidence: PartialDate,
   return ctx.get(date_w, world);
 }
 
-opal(async function (ctx) {
-  let date = await resolveDate(
-    ctx,
-    {
-      dayOfWeek: 5,
-      future: true,
-      base: new Date()
-    }
-  );
-  console.log(date);
-});
+// A quick demonstration when this file is run directly.
+if (require.main === module) {
+  opal(async function (ctx) {
+    let date = await resolveDate(
+      ctx,
+      {
+        dayOfWeek: 5,
+        future: true,
+        base: new Date()
+      }
+    );
+    console.log(date);
+  });
+}
