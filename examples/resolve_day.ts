@@ -53,19 +53,20 @@ function dateMatch(date: Date, evidence: PartialDate): number {
   let delta = date.valueOf() - evidence.base.valueOf();  // ms
   let deltaDays = Math.round(delta / DAY);
 
-  let distance = 0;
+  let distance = 0; // what type is this?
   if (evidence.dayOfWeek !== undefined) {
-    distance += date.getDay() === evidence.dayOfWeek ? 0 : 1;
+    distance += date.getDay() === evidence.dayOfWeek ? 0 : 1; // FEATURE("MismatchedDayOfWeek", 1)
   }
   if (evidence.dayOfMonth !== undefined) {
-    distance += date.getDate() === evidence.dayOfMonth ? 0 : 1;
+    distance += date.getDate() === evidence.dayOfMonth ? 0 : 1; // FEATURE("MismatchedDayOfMonth", 1)
   }
   if (evidence.relativeDays !== undefined) {
-    distance += Math.abs(deltaDays - evidence.relativeDays);
+    distance += Math.abs(deltaDays - evidence.relativeDays) * 1; // FEATURE("RelativeDayDiff", 1) [constraint? characteristic?]
   }
+  // distance += FEATURE("DatePredictorModel") * ProbOfModel(foo)
   if (evidence.future !== undefined) {
     if (evidence.future) {
-      distance += delta > 0 ? 0 : 1;
+      distance += delta > 0 ? 0 : 1; // FEATURE("???")
     } else {
       distance += delta < 0 ? 0 : 1;
     }
