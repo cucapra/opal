@@ -35,6 +35,14 @@ interface PartialDate {
    * relative to `base`.
    */
   relativeDays?: number;
+
+  /**
+   * Whether the date should be in the future or the past by an unspecified
+   * number of days. For example, this should be true if the user said
+   * "next," false if they said "last," and unspecified if they didn't
+   * say either way.
+   */
+  future?: boolean;
 }
 
 /**
@@ -42,6 +50,9 @@ interface PartialDate {
  * number where lower means a better match (and 0.0 is a perfect match).
  */
 function dateMatch(date: Date, evidence: PartialDate): number {
+  let delta = date.valueOf() - evidence.base.valueOf();  // ms
+  let deltaDays = Math.round(delta / DAY);
+
   let distance = 0;
   if (evidence.dayOfWeek !== undefined) {
     distance += date.getDay() === evidence.dayOfWeek ? 0 : 1;
@@ -50,9 +61,14 @@ function dateMatch(date: Date, evidence: PartialDate): number {
     distance += date.getDate() === evidence.dayOfMonth ? 0 : 1;
   }
   if (evidence.relativeDays !== undefined) {
-    let delta = date.valueOf() - evidence.base.valueOf();  // ms
-    let deltaDays = Math.round(delta / DAY);
     distance += Math.abs(deltaDays - evidence.relativeDays);
+  }
+  if (evidence.future !== undefined) {
+    if (evidence.future) {
+      distance += delta > 0 ? 0 : 1;
+    } else {
+      distance += delta < 0 ? 0 : 1;
+    }
   }
   return distance;
 }
@@ -90,7 +106,11 @@ async function resolveDate(ctx: Context, evidence: PartialDate,
 opal(async function (ctx) {
   let date = await resolveDate(
     ctx,
-    { dayOfWeek: 5, base: new Date() }
+    {
+      dayOfWeek: 5,
+      future: true,
+      base: new Date()
+    }
   );
   console.log(date);
 });
