@@ -63,9 +63,13 @@ function dateMatch(date: Date, evidence: PartialDate): number {
  * @param ctx      The OPAL context.
  * @param evidence The specification from the user.
  * @param window   The number of days to look ahead an behind of the 
- *                 current date.
+ *                 current date. (By defualt, 7.)
  */
-async function resolveDate(ctx: Context, evidence: PartialDate, window = 7) {
+async function resolveDate(ctx: Context, evidence: PartialDate,
+                           window?: number)
+{
+  window = window || 7;
+
   // The search window.
   let start = new Date(evidence.base.valueOf() - window * DAY);
   let end = new Date(evidence.base.valueOf() + window * DAY);
@@ -86,7 +90,7 @@ async function resolveDate(ctx: Context, evidence: PartialDate, window = 7) {
 opal(async function (ctx) {
   let date = await resolveDate(
     ctx,
-    { dayOfWeek: 2, base: new Date() }
+    { dayOfWeek: 5, base: new Date() }
   );
   console.log(date);
 });

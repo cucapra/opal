@@ -239,7 +239,7 @@ export class User {
       },
     };
     return new Promise<any>((resolve, reject) => {
-      outlook.base.makeApiCall(parameters, (error, response) => {
+      outlook.base.makeApiCall(parameters, (error: any, response: any) => {
         if (error) {
           reject(error);
         } else if (response.statusCode != 200) {
