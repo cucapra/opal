@@ -10,10 +10,10 @@ OPAL: Optimization and Personal Assistant Language
     - No statistical contracts
     - entanglement/abstraction busting
       - Performance - SLA
-      - Uncertainty, data bias,  
+      - Uncertainty, data bias,
     - More at stake now
       - infrastructural
-      - Mission critical applications 
+      - Mission critical applications
 - These look like systems/pl problems
   - System has to do it
     - Boundary between things
@@ -28,16 +28,11 @@ We are just beginning to see the initial ripples of the next major wave of compu
 This new wave of applications will be more demanding on our computing systems in nearly every way. Monitoring the current state of the world will necessitate increased bandwidth to collect the sundry set of data streams, and crossing the boundary between physical and digital worlds requires significant computation to do the data processing and inference required to turn analog signals into meaningful digital information.  Understanding the world will likely require joining large amounts of data from diverse sources, rich models and simulations, and complex inferences.  Finally, reacting to and controlling the world will demand rapid response times. Building systems for this class of applications will require both new abstractions and architectures to enable new programming models and provide scalability as well as new control algorithms to operate effectively.
 
 * The Rise of Intelligent Systems
-
 * Many of these problems are Programing Language Problems
-
 * Challenges of increasing command surface
-
-    * Finding and negotiating functionality
-
-    * Automating repetitive tasks
-
-    * Customization and personalization
+  * Finding and negotiating functionality
+  * Automating repetitive tasks
+  * Customization and personalization
 
 As we add functionality to systems, we must address the resulting complexity of the user interface. Already users struggle to control and understand their devices: witness the growing number of help and support pages to guide users through all aspects of life, especially complex software. [Ideally we would code tasks and preferences using constructs that are simple to author and easy to inspect.] Humans naturally deal with ambiguous circumstances and instructions through interaction, and learn what others prefer to quickly navigate these spaces. Future software must have similar abilities: retaining ambiguity as necessary, refining interpretations through interaction, and modeling user preferences based on interactions.
 
@@ -51,16 +46,11 @@ Clearly a problem -- between systems and UI -- we can add a language abstraction
 
 Think in terms of dialog
 
-U: "[initial request]"
-
-S: "Do you mean A, B, or C?"
-
-U: "Well, B is almost right, but [refinement]"
-
-S: "Ah, how about B’?"
-
-U: "Yes, perfect!"
-
+U: "[initial request]"  
+S: "Do you mean A, B, or C?"  
+U: "Well, B is almost right, but [refinement]"  
+S: "Ah, how about B’?"  
+U: "Yes, perfect!"  
 S: Applies transaction, updates weights to prefer B over A
 
 ]
@@ -76,15 +66,10 @@ The goal of this project is to identify the right abstractions that give develop
 We target these latent concepts in intelligent system engineering:
 
 * Users of machine learning don’t need to worry about the "guts" of ML algorithms. They can specify the “inputs and outputs” instead—the raw ingredients that specify what they *want* out of the learning system.
-
 * Hypothetical worlds: specifying features where the most natural expression is on the state of the current world, even when that world doesn’t exist yet.
-
 * [list here]
-
 * Dealing with ambiguity in user intent [hypothetical worlds]
-
 * Multi-turn interactions [incremental]
-
 * …
 
 By designing these abstractions into the language, we think we can avoid problems like:
@@ -117,20 +102,15 @@ A core concept in OPAL is a *feature*, which is a mechanism for scoring and rank
 
 In programming languages terms, a "feature" is a function from an input type ‘a to a score number.
 
-* BasicFeature
-
-* Weight
-
-* LinearFeature
+* `BasicFeature`
+* `Weight`
+* `LinearFeature`
 
 How to *use* a feature (really, a network of features):
 
-* Applying a features produces a Score
-
-* A Score can be flattened to a single number, and used for ranking
-
-* A Score can also produce explanations
-
+* Applying a features produces a `Score`
+* A `Score` can be flattened to a single number, and used for ranking
+* A `Score` can also produce explanations
 * Reinforcement learning looks like taking a Score and providing the user’s actual decision as a number
 
 How to *define* features:
