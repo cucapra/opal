@@ -1,5 +1,5 @@
 TARGET := opal
-DEPS := $(TARGET).bib
+DEPS := $(TARGET).bib style.mdk
 
 DEST_PATH := adriansampson.net/drafts
 DEST := dh:domains/$(DEST_PATH)

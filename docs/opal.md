@@ -1,5 +1,6 @@
 title: OPAL: Language Abstractions for Engineering Intelligent Systems
 bib: opal
+[INCLUDE="style.mdk"]
 
 [TITLE]
 

@@ -1,0 +1,37 @@
+<!-- Black-and-white syntax highlighting for PDF output. -->
+@if tex {
+  .token.keyword {
+    color: black;
+    font-weight: bold;
+  }
+  .token.string {
+    color: black;
+  }
+  .token.comment {
+    color: gray;
+  }
+  .token.constant {
+    color: black;
+  }
+}
+
+<!-- Placeholders. -->
+todo, .tk {
+  color: red;
+}
+tk: [TK]{.tk}
+
+<!-- Hyphenate in browser. -->
+<style>
+.madoko p, .madoko li {
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
+</style>
+
+<!-- Don't colorize links. -->
+~TexRaw
+\hypersetup{hidelinks=true}
+~
