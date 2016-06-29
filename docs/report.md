@@ -25,7 +25,7 @@ Related Text:
 
 We are just beginning to see the initial ripples of the next major wave of computing.  In the beginning, computers were primarily used for computation, and later, they also became powerful communication tools.  The emerging 3rd wave of applications seeks to help us better engage with the world around us. We can see many early examples: augmented reality applications overlay the real world with anything from translations of signs (e.g., WordLens) to virtual modifications of real objects (e.g., HoloLens); digital assistants (e.g.., Siri, Cortana, Google Now) understand physical concepts like locations and traffic and advise users on travel times and directions; and smart devices monitor and automate anything from room temperature (e.g., Nest thermostats) to watering plants (e.g., Parrot Flower Power H2O).
 
-This new wave of applications will be more demanding on our computing systems in nearly every way. Monitoring the current state of the world will necessitate increased bandwidth to collect the sundry set of data streams, and crossing the boundary between physical and digital worlds requires significant computation to do the data processing and inference required to turn analog signals into meaningful digital information.  Understanding the world will likely require joining large amounts of data from diverse sources, rich models and simulations, and complex inferences.  Finally, reacting to and controlling the world will demand rapid response times. Building systems for this class of applications will require both new abstractions and architectures to enable new programing models and provide scalability as well as new control algorithms to operate effectively.  
+This new wave of applications will be more demanding on our computing systems in nearly every way. Monitoring the current state of the world will necessitate increased bandwidth to collect the sundry set of data streams, and crossing the boundary between physical and digital worlds requires significant computation to do the data processing and inference required to turn analog signals into meaningful digital information.  Understanding the world will likely require joining large amounts of data from diverse sources, rich models and simulations, and complex inferences.  Finally, reacting to and controlling the world will demand rapid response times. Building systems for this class of applications will require both new abstractions and architectures to enable new programming models and provide scalability as well as new control algorithms to operate effectively.
 
 * The Rise of Intelligent Systems
 
@@ -192,15 +192,10 @@ Service providers can write OPAL libraries to expose their data inside the OPAL 
 xx
 
 * parent/child paradigm
-
 * Communication
-
 * Edits/diffs
-
 * Implementing optimization/search with these
-
     * Recursion
-
     * Examples with search algorithms
 
 ## Objective functions, weights, ranking, features
@@ -217,7 +212,7 @@ xx
 
 ## Controlling computation cost/value
 
-        * Bounding cost/search space
+* Bounding cost/search space
 
 # Calendar Prototype
 
@@ -225,19 +220,17 @@ xx
 
 ## Learning systems
 
-        * Smarter models, more personalization
+* Smarter models, more personalization
+* More intelligent search/learning to search
 
-        * More intelligent search/learning to search
-
-Initial system implementations can rely on simple models with limited personalization. For instance, each task can have a separate linear model with its own weights. A natural next step is to allow some degree of parameter sharing between users. For instance, each task could have two copies of each parameter: the first would be weighted by a value shared by all users, and the second would have a user-specific weight [cf. [http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf](http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf)]. This allows the model to capture general preferences and user-specific exceptions. More complex systems could have multi-level sharing by grouping users into subtypes, parameter sharing across tasks, and more complex models.
+Initial system implementations can rely on simple models with limited personalization. For instance, each task can have a separate linear model with its own weights. A natural next step is to allow some degree of parameter sharing between users. For instance, each task could have two copies of each parameter: the first would be weighted by a value shared by all users, and the second would have a user-specific weight [cf. http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf]. This allows the model to capture general preferences and user-specific exceptions. More complex systems could have multi-level sharing by grouping users into subtypes, parameter sharing across tasks, and more complex models.
 
 The ranking of potential system actions can be naturally cast as either supervised learning or reinforcement learning. If the actions are drawn from a small, finite set, then multi-class classification or multi-armed bandits suffice. However, the actions are likely to become more complex and parameterized. Imagine a calendaring system: initially it might just propose a series of possible calendar slots to a user, but a richer implementation might perform a complex set of rescheduling operations to implement the user’s command. The structure prediction task of learning a complex set of rescheduling operations given a user command is a very interesting research area. Although there is some relevant prior work in both semantic parsing [cite Mooney et al.] and mapping from language to code [cite naturalness of code, lang2code workshop, etc.], lots of work remains.
 
 ## Dialog systems
 
-        * Language-integrated "LUIS 2.0"
-
-        * Shared models natural language understanding tasks
+* Language-integrated "LUIS 2.0"
+* Shared models natural language understanding tasks
 
 Many real-world tasks are difficult to express in a single turn. People, when discussing a course of actions, often require a conversation to understand all the necessary details and ramification of a task. These dialogs negotiate the bounds of a task, circumvent or discard the unachievable portions, disambiguate the core actions, refine the specific details, and confirm the broad goal before committing the task in the end.
 
@@ -259,11 +252,8 @@ Unlike probabilistic programming systems, OPAL provides a high-level interface t
 
 ## Agent-to-agent communication
 
-# Appendix: 
+# Appendix
 
-    * User Guide
-
-    * Programmer Guide
-
-    * Service Integrator Guide
-
+* User Guide
+* Programmer Guide
+* Service Integrator Guide
