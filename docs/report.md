@@ -240,13 +240,10 @@ Longer term, we hope to address some of these issues in two ways. First, we beli
 
 ## ML-User Interface
 
-        * Explaining decisions
-
-        * Core operations:
-
-            * Ranking
-
-            * Gathering user preferences
+* Explaining decisions
+* Core operations:
+  * Ranking
+  * Gathering user preferences
 
 Unlike probabilistic programming systems, OPAL provides a high-level interface to the machine learning systems. Our core operations focus on populating and choosing among hypothetical worlds. These worlds are ranked by features with learned weights, so that the ranking of worlds can be learned for each scenario and potentially customized for each user. A crucial initial set of operations include ranking worlds, then gathering user preferences about those rankings to update weights. Longer term, we envision a system that can naturally communicate why some elements are preferred over others. Psychology research has shown that people respond much more positively to requests with explanations [CITE Ellen Langer, 1977]. Also, we begin by learning features that are crafted by the developer. Soliciting new features from the user allows much more flexibility and customization in ranking.
 
