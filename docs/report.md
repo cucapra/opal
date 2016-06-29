@@ -141,7 +141,7 @@ The idea is that all of this together should let non-ML-expert users apply ML mo
 
 ## Distributions
 
-OPAL includes first-class support for probability distributions. A distribution of type T~ is a weighted set of values of type T. Concretely, a T~ is implemented as a collection of $(v, p)$ pairs of a value and a probability.
+OPAL includes first-class support for probability distributions. A distribution of type T~ is a weighted set of values of type T. Concretely, a T~ is implemented as a collection of pairs of a value and a probability.
 
 In OPAL, code can work with distributions even when it is written in a probability-oblivious way. Any operation that works on a value T is automatically "lifted" to operate on T~ by mapping it over the elements of the distribution. For example, an absolute value function from `Float` to `Float`, when lifted, is a function from `Float~` to `Float~`; lifting applies the `abs` value to each number in the distribution’s support.
 
