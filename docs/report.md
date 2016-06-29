@@ -2,41 +2,24 @@ OPAL: Optimization and Personal Assistant Language
 
 # Background
 
-Rise of intelligent systems
-
--more personalization, greater scale, new applications (e.g., physical world stuff)
-
-Why is this different?
-
-	Technical debt stuff
-
-	Complete learning loop
-
-	No statistical contracts
-
-	entanglement/abstraction busting
-
-		Performance - SLA
-
-		Uncertainty, data bias,  
-
-	More at stake now
-
-		infrastructural
-
-		Mission critical applications 
-
-These look like systems/pl problems
-
-	System has to do it
-
-		Boundary between things
-
-		Runtime enforcement
-
-	We can use a lot of our great tools
-
-	Plus some new ones
+- Rise of intelligent systems
+  - more personalization, greater scale, new applications (e.g., physical world stuff)
+  - Why is this different?
+    - Technical debt stuff
+    - Complete learning loop
+    - No statistical contracts
+    - entanglement/abstraction busting
+      - Performance - SLA
+      - Uncertainty, data bias,  
+    - More at stake now
+      - infrastructural
+      - Mission critical applications 
+- These look like systems/pl problems
+  - System has to do it
+    - Boundary between things
+    - Runtime enforcement
+  - We can use a lot of our great tools
+  - Plus some new ones
 
 Related Text:
 
