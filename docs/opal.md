@@ -1,4 +1,5 @@
 title: OPAL: Language Abstractions for Engineering Intelligent Systems
+bib: opal
 
 [TITLE]
 
@@ -205,7 +206,7 @@ xx
 * Smarter models, more personalization
 * More intelligent search/learning to search
 
-Initial system implementations can rely on simple models with limited personalization. For instance, each task can have a separate linear model with its own weights. A natural next step is to allow some degree of parameter sharing between users. For instance, each task could have two copies of each parameter: the first would be weighted by a value shared by all users, and the second would have a user-specific weight [cf. http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf]. This allows the model to capture general preferences and user-specific exceptions. More complex systems could have multi-level sharing by grouping users into subtypes, parameter sharing across tasks, and more complex models.
+Initial system implementations can rely on simple models with limited personalization. For instance, each task can have a separate linear model with its own weights. A natural next step is to allow some degree of parameter sharing between users. For instance, each task could have two copies of each parameter: the first would be weighted by a value shared by all users, and the second would have a user-specific weight [cf. @easyadapt]. This allows the model to capture general preferences and user-specific exceptions. More complex systems could have multi-level sharing by grouping users into subtypes, parameter sharing across tasks, and more complex models.
 
 The ranking of potential system actions can be naturally cast as either supervised learning or reinforcement learning. If the actions are drawn from a small, finite set, then multi-class classification or multi-armed bandits suffice. However, the actions are likely to become more complex and parameterized. Imagine a calendaring system: initially it might just propose a series of possible calendar slots to a user, but a richer implementation might perform a complex set of rescheduling operations to implement the user’s command. The structure prediction task of learning a complex set of rescheduling operations given a user command is a very interesting research area. Although there is some relevant prior work in both semantic parsing [cite Mooney et al.] and mapping from language to code [cite naturalness of code, lang2code workshop, etc.], lots of work remains.
 
@@ -236,3 +237,5 @@ Unlike probabilistic programming systems, OPAL provides a high-level interface t
 * User Guide
 * Programmer Guide
 * Service Integrator Guide
+
+[BIB]
