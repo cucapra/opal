@@ -45,7 +45,7 @@ docs-watch: docs
 
 # Deploy docs and bot.
 
-.PHONY: deploy deploy_docs deploy_bot
+.PHONY: deploy deploy_docs deploy_bot deploy_paper
 
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh
 DEST := dh:domains/adriansampson.net/opal
@@ -60,4 +60,7 @@ deploy_bot:
 	cd bot && npm run build
 	systemctl --user restart opal
 
-deploy: deploy_docs deploy_bot
+deploy_paper:
+	make -C docs deploy
+
+deploy: deploy_docs deploy_bot deploy_paper
