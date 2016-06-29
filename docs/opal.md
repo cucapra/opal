@@ -40,9 +40,12 @@ This new wave of applications will be more demanding on our computing systems in
 
 As we add functionality to systems, we must address the resulting complexity of the user interface. Already users struggle to control and understand their devices: witness the growing number of help and support pages to guide users through all aspects of life, especially complex software. [Ideally we would code tasks and preferences using constructs that are simple to author and easy to inspect.] Humans naturally deal with ambiguous circumstances and instructions through interaction, and learn what others prefer to quickly navigate these spaces. Future software must have similar abilities: retaining ambiguity as necessary, refining interpretations through interaction, and modeling user preferences based on interactions.
 
-[Talk about the confluence of systems, programming languages, human computer interaction, etc -- does this belong at the end of this section or the beginning of the next?]
+~TODO
+Talk about the confluence of systems, programming languages, human computer interaction, etc -- does this belong at the end of this section or the beginning of the next?
+~
 
-[Programming language mediates the user-interaction ambiguity and system interpretation ambiguity
+~TODO
+Programming language mediates the user-interaction ambiguity and system interpretation ambiguity
 
 You would think that there’s an in interface component and a systems component. Somewhere in between there are abstractions that stay separate but allow them to communicate. The way that you interact with the user has complicated interactions with how the system works, and the system constraints have ramifications for the user.
 
@@ -56,8 +59,7 @@ U: "Well, B is almost right, but [refinement]"
 S: "Ah, how about B’?"  
 U: "Yes, perfect!"  
 S: Applies transaction, updates weights to prefer B over A
-
-]
+~
 
 # Project Vision
 
@@ -80,17 +82,23 @@ By designing these abstractions into the language, we think we can avoid problem
 
 * [list again]
 
-[give examples in this paragraph of what could go wrong]
+~TODO
+give examples in this paragraph of what could go wrong
+~
 
 Specifying the score for things that are several levels "deep" into potential changes. For example, if you need to move a meeting to another day, which implies canceling a meeting on that day, and then computing the travel time *excluding* that canceled meeting, suddenly the fitness computations are really complicated.
 
-[an example should include composing]
+~TODO
+an example should include composing
+~
 
 # High-Level OPAL Design
 
 * Users vs programs vs integrators/service providers
 
-[Adrian: I’d like to come back to this overview section after getting a little more detail into the body sections.]
+~TODO
+Adrian: I’d like to come back to this overview section after getting a little more detail into the body sections.
+~
 
 # Mechanisms in the Language
 
@@ -131,7 +139,9 @@ In OPAL, code can work with distributions even when it is written in a probabili
 
 OPAL also provides basic built-in tools for working directly with entire distributions. A `max` operation gets the most likely element from a distribution, and a `sample` operation can randomly select values according to the distribution.
 
-[This section bears revisiting once we actually use distributions meaningfully.]
+~TODO
+This section bears revisiting once we actually use distributions meaningfully.
+~
 
 ## Hypothetical worlds
 
@@ -167,7 +177,9 @@ This means that hypothetical worlds also work as a form of concurrency control. 
 
 Service providers can write OPAL libraries to expose their data inside the OPAL universe. This works by extending OPAL’s collection type with hooks for each possible operation on the collection. Collections support addition and deletion by default, but providers can also add custom operation types---for example, our calendar source supports an in-place modification operation. When hypothetical operations reach the non-hypothetical top-level world, OPAL "unspools" the hypothetical operations and invokes the library’s hooks.
 
-[Adrian: That paragraph is still pretty messy and vague, and it might belong somewhere else.]
+~TODO
+Adrian: That paragraph is still pretty messy and vague, and it might belong somewhere else.
+~
 
 # Programing
 
@@ -188,7 +200,7 @@ xx
 
 # Runtime
 
-## Language concurrency 
+## Language concurrency
 
 ## Multiturn refinement with computational reuse
 
