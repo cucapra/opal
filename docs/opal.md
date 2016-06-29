@@ -1,314 +1,236 @@
-OPAL
-====
+OPAL: Optimization and Personal Assistant Language
 
-These are some initial notes on OPAL, a hypothetical Office Productivity Assistant Language.
+# Background
 
-Goals
------
+- Rise of intelligent systems
+  - more personalization, greater scale, new applications (e.g., physical world stuff)
+  - Why is this different?
+    - Technical debt stuff
+    - Complete learning loop
+    - No statistical contracts
+    - entanglement/abstraction busting
+      - Performance - SLA
+      - Uncertainty, data bias,
+    - More at stake now
+      - infrastructural
+      - Mission critical applications
+- These look like systems/pl problems
+  - System has to do it
+    - Boundary between things
+    - Runtime enforcement
+  - We can use a lot of our great tools
+  - Plus some new ones
 
-The idea is to design a programming language that can express the commands we give to a Cortana-like intelligent assistant. Here are some reasons this language could be better than the current ad-hoc approach to defining these actions:
+Related Text:
 
-* The language could serve as the right target for NLP and other interfaces that try to translate user intent into actions.
-* Having a well-defined language would make it easy for programmers to write custom workflows.
-* Abstractions would make it easier to integrate new components: sources of data, inference strategies, etc. For example, when a new mechanism for *notifying the user* or *determining the relationship between two people* is invented, existing scenarios could take advantage of it transparently without specific tuning.
-* It would enable program analysis over these actions to optimize them (e.g., for a performance/utility trade-off) or to schedule them on a distributed system.
+We are just beginning to see the initial ripples of the next major wave of computing.  In the beginning, computers were primarily used for computation, and later, they also became powerful communication tools.  The emerging 3rd wave of applications seeks to help us better engage with the world around us. We can see many early examples: augmented reality applications overlay the real world with anything from translations of signs (e.g., WordLens) to virtual modifications of real objects (e.g., HoloLens); digital assistants (e.g.., Siri, Cortana, Google Now) understand physical concepts like locations and traffic and advise users on travel times and directions; and smart devices monitor and automate anything from room temperature (e.g., Nest thermostats) to watering plants (e.g., Parrot Flower Power H2O).
 
-Design
-------
+This new wave of applications will be more demanding on our computing systems in nearly every way. Monitoring the current state of the world will necessitate increased bandwidth to collect the sundry set of data streams, and crossing the boundary between physical and digital worlds requires significant computation to do the data processing and inference required to turn analog signals into meaningful digital information.  Understanding the world will likely require joining large amounts of data from diverse sources, rich models and simulations, and complex inferences.  Finally, reacting to and controlling the world will demand rapid response times. Building systems for this class of applications will require both new abstractions and architectures to enable new programming models and provide scalability as well as new control algorithms to operate effectively.
 
-Here are a few half-baked ideas for language features that might add up to the system we want.
+* The Rise of Intelligent Systems
+* Many of these problems are Programing Language Problems
+* Challenges of increasing command surface
+  * Finding and negotiating functionality
+  * Automating repetitive tasks
+  * Customization and personalization
 
+As we add functionality to systems, we must address the resulting complexity of the user interface. Already users struggle to control and understand their devices: witness the growing number of help and support pages to guide users through all aspects of life, especially complex software. [Ideally we would code tasks and preferences using constructs that are simple to author and easy to inspect.] Humans naturally deal with ambiguous circumstances and instructions through interaction, and learn what others prefer to quickly navigate these spaces. Future software must have similar abilities: retaining ambiguity as necessary, refining interpretations through interaction, and modeling user preferences based on interactions.
 
-### Basic Data Model
+[Talk about the confluence of systems, programming languages, human computer interaction, etc -- does this belong at the end of this section or the beginning of the next?]
 
-Let's start with data. Since we often want to deal with database-like collections of user data, let's represent that in the type system. The language has records:
+[Programming language mediates the user-interaction ambiguity and system interpretation ambiguity
 
-    type Event = { title: String, when: Date, where: Location }
+You would think that there’s an in interface component and a systems component. Somewhere in between there are abstractions that stay separate but allow them to communicate. The way that you interact with the user has complicated interactions with how the system works, and the system constraints have ramifications for the user.
 
-And it should probably have lists, written `[T]`:
+Clearly a problem -- between systems and UI -- we can add a language abstraction.
 
-    type Email = { from: Person, to: [Person], subject: String, body: String }
+Think in terms of dialog
 
-It also has a kind of type for *collections* of data, where `T*` is a collection of `T`s. Unlike lists, which should be reasonably small, collections can be of unbounded size---perhaps too big to fit into memory. It's not too different from [`IEnumerable` in LINQ land][list-vs-ienumerable]. For example:
+U: "[initial request]"  
+S: "Do you mean A, B, or C?"  
+U: "Well, B is almost right, but [refinement]"  
+S: "Ah, how about B’?"  
+U: "Yes, perfect!"  
+S: Applies transaction, updates weights to prefer B over A
 
-    type Mailbox = { owner: Person, messages: Email* }
-    type Calendar = Event*
+]
 
-Sources of data are represented as functions that produce collections:
+# Project Vision
 
-    function get_user_mail() -> Mailbox
+The level of abstraction for mainstream application development is changing. Instead of functions and variables, the basic atoms in a mobile application or voice assistant are entire web services or natural language models.
 
-Similarly, machine learning models and other inference tasks are functions that take collections as arguments:
+For "classical" development, engineers have tools and techniques to make software more composable, debuggable, and maintainable. Modern applications that use intelligent systems have similar problems, but they occur at a different level of abstraction. Instead of null pointers and memory leaks, potential problems in intelligent systems include conflated features, training feedback loops, and low-quality classifiers. Instead of command-line interfaces and GUIs, intelligent systems use a new category of user interaction that is prone to ambiguity and confusing output. These new categories of pitfalls and correctness criteria need corresponding modern tools and abstractions.
 
-    type Topic = { name: String, keywords: [String] }
-    function mine_expertise(Email*) -> Topic*
+The goal of this project is to identify the right abstractions that give developers control over the higher-order concerns of intelligent systems. The idea is that the right set of concepts already exist in intelligent systems, but they are latent in the code written using traditional programming languages and traditional tools. Especially as software projects grow, these missing abstractions make it difficult to avoid the pitfalls that come with complex component interactions. With a new approach to programming, we can rule out entire classes of problems that affect intelligent systems and build tools to help catch others---in the same way that type systems rule out low-level programming errors and profilers help catch performance pathologies.
 
-So far, this looks like a data-oriented API implemented in an everyday programming language, but it should already be useful for writing some simple tasks. We'll make things more complicated in a moment.
+We target these latent concepts in intelligent system engineering:
 
-[list-vs-ienumerable]: http://stackoverflow.com/questions/3628425/ienumerable-vs-list-what-to-use-how-do-they-work
+* Users of machine learning don’t need to worry about the "guts" of ML algorithms. They can specify the “inputs and outputs” instead—the raw ingredients that specify what they *want* out of the learning system.
+* Hypothetical worlds: specifying features where the most natural expression is on the state of the current world, even when that world doesn’t exist yet.
+* [list here]
+* Dealing with ambiguity in user intent [hypothetical worlds]
+* Multi-turn interactions [incremental]
+* …
 
+By designing these abstractions into the language, we think we can avoid problems like:
 
-### Structural Subtyping
+* [list again]
 
-Our language needs to be *open:* it should be as easy as possible to use new components as they're added to the system. To that end, programs in the language can use values according to their "shape." (This will be especially important for *sketching,* in the next section.)
+[give examples in this paragraph of what could go wrong]
 
-Our language uses [structural subtyping][structural]. As in [Go][] or [TypeScript][], the `Email` type definition above just indicates the *minimum requirements* for something to be considered an email. Any other type with the same fields---or even extra fields---is a subtype of `Email`. So if a separate component defines another record type for emails that has some extra bookkeeping information, anything that works with `Email`s can happily use that type too.
+Specifying the score for things that are several levels "deep" into potential changes. For example, if you need to move a meeting to another day, which implies canceling a meeting on that day, and then computing the travel time *excluding* that canceled meeting, suddenly the fitness computations are really complicated.
 
-More radically, we extend structural typing to *functions* in addition to records. This would mean that you're free to provide extra arguments to a function that just ignores them. (And, complementarily, functions are free to return extra data that you ignore.) Say you have a function that recognizes people in a photograph. It might have the function type:
+[an example should include composing]
 
-    type Recognize = { photo: Image } -> { subjects: [Person] }
+# High-Level OPAL Design
 
-(Here, I'm "naming" the values by using records as the argument and return types.) Maybe you have an alternative face recognition engine that needs to know how many faces to look for:
+* Users vs programs vs integrators/service providers
 
-    type MyRecognize = { photo: Image, n: Int } -> { subjects: [Person] }
+[Adrian: I’d like to come back to this overview section after getting a little more detail into the body sections.]
 
-With structural typing, `MyRecognize` is a *supertype* of `Recognize`. So any implementation of the former type can be used in a context that's expecting to use the latter---in that case, `n` will just be ignored.
+# Mechanisms in the Language
 
-**TK:** We'll probably want something like [Unity's "brands"][unity] to help express more information about functions' intent.
+## Features
 
-[structural]: https://en.wikipedia.org/wiki/Structural_type_system
-[go]: https://golang.org/
-[typescript]: http://www.typescriptlang.org/
-[unity]: http://www.cs.cmu.edu/~donna/public/ecoop08.pdf
+A core concept in OPAL is a *feature*, which is a mechanism for scoring and ranking things. The idea is to provide a better abstraction for ranking alternatives to support high-level operations including:
 
+* Learning: a uniform way to update a model’s weights according to user interaction. The main use case here is for reinforcement learning, but you could also imagine using the same abstractions for supervised learning on the same model.
 
-### Open Composition via Sketching
+* Personalization: using a common model specification that combines global priors and per-user preferences.
 
-One of the goals of this project is to compose components that don't know anything about each other. That is, the user might dictate a "program" that says *cancel the meeting with Alice*. The command composes several kinds of tasks:
+* Explanation: when the system makes a decision, it can use the feature structure to explain why it made that decision.
 
-* Find out who "Alice" is.
-* Find the most likely upcoming event involving that person.
-* Contact "Alice" on channel to tell them about the cancelation.
+In programming languages terms, a "feature" is a function from an input type ‘a to a score number.
 
-There are different ways to accomplish each subtask, and the overall program that describes the request shouldn't have to worry about the choices.
+* `BasicFeature`
+* `Weight`
+* `LinearFeature`
 
-In the language, then, we might write the scenario as something like:
+How to *use* a feature (really, a network of features):
 
-    let person = find_contact("Alice")
-    let event = event_with(person)
-    remove_from_calendar(event)
-    let message = EventChangeMessage{
-      event: event,
-      action: Cancel,
-    }
-    notify(person, message)
+* Applying a features produces a `Score`
+* A `Score` can be flattened to a single number, and used for ranking
+* A `Score` can also produce explanations
+* Reinforcement learning looks like taking a Score and providing the user’s actual decision as a number
 
-The calls to `find_contact`, `event_with`, and `notify` shouldn't refer to specific, concrete implementations. Instead, they should work as extension points, where they mean *find me something that can do this task*.
+How to *define* features:
 
-We can implement this "open composition" as a kind of [program sketching][sketch]. The basic idea in sketching is to add a "wildcard" language construct that means "find me some expression that fits in this context."
+* How to personalize all the weights in a structure? Are the weights associated with the Feature object (probably not) or provided by an external repository? There’s some missing concept here of a "weight repository" that maps the *identity* of Feature objects to values. We provide a global default.
 
-In our language, combining wildcards with structural typing makes this easy to write. Everywhere that you're not sure exactly which function you want, you instead just use the type of the function with a wildcard, written `??`. For example, the `FindContact` function type could be written:
+The idea is that all of this together should let non-ML-expert users apply ML models, train ML models, and extract interesting information---without worrying about the actual learning mechanism.
 
-    type FindContact = { name: String } -> { person: Person }
+## Distributions
 
-Then, to summon some available implementation of the type, write `FindContact??`. The invocation looks like this:
+OPAL includes first-class support for probability distributions. A distribution of type T~ is a weighted set of values of type T. Concretely, a T~ is implemented as a collection of pairs of a value and a probability.
 
-    let person = FindContact??("Alice")
+In OPAL, code can work with distributions even when it is written in a probability-oblivious way. Any operation that works on a value T is automatically "lifted" to operate on T~ by mapping it over the elements of the distribution. For example, an absolute value function from `Float` to `Float`, when lifted, is a function from `Float~` to `Float~`; lifting applies the `abs` value to each number in the distribution’s support.
 
-This instructs the system to fill in the blank for the function and then invoke it with the argument `"Alice"`. These "typed wildcards" (which I haven't seen before in the sketching literature) help us constrain the search problem and lets us type-check programs before filling in the blanks.
+OPAL also provides basic built-in tools for working directly with entire distributions. A `max` operation gets the most likely element from a distribution, and a `sample` operation can randomly select values according to the distribution.
 
-**TK:** Unify this with search/optimization, below. Perhaps by using a "distribution over functions".
+[This section bears revisiting once we actually use distributions meaningfully.]
 
-[sketch]: http://people.csail.mit.edu/asolar/papers/thesis.pdf
+## Hypothetical worlds
 
+In the kind of intelligent applications we want to target, a common goal is to choose the best action to take in the real world among alternatives. The action could be scheduling a meeting, booking a flight, or sending a message. The common thread is that the best alternative depends on how the world *would* look if the action were taken: in other words, the fitness of a potential action depends on its effect on the world. For example, a potential meeting slot might be good if the travel times between adjacent events is sufficient, or it might be bad if it leads to a busy day with too many meetings.
 
-### Confidence, Uncertainty, and Distributions
+OPAL introduces an abstraction for *hypothetical worlds* to deal with potential actions and their effects on the outside world. The intent is to let the system define the quality of an action *post facto* in terms of its effects. This style of definition can be more natural than defining preferences in terms of the action itself. The style is especially critical when composing multiple, potentially conflicting actions.
 
-In many scenarios we brainstormed, there are interdependent choices that need to be resolved. Even in our tiny "cancel the meeting with Alice" example, the resolutions of "Alice" and "the meeting" should not be completely separate: if the user knows multiple Alices, we should choose the one they have a meeting with soon.
+(Hypothetical worlds also let systems encapsulate changes for preview and training before committing to them. The next section gives details on that aspect.)
 
-At the risk of crossing over into the realm of [probabilistic programming languages][ppl] and generic machine learning problems, we should make this kind of uncertainty first-class in the language. For instance, we could introduce a *distribution type*, which is like a collection but is weighted by probability. If a distribution over `T`s is written `T~` (akin to [Uncertain&lt;T&gt;][uncertaint]), then we could define our contact lookup function to quantify its uncertainty:
+OPAL’s hypothetical worlds borrow concepts from task-parallel programming languages. The program *forks* a new hypothetical world that runs in a snapshot of the state of the current world. The child world can make changes to the state, but the changes do not immediately affect the view of the same data in the parent world. The parent is in charge of deciding when to *commit* the child’s changes and apply any updates to the parent’s state. To decide which uncommitted hypothetical world to commit, the parent uses special-purpose communication channels.
 
-    function find_contact(name: String) -> Person~
+**Post-facto fitness assessment.**
 
-And the same for the `event_with` function, which might also find several options if there are multiple meetings with the person:
+Hypothetical worlds facilitate the definition of search criteria. For example, a meeting scheduler can fork many hypothetical worlds to decide which slot is best for a meeting. In each child world, the system will attempt to schedule a meeting in a different slot. Adding a meeting to the calendar inside a hypothetical world does not send any commands to the real-world calendar server; instead, it affects shadow data that is visible only to the OPAL program itself. It can inspect the potential final state of the calendar to decide the potential action’s quality---for example, it might measure how busy the day has become, or how many meetings have been scheduled before a cut-off time in the morning.
 
-    function event_with(who: Person) -> Event~
+Without the ability to pre-flight potential changes in hypothetical worlds, the programmer would need to define these quality properties in terms of the action itself. They would need to define the "busy day" feature, for example, by manually recreating the final calendar state and measuring it.
 
-Notice that although `event_with` takes a single person as an argument, we want to invoke it with the *distribution* over people returned by `find_contact`. We allow this in language by defining some way to compose the probability distributions.
+**Modular worlds and recursive search.**
 
-**TK:** How, exactly? Does every `T~` imply a Bayesian network?
+Hypothetical worlds also provide an abstraction mechanism. In the scheduling example, a child world that wants to schedule a meeting in a given slot may need to recursively move a pre-existing conflicting meeting. To find the best way to move *that* meeting, the child world can recursively fork second-level child worlds of its own. In other words, OPAL code can use hypothetical worlds anywhere without exposing them to its clients.
 
-Eventually, we need a way to choose the most likely value from a distribution: that is, to go from a `T~` to a `T`. We can provide generic inference strategies that use sampling to find a likely value, but we can also allow for custom strategies. For example, you might write a resolution method that asks the user to choose from a ranked list of the 5 most likely `T`s above some probability threshold.
+## Integrating with real-world services
 
-[ppl]: http://dippl.org/
-[uncertaint]: http://research.microsoft.com/apps/pubs/default.aspx?id=208236
+OPAL is a system integration language: it needs to interface safely with external services that take actions on its behalf. The external systems need to play nicely with OPAL’s internal abstractions: namely, hypothetical worlds.
 
+The idea is that OPAL programs can affect the outside world automatically when they commit hypothetical changes *into the top-level world*. In other words, the top-level non-hypothetical world in OPAL is where service interactions occur, and hypothetical worlds help coordinate those interactions.
 
-### Optimization Search
+**Hypothetical worlds for consistency and atomicity.**
 
-Another common pattern in our brainstorming is *optimization problems:* decision-making where there many different decisions and the user has many different preferences and constraints that define the space of possible actions.
+This means that hypothetical worlds also work as a form of concurrency control. As with a transaction, a hypothetical world is isolated from any other code---including external systems---until the program commits it. The data it observes cannot change during the course of the world’s execution. For example, a scheduling program in OPAL can observe that a meeting slot is free and schedule a new meeting in that slot without worrying that someone else will fill that slot in between the check and the update.
 
-A great example is travel planning: it could be that you can book a better hotel if you're willing to take a red-eye on the way home. We should be able to describe each of the individual options as data in the language, and then define a `preference` objective function that assigns a weight to an entire itinerary. A red-eye could incur a negative weight, for example, and the distance from the hotel to the conference center would incur another cost.
+**Interface to the outside world.**
 
-The language could support scenarios using something similar to the uncertainty type `T~`: optimizing according to an objective is not too different from sampling according to a probability distribution. The language might provide a `weight` operation:
+Service providers can write OPAL libraries to expose their data inside the OPAL universe. This works by extending OPAL’s collection type with hooks for each possible operation on the collection. Collections support addition and deletion by default, but providers can also add custom operation types---for example, our calendar source supports an in-place modification operation. When hypothetical operations reach the non-hypothetical top-level world, OPAL "unspools" the hypothetical operations and invokes the library’s hooks.
 
-    function <T> weight(collection: T*, objective: T -> float) -> T~
+[Adrian: That paragraph is still pretty messy and vague, and it might belong somewhere else.]
 
-that converts from an unweighted collection `T*` to a probability distribution `T~` according to a specified scoring function.
+# Programing
 
+## Hypothetical worlds
 
-### Privacy
+xx
 
-We could consider making privacy a first-class concern. Especially in office scenarios, we often want to express tasks that use information from multiple people---and we should avoid exposing sensitive data while still enabling powerful coordination among teams.
+* parent/child paradigm
+* Communication
+* Edits/diffs
+* Implementing optimization/search with these
+    * Recursion
+    * Examples with search algorithms
 
-One basic strategy is [type-based information flow tracking][iflow]. The language would optionally tag each type with the user who owns the data. The type system would, by default, prevent outputting information owned by user A to user B; you would need to use explicit constructs to disclose any data.
+## Objective functions, weights, ranking, features
 
-For our purposes, we might need something a little more complex: the safety of a disclosure can depend on dynamic state, like the "trainedness" of a machine-learning model. A model based on just two users' data is not anonymizing, but a model based on two thousand users might be.
+* Feature creation
 
-Here's one way to model privacy concerns: tag every value with a set of users who are allowed to see the data. For example, the components that fetch mailboxes or calendars can define strict policies by tagging values only with their owners:
+# Runtime
 
-    function get_mailbox(user: Person) -> Mailbox:
-      ...
-      email.allowed = user
-      ...
+## Language concurrency 
 
-Correspondingly, components that display data would check these tags and either throw an error or apply some negative weight.
+## Multiturn refinement with computational reuse
 
-The language should use some built-in rules for propagating these `allowed` sets through information flow rules, but these can only make values *less* permissive. Helper components can use explicit endorsements to make values *more* permissive. A function that asks the user to confirm exposure, for example:
+## Reinforcement learning
 
-    public_data = confirm(private_data, to_whom)
+## Controlling computation cost/value
 
-can add new users to the `allowed` set.
+* Bounding cost/search space
 
-In a learning case, the model could dynamically decide---based on internal state---whether to declassify information.
+# Calendar Prototype
 
-[iflow]: http://www.cs.cornell.edu/andru/papers/jsac/sm-jsac03.pdf
+# Extensions, Future Work, Related Systems
 
+## Learning systems
 
-### Composing Systems
+* Smarter models, more personalization
+* More intelligent search/learning to search
 
-One of this project's goals is to integrate disparate systems to enable higher-level tools that build on top of them. We need to provide a way for services to expose their data to each other. This can work by writing an "API shim" that wraps a system's existing capabilities and makes it manifest as values in our language.
+Initial system implementations can rely on simple models with limited personalization. For instance, each task can have a separate linear model with its own weights. A natural next step is to allow some degree of parameter sharing between users. For instance, each task could have two copies of each parameter: the first would be weighted by a value shared by all users, and the second would have a user-specific weight [cf. http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf]. This allows the model to capture general preferences and user-specific exceptions. More complex systems could have multi-level sharing by grouping users into subtypes, parameter sharing across tasks, and more complex models.
 
-Each service writes an interface definition that describes what it can provide. This is something like a C header file: it contains only names and types; it doesn't have any implementations. For example, a calendar system might define an interface like the examples above:
+The ranking of potential system actions can be naturally cast as either supervised learning or reinforcement learning. If the actions are drawn from a small, finite set, then multi-class classification or multi-armed bandits suffice. However, the actions are likely to become more complex and parameterized. Imagine a calendaring system: initially it might just propose a series of possible calendar slots to a user, but a richer implementation might perform a complex set of rescheduling operations to implement the user’s command. The structure prediction task of learning a complex set of rescheduling operations given a user command is a very interesting research area. Although there is some relevant prior work in both semantic parsing [cite Mooney et al.] and mapping from language to code [cite naturalness of code, lang2code workshop, etc.], lots of work remains.
 
-    type Event = { title: String, when: Date, where: Location }
-    type Calendar = Event*
-    function get_calendar(user: Person) -> Calendar
+## Dialog systems
 
-There's no source code that implements `get_calendar`. Instead, our language defines a way to translate an interface like this to lower-level API calls. There are two ways we could do this:
+* Language-integrated "LUIS 2.0"
+* Shared models natural language understanding tasks
 
-* We describe a one-to-one correspondence between language-level constructs and a specific format of RPC service. Services need to implement this RPC interface and translate it internally to their API. This would make the system completely flexible but would require more work to integrate systems.
-* We define a way to describe *existing* HTTP-based APIs and map them onto language-level constructs. This would be less flexible---you couldn't express arbitrary API styles---but would incur less boilerplate code.
+Many real-world tasks are difficult to express in a single turn. People, when discussing a course of actions, often require a conversation to understand all the necessary details and ramification of a task. These dialogs negotiate the bounds of a task, circumvent or discard the unachievable portions, disambiguate the core actions, refine the specific details, and confirm the broad goal before committing the task in the end.
 
-To use an API, a program in our language uses a `use` directive with a URL that points to an interface description:
+A number of recent systems such as LUIS.ai, wit.ai, and api.ai build natural language understanding systems on user utterances using active learning techniques. The learning aspect of these systems generally treats each application or domain as completely independent, and focuses on single-turn interactions, though. Any connections between dialog turns are generally hand-crafted through developer defined contexts.
 
-    use "http://example.com/calendar/api" as cal_server
-    let my_calendar = cal_server.get_calendar(me)
+Longer term, we hope to address some of these issues in two ways. First, we believe that many types of user data should be shared across applications. [] []
 
-The compiler then translates the `get_calendar` call into an API call. For example, it might become an HTTP `GET` request for `/calendar/api/get_calendar`.
+## ML-User Interface
 
+* Explaining decisions
+* Core operations:
+  * Ranking
+  * Gathering user preferences
 
-### Remote Data: Events and Queries
+Unlike probabilistic programming systems, OPAL provides a high-level interface to the machine learning systems. Our core operations focus on populating and choosing among hypothetical worlds. These worlds are ranked by features with learned weights, so that the ranking of worlds can be learned for each scenario and potentially customized for each user. A crucial initial set of operations include ranking worlds, then gathering user preferences about those rankings to update weights. Longer term, we envision a system that can naturally communicate why some elements are preferred over others. Psychology research has shown that people respond much more positively to requests with explanations [CITE Ellen Langer, 1977]. Also, we begin by learning features that are crafted by the developer. Soliciting new features from the user allows much more flexibility and customization in ranking.
 
-Now that we have a way to publish and subscribe to APIs, how should clients interact with the remote data that they consume? There are two major ways you might want to use data:
+## Agent-to-agent communication
 
-* Streaming. This matches the IFTTT sort of scenario, where you want to trigger an action whenever something happens. In our world, we can model "something happening" as adding a new record to a collection. Remote systems need to call back with every new record that appears.
-* Querying. If a client needs to analyze an entire data set or find a needle in a haystack, it's better to run a batch query. For example, training a machine learning model on an entire company's email could be implemented with a query.
+# Appendix
 
-Our language should provide different mechanisms for these two interaction modes. We could even consider letting services opt into one and out of the other---if, for example, it's not set up to efficiently support batch queries on a certain data set but is happy to notify clients on events.
-
-#### Streaming
-
-We can build an event-handling abstraction on top of records and collections.
-
-Let `collection v -> expr` denote an event handler. The expression will be invoked whenever a new value appears in the collection, with the new value mapped to `v`. For example:
-
-    mailbox msg -> notify(msg.subject)
-
-where `mailbox` has type `Email*` indicates that we'll notify the user for every new email. In other words, we can treat *collections as streams*.
-
-**TK:** Is it possible to compose these triggers? For example, would you want to write "when I get an email from Alice and a phone call from Alice, *then* notify me about the email"? An algebra for events as in Concurrent ML might help.
-
-#### Querying
-
-**TK:** Querying could work by sending a function to the remote server. Using `map`, `filter`, and `fold` primitives we can build up a reasonably expressive query language. Alternatively, we could build something closer to LINQ (i.e., a specific query sub-language that works like SQL).
-
-
-## State and Hypotheticals
-
-The language uses *transactions* to let programs explore hypothetical situations. The idea is that programs should be able to use and inspect state without actually affecting the outside world.
-
-Here's a simple example in a calendaring scenario where the user wants to add an appointment. Say we want to confirm with the user if the day gets too busy with that addition. We can use a `try` block to *hypothetically* add the appointment and `abort` to roll back if it seems like a bad idea:
-
-    let day = date_of(appt)
-    try {
-      add_event(calendar, appt)
-      if hecticness(calendar, day) > threshold:
-        let decision = confirm(calendar, day)
-        if not decision:
-          abort
-    }
-
-The idea is that any updates to collections---additions or removals---are buffered inside a `try` block until it reaches the end. The `abort` statement restores the original state and jumps to the end. Writing our threshold check this way makes the `hecticness` function simpler: it doesn't need to know that the calendar is hypothetical.
-
-When a transaction commits, the system sends the buffered collection updates out to the services that own them. System interfaces can also mark some functions as "effectful," meaning that they can't be used in transactions.
-
-**TK:** It should also be possible to explore a collection of many different hypotheticals and then weight them using our search/optimization feature. A good example is travel planning: each itinerary could be a hypothetical transaction.
-
-
-## Choices
-
-This section is on a language construct that attempts to unify three of the above concepts: probability, optimization, and hypotheticals.
-
-The idea is to add a construct, `choose`, that expresses many *possible executions* and how to choose between them. The statements look something like this:
-
-    CHOICE = choose VARIABLE in DOMAIN {
-      ...
-      weight NAME = SCORE
-      ...
-    }
-
-The `choose` statement, intuitively, forks execution many times. In each one, `VARIABLE` has a different value selected from the collection `DOMAIN`. (The *number* of forks is up to the search strategy, which we'll work out later: for now, imagine that we exhaustively try every value in `DOMAIN`.)
-
-The result of a `choose` is a special *choice* value that encapsulates all the parallel universes that it explored. That is, all the updates inside the `choice` block are buffered and not observable after it completes. In this example:
-
-    x = 1
-    choice = choose y in [1, 2, 3] {
-      x = y * 2
-    }
-    print x
-
-the `choose` body updates the `x` variable, but those updates are local---so the program prints 1, not any of the hypothetical values 2, 4, or 6.
-
-The returned choice value contains pairs consisting of each hypothetical world and together with the `weight`s defined in that world. Ranking strategies can read these weights to find the "best" world from a choice set. Let's change the above example slightly:
-
-    x = 1
-    choice = choose y in [1, 2, 3] {
-      weight z = y * 2
-    }
-    world = rank(choice)
-    apply world
-
-This produces a list of choices that looks like this:
-
-    [
-      (world1, { z: 2 }),
-      (world2, { z: 4 }),
-      (world3, { z: 6 }),
-    ]
-
-(I'm writing the world values as opaque tokens because I don't know exactly how they'll be represented---perhaps continuations.) The `rank` function uses some strategy to choose the best world according to the weights.
-
-The final piece of the puzzle is `apply`, which takes a world value and *commits* it, applying any mutations in the world to the current, physical state.
-
-### An Example
-
-In a previous section, I had a tiny example of using `try` to avoid adding an appointment if the day looked too busy. Here's an example of rewriting it to use `choose` instead with a boolean domain:
-
-    day = date_of(appt)
-    choice = choose addit in [true, false] {
-      if addit:
-        add_event(calendar, appt)
-      weight hectic = hecticness(calendar, day)
-    }
-    apply ask_user(choice)
-
-Here, `ask_user` is a ranking function that should always explicitly ask the user's opinion.
-
-
-## Loose Ends
-
-Here are a few design aspects that we have not yet fully addressed:
-
-- Describing where to run code. As in HPC languages like X10 and Chapel, we could use a construct that says *execute this query on the machine of person P* or *execute this query on server that has the relevant data*.
-- Transitioning to a learning model. Is there language support we can add to help transparently swap out some explicit "seed" logic with a trained model when it is ready?
+* User Guide
+* Programmer Guide
+* Service Integrator Guide
