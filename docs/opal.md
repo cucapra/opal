@@ -1,4 +1,6 @@
-OPAL: Optimization and Personal Assistant Language
+title: OPAL: Language Abstractions for Engineering Intelligent Systems
+
+[TITLE]
 
 # Background
 
