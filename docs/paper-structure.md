@@ -41,6 +41,8 @@ By adding abstractions for them to the language, we can:
 
 Maybe? I'm not 100% sure this paper needs it, but it might be useful to rigorously define the hypothetical semantics.
 
+This section will also include proofs of any interesting properties. Along the way, we should try to think of desirable notions that might be phrased as "guarantees" and therefore useful to formalize.
+
 # Implementation
 
 The implementation section can be short.
