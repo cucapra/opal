@@ -4,13 +4,19 @@ title: Resolving Ambiguity in a Language for Learning-Based Intelligent Systems
 
 Define *intelligent systems* and highlight their importance. This includes conversational UIs, but also...
 
-Describe the problems people have when engineering this kind of systems.
+Machine learning is typically exposed as a black box to the people who try to deploy it---or it needs to be handled like a controlled substance by certified ML wizards.
+We want a third way: systems engineers and domain experts should be able to harness the full power of ML systems.
+Our goal in this work is to establish the abstractions that make machine learning usable and customizable for everyone.
+(Describe the problems people have when engineering this kind of systems.)
 
-The goal of this work is to address these pitfalls with programming abstractions. We introduce two interlocking concepts that, together, rule out the following classes of potential problems...
+The idea in this work is to address these pitfalls with programming abstractions. We introduce two interlocking concepts that, together, rule out the following classes of potential problems...
 
 This paper describes the design and implementation of OPAL, a programming system for intelligent systems.
 
 # Overview
+
+The two concepts in OPAL address the two big pieces in engineering intelligent systems: *searching* among possible actions, and *choosing* the best based on learning.
+We address the first with hypothetical worlds and the second with first-class features.
 
 # Hypothetical Worlds: Ambiguity and Search
 
