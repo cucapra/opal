@@ -1,5 +1,5 @@
-Meeting Materials Discovery
-===========================
+Meeting Prep Assistant
+======================
 
 The goal in this case study is to automatically surface information relevant to an upcoming meeting.
 
