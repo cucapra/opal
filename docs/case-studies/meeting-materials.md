@@ -66,14 +66,29 @@ Or it might conclude:
 OPAL Structure
 --------------
 
-A *feature* here should be a factor in the overall relevance score. That is, every feature is a function of the event--document pair. Then, our `LinearCombiantion` feature combinator should gather all of them together into the bottom-line relevance.
+A *feature* here should be a factor in the overall relevance score. That is, every feature is a function of the event--document pair. Specifically, every individual feature will have the same type, like this:
 
-    let referencesAttendees = new Feature(...);
-    let similarTopic = new Feature(...);
-    ...
-    let relevance = new LinearCombination([
+    // A type for relevance features.
+    type RelFeat = Feature<[Event, Document]>;
+
+    // Our hodgepodge of individual relevance features.
+    let referencesAttendees: RelFeat = new Feature([e, d] => {
+      // ...
+    });
+    let similarTopic: RelFeat = new Feature([e, d] => {
+      // ...
+    });
+
+The "body" of each feature function takes an `[Event, Document]` pair and produces a score.
+
+Then, our `LinearCombination` feature combinator should gather all of them together into the bottom-line relevance.
+The constructor for `LinearCombination` takes a list of features with identical types and produces a new feature with the same type: here, a `RelFeat`.
+
+    let relevance: RelFeat = new LinearCombination([
         referencesAttendees,
         similarTopic,
     ]);
+
+The idea is that you can now apply the overall `relevance` feature to a meeting/document pair to get a total score.
 
 We need a top-$k$ primitive to search for the set of documents that maximize `relevance`.
