@@ -35,6 +35,7 @@ Here are some specific features I can imagine using:
 * "Hotness": documents that people worked on more recently are more likely to be relevant.
 * Overlap between the set of people involved in the meeting and the set of people with access to the document (or the set of people who authored the document).
 * Whether the document was accessed during previous iterations of the same meeting (or other meetings with similar titles).
+* The text of a document refers to the people involved in the meeting.
 
 
 Interface
