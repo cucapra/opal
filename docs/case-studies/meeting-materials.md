@@ -92,4 +92,17 @@ The constructor for `LinearCombination` takes a list of features with identical 
 
 The idea is that you can now apply the overall `relevance` feature to a meeting/document pair to get a total score.
 
+From the user's perspective, every `RelFeat` might feel like a 2D matrix: given a document and a meeting, you can look up the relevance score for that feature. This applies equally well to the individual features as to our linear combination.
+To emphasize this, we can make features callable, so if you're interested in the score for a particular document in a particular meeting, you can look it up directly:
+
+    print(relevance([someEvent, myDoc]));
+
+Internally, `LinearCombination` will probably want to maintain a *3D* mapping: it can reify the feature value for every individual feature on every event--document pair.
+In other words, `relevance` should support a way to look up a specific feature for a specific input, like this:
+
+    let fvec = relevance.components([someEvent, myDoc]);
+    print(fvec(similarTopic));
+
+The `fvec` value is like a feature vector; it contains the score for each individual feature when applied to each input pair.
+
 We need a top-$k$ primitive to search for the set of documents that maximize `relevance`.
