@@ -14,7 +14,27 @@ Specifically, let's say the prototype will deal with these categories of documen
 * Files on GitHub, indexed by their URL (like [this](https://github.com/sampsyo/opal/blob/master/docs/case-studies/meeting-materials.md)). These are visible to everyone with read access to the repository.
 * Text and word processing files in OneDrive (i.e., Word) or Google Drive (i.e., Docs), also indexed by their URL. I'm not 100% sure how you'd determine access permissions for those.
 
+Each document will consist of:
+
+* A unique ID that also serves as a way for everyone to access the document.
+* A title.
+* Content: a blob of text.
+* The set of people who have access.
+* Perhaps a trace of access times: when did each person look at/work on the document?
+
 I also imagine that we might want to use NLP magic to pre-process the raw documents and extract more discrete units of knowledge.
+
+
+Features
+--------
+
+The core of this application are features that signal the relevance of a document to a particular meeting.
+Here are some specific features I can imagine using:
+
+* Textual similarity between the title/text of the document and the name of the meeting.
+* "Hotness": documents that people worked on more recently are more likely to be relevant.
+* Overlap between the set of people involved in the meeting and the set of people with access to the document (or the set of people who authored the document).
+* Whether the document was accessed during previous iterations of the same meeting (or other meetings with similar titles).
 
 
 Interface
