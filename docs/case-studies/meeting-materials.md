@@ -8,6 +8,11 @@ Data Collection
 ---------------
 
 Part of the case study will involve conduits for collecting the various kinds of information we might want to surface. The raw information might include documents, emails, other meetings, and contacts.
+Specifically, let's say the prototype will deal with these categories of documents:
+
+* Email messages, indexed by their `Message-ID` header. Messages are considered visible to the sender and all recipients.
+* Files on GitHub, indexed by their URL (like [this](https://github.com/sampsyo/opal/blob/master/docs/case-studies/meeting-materials.md)). These are visible to everyone with read access to the repository.
+* Text and word processing files in OneDrive (i.e., Word) or Google Drive (i.e., Docs), also indexed by their URL. I'm not 100% sure how you'd determine access permissions for those.
 
 I also imagine that we might want to use NLP magic to pre-process the raw documents and extract more discrete units of knowledge.
 
