@@ -167,6 +167,22 @@ Now, we can construct our linear classifier over the expanded list of features:
 
 This new `relevance` feature now works on complete triples of events, documents, and users.
 
+#### Loose Ends
+
+This approach bears a little criticism:
+
+> It introduces a bunch of zeroes that don't seem strictly necessary. This reflects the [original paper][feda] I'm using to guide the design but it seems a little wasteful.
+
+On the other hand, the nice thing about the current approach is that `LinearCombination` is blissfully unaware of the domain adaptation---it doesn't need to care that there are multiple "copies" of each feature!
+We could sacrifice that by creating a special `AdaptedLinearCombination` thing, which would avoid zeroing and instead just maintain exactly $|A| * (|B| + 1)$ weights.
+Given an `A` and a `B`, the new classifier would use only the relevant set of weights.
+
+> How do you look up a particular score component? You need the identify of the augmented `[A, B]` feature for a particular feature/`B` pair.
+
+We could maintain a map that would let you look up the appropriate feature before using it as index into the `LinearCombination`.
+
+The special `AdaptedLinearCombination` could solve this problem easily too.
+
 [feda]: http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf
 
 ### Search
