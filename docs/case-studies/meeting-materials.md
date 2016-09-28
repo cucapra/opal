@@ -105,4 +105,70 @@ In other words, `relevance` should support a way to look up a specific feature f
 
 The `fvec` value is like a feature vector; it contains the score for each individual feature when applied to each input pair.
 
+### Personalization
+
+This application is a perfect case study to examine per-user personalization. The idea is to supplement our `LinearCombination` feature combinator with per-user features in a ["frustratingly easy domain adaptation"][feda] style.
+
+Intuitively, the technique exploits *general* and *per-user* weights for the same features.
+In our example so far, the basic features are called `referencesAttendees` and `similarTopic`.
+Without personalization, our `LinearCombination` has two weights, one for each feature.
+The idea here is that, if we have $n$ users, the combination will now have $n+1$ weights per feature (i.e., $2n+2$ total)---a general weight and one for each user.
+
+In OPAL, we'll do this by creating special copies of our features.
+We'll need a basic combinator:
+
+    // Adapt a single feature. Given a feature for "A"s and a single "B", make
+    // a feature that works for "A/B pairs." The second argument can either
+    // be a specific B or null to generate a general feature.
+    function adaptFeature<A, B>(feat: Feature<A>, the_b: B | null):
+        Feature<[A, B]>
+    {
+      if (b === null) {
+          // This is a general feature: ignore the B and just return the
+          // original feature.
+          return new Feature<[A, B]>(([a, b]) => {
+            return feat(a);
+          });
+      } else {
+        // This is a specific feature: the original feature for the given B
+        // and zero otherwise.
+        return new Feature<[A, B]>(([a, b]) => {
+          if (b == the_b) {
+            return feat(a);
+          } else {
+            return 0;
+          }
+        });
+      }
+    }
+
+Next, we'll use this adaptor for single features to build something that can augment entire *lists* of features for domain adaptation:
+
+    // Given a list of "A" features and a list of "B"s, create a cross-product
+    // list of features for domain adaptation.
+    function adaptFeatures(feats: Feature<A>[], bs: B[]): Feature<A, B>[] {
+      let out = [];
+      for (let feat of feats) {
+        for (let b of bs) {
+          let ab_feat = adaptFeature(feat, b);
+          out.push(ab_feat);
+        }
+      }
+      return out;
+    }
+
+Now, we can construct our linear classifier over the expanded list of features:
+
+    let relevance: Feature<[[Event, Document], User]> =
+      new LinearCombination(adaptFeatures([
+          referencesAttendees,
+          similarTopic,
+      ], users));
+
+This new `relevance` feature now works on complete triples of events, documents, and users.
+
+[feda]: http://www.umiacs.umd.edu/~hal/docs/daume07easyadapt.pdf
+
+### Search
+
 We need a top-$k$ primitive to search for the set of documents that maximize `relevance`.
