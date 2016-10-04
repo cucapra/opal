@@ -169,7 +169,7 @@ class Modify extends PSet.Operation<Event> {
  */
 export class Calendar extends ExternalCollection<Event> {
   user: office.User;
-  
+
   // The `send` method implements the "real" operations that affect the
   // outside world.
   send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
@@ -182,14 +182,15 @@ export class Calendar extends ExternalCollection<Event> {
     for (let op of ops) {
       // Add an event.
       if (op instanceof PSet.Add) {
-        let data = op.value.toOffice();
+        let add = op;
+        let data = add.value.toOffice();
         this.user.addEvent(data, (error, result) => {
           if (error) {
             console.log("error adding event:", error);
           } else {
             // TODO Await the completion of the request before returning.
             // (This requires `send` to be an async call.)
-            op.value.id = result.Id;
+            add.value.id = result.Id;
           }
         });
 
