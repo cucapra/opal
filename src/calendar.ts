@@ -31,7 +31,7 @@ function parseOfficeDate(d: { DateTime: string, TimeZone: string }): Date {
  * A single event in a user's calendar.
  */
 export class Event {
-  id: string;
+  id: string | null;
 
   /**
    * Create a new `Event`.
@@ -146,14 +146,16 @@ class Modify extends PSet.Operation<Event> {
   // he event are unaffected).
   apply(set: Set<Event>) {
     // Look for the old event.
-    let old: Event = null;
+    let old: Event | null = null;
     for (let obj of set) {
       if (obj.id === this.id) {
         old = obj;
         break;
       }
     }
-    console.assert(old !== null, "event not found by id");
+    if (old === null) {
+      throw "event not found by id";
+    }
 
     // Update and replace the object.
     let modified = clone(old);
@@ -306,6 +308,9 @@ export async function getEventRange(ctx: Context, user: office.User, start: Date
  */
 export function modifyEvent(ctx: Context, collection: Calendar,
                             event: Event, changes: EventChange) {
+  if (event.id === null) {
+    throw "modifying an event without an id";
+  }
   let op = new Modify(event.id, changes);
   let s = PSet.op(collection.lookup(ctx.world), op);
   collection.update(ctx.world, s);

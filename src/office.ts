@@ -123,7 +123,7 @@ export class Client {
     });
   }
 
-  getTokenFromCode(auth_code: string, callback: (error: any, token: string) => void) {
+  getTokenFromCode(auth_code: string, callback: (error: any, token: string | null) => void) {
       var token: any;
       let oauth2 = this.oauth2;  // Work around JavaScript's broken `this`.
       oauth2.authCode.getToken({

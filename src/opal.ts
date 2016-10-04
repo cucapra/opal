@@ -26,6 +26,18 @@ export function orderBy<S, T>(f: (v: S) => T) {
 
 
 /**
+ * Dynamic null check for TypeScript 2.0. (A dynamic version of the new
+ * built-in ! operator.)
+ */
+function nchk<T>(x: T | null, msg?: string): T {
+  if (x === null) {
+    throw msg || "null check failed";
+  }
+  return x;
+}
+
+
+/**
  * A promise utility for delayed resolution.
  *
  * This is useful when you want to call `then` on a promise but you don't know
@@ -68,7 +80,7 @@ export class Weight<T> {
 
   private jar(world: World): PromiseJar<T> {
     if (this.jars.has(world)) {
-      return this.jars.get(world);
+      return this.jars.get(world)!;
     } else {
       let s = new PromiseJar<T>();
       this.jars.set(world, s);
@@ -129,11 +141,11 @@ export class Collection<T> {
    */
   lookup(world: World): PSet.Node<T> {
     if (this.sets.has(world)) {
-      return this.sets.get(world);
+      return this.sets.get(world)!;
     } else {
       console.assert(world.parent != null,
                      "collection not defined in any ancestor");
-      let parent_set = this.lookup(world.parent);
+      let parent_set = this.lookup(nchk(world.parent));
       this.sets.set(world, parent_set);
       return parent_set;
     }
@@ -156,9 +168,9 @@ export class Collection<T> {
    */
   merge(world: World) {
     if (this.sets.has(world)) {
-      let child_set = this.sets.get(world);
-      let parent_set = this.lookup(world.parent);
-      this.update(world.parent, PSet.merge(parent_set, child_set));
+      let child_set = this.sets.get(world)!;
+      let parent_set = this.lookup(nchk(world.parent));
+      this.update(nchk(world.parent), PSet.merge(parent_set, child_set));
     }
   }
 }
@@ -258,7 +270,7 @@ export class Lazy {
   /**
    * The next step to take, when this thread is suspended.
    */
-  private next: () => void;
+  private next: (() => void) | null;
 
   /**
    * The number of times this thread has been acquired.
@@ -375,7 +387,7 @@ export class World extends Lazy {
    */
   collections: Set<Collection<any>>;
 
-  constructor(public parent: World, func: AsyncFunc) {
+  constructor(public parent: World | null, func: AsyncFunc) {
     super();
     this.subworlds = new Set();
     this.collections = new Set();
@@ -476,8 +488,11 @@ export class Context {
     console.assert(this.world.parent !== null,
         "clean_view() not available in top-level world");
     let cur_set = collection.lookup(this.world);
-    let parent_set = collection.lookup(this.world.parent);
+    let parent_set = collection.lookup(nchk(this.world.parent));
     let ancestor = PSet.common(parent_set, cur_set);
+    if (ancestor === null) {
+      throw "child unrelated to parent!";
+    }
     return ancestor.view();
   }
 
@@ -489,7 +504,7 @@ export class Context {
     console.assert(this.world.parent !== null,
         "diff() not available in top-level world");
     let cur_set = collection.lookup(this.world);
-    let parent_set = collection.lookup(this.world.parent);
+    let parent_set = collection.lookup(nchk(this.world.parent));
     return new Edit(PSet.diff(parent_set, cur_set));
   }
 
