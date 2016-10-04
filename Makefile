@@ -16,7 +16,7 @@ test:
 # Remove all built files, including built documentation.
 .PHONY: clean
 clean:
-	rm -rf build node_modules typings docs/build
+	rm -rf build node_modules docs/build
 
 # Run one of the examples.
 .PHONY: run
@@ -54,9 +54,7 @@ deploy_docs: docs
 
 deploy_bot:
 	npm install
-	npm run typings
 	cd bot && npm install
-	cd bot && npm run typings
 	cd bot && npm run build
 	systemctl --user restart opal
 

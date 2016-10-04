@@ -13,7 +13,6 @@
     "examples/schedule.ts",
     "examples/event_modify.ts",
     "examples/schedule_workday.ts",
-    "examples/resolve_day.ts",
-    "typings/main.d.ts"
+    "examples/resolve_day.ts"
   ]
 }

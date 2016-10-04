@@ -11,13 +11,13 @@
     "tape": "^4.2.2",
     "faucet": "^0.0.1",
     "typescript": "^1.7.3",
-    "typings": "^0.6.2"
+
+    "@types/node": "^6.0.42"
   },
 
   "scripts": {
     "build": "tsc",
     "smoketest": "node build/examples/schedule.js",
-    "typings": "typings install",
 
     "pretest": "tsc -p test",
     "test": "tape build/test/test_*.js | faucet"
