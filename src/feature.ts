@@ -3,9 +3,26 @@
  */
 type Score = number;
 
+/**
+ * The inner product of two dense vectors represented as JavaScript lists.
+ */
+function dot(a: number[], b: number[]) {
+  console.assert(a.length === b.length);
+  let total = 0;
+  for (let i = 0; i < a.length; ++i) {
+    total += a[i] * b[i];
+  }
+  return total;
+}
+
+
+/**
+ * A common type for all features.
+ */
 interface Feature<T> {
   score(v: T): Score;
 }
+
 
 /**
  * A basic feature that extracts a score from a concrete value using
@@ -20,6 +37,7 @@ class ElementaryFeature<T> implements Feature<T> {
   }
 }
 
+
 /**
  * A liner combination of other features.
  */
@@ -28,11 +46,19 @@ class LinearCombination<T> implements Feature<T> {
     console.assert(feats.length === weights.length);
   }
 
-  score(v: T): Score {
-    let total: Score = 0;
+  /**
+   * Get the feature vector for a value: i.e., run each of the features on
+   * the value.
+   */
+  fvec(v: T): Score[] {
+    let out: Score[] = [];
     for (let i = 0; i < this.feats.length; ++i) {
-      total += this.feats[i].score(v) * this.weights[i];
+      out.push(this.feats[i].score(v) * this.weights[i]);
     }
-    return total;
+    return out;
+  }
+
+  score(v: T): Score {
+    return dot(this.fvec(v), this.weights);
   }
 }
