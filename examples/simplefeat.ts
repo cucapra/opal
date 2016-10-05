@@ -10,9 +10,12 @@ let NOUNS = [
 
 /**
  * Construct a LinearCombination feature for the frequencies of a set of
- * words.
+ * words. The arguments are a list of words and (optionally) a list of
+ * per-word weights. If the weights aren't provided, they are initialized to
+ * 1.0 for all words.
  */
-function get_words_feat(words: string[] = NOUNS): Feature<string> {
+function get_words_feat(words: string[] = NOUNS,
+                        weights?: number[]): Feature<string> {
   // Build a list of per-word features.
   let termfreqs: Feature<string>[] = [];
   for (let word of words) {
@@ -31,9 +34,16 @@ function get_words_feat(words: string[] = NOUNS): Feature<string> {
     });
   }
 
+  // Initialize the weights to all-1.
+  if (!weights) {
+    weights = [];
+    for (let i = 0; i < words.length; ++i) {
+      weights.push(1.0);
+    }
+  }
+
   // Map the new features to their weights.
   return new LinearCombination(
-    termfreqs,
     new Score(termfreqs, weights),
   );
 }
