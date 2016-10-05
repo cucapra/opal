@@ -29,6 +29,20 @@ class Score<T> {
     }
     return new Score(feats, amounts);
   }
+
+  /**
+   * An alternative constructor that takes a list of pairs instead of a pair
+   * of lists.
+   */
+  static from_pairs<T>(pairs: [Feature<T>, number][]) {
+    let feats: Feature<T>[] = [];
+    let amounts: number[] = [];
+    for (let [f, n] of pairs) {
+      feats.push(f);
+      amounts.push(n);
+    }
+    return new Score(feats, amounts);
+  }
 }
 
 /**
