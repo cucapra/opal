@@ -1,5 +1,6 @@
 import * as PSet from './pset';
-import {ExternalCollection, Context} from './opal';
+import {Context} from './opal';
+import {ExternalCollection} from './world';
 import * as office from './office';
 import {dateToOfficeLocal} from './office';
 
