@@ -6,6 +6,13 @@ let NOUNS = [
   'hand', 'part', 'child', 'eye', 'woman', 'place', 'work', 'week', 'case',
   'point', 'government', 'company', 'number', 'group', 'problem', 'fact',
 ];
+let DOCS = [
+  'Life is a gift horse in my opinion.',
+  'It pays to be obvious, especially if you have a reputation for subtlety.',
+  'The world is changing: I feel it in the water, I feel it in the earth, and I smell it in the air.',
+  'Love, I find is like singing. Everybody can do enough to satisfy themselves, though it may not impress the neighbors as being very much.',
+  'It is for man to establish the reign of liberty in the midst of the world of the given. To gain the supreme victory, it is necessary, for one thing, that by and through their natural differentiation men and women unequivocally affirm their brotherhood.',
+];
 
 
 /**
@@ -14,8 +21,10 @@ let NOUNS = [
  * per-word weights. If the weights aren't provided, they are initialized to
  * 1.0 for all words.
  */
-function get_words_feat(words: string[] = NOUNS,
+function get_words_feat(words?: string[],
                         weights?: number[]): Feature<string> {
+  words = words || NOUNS;
+
   // Build a list of per-word features.
   let termfreqs: Feature<string>[] = [];
   for (let word of words) {
@@ -51,5 +60,9 @@ function get_words_feat(words: string[] = NOUNS,
 
 function main() {
   let words_feat = get_words_feat();
+  for (let doc of DOCS) {
+    let score = words_feat.score(doc);
+    console.log(score.total());
+  }
 }
 main();
