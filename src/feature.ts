@@ -1,7 +1,7 @@
 /**
  * A score is (currently) a sum of values attributed to features.
  */
-class Score<T> {
+export class Score<T> {
   constructor(public feats: Feature<T>[], public amounts: number[]) {
   }
 
@@ -64,7 +64,7 @@ function dot<T>(a: Score<T>, b: Score<T>) {
 /**
  * A common type for all features.
  */
-interface Feature<T> {
+export interface Feature<T> {
   score(v: T): Score<T>;
 }
 
@@ -73,7 +73,7 @@ interface Feature<T> {
  * A basic feature that extracts a score from a concrete value using
  * a user-defined function.
  */
-class ElementaryFeature<T> implements Feature<T> {
+export class ElementaryFeature<T> implements Feature<T> {
   constructor(public func: (v: T) => number) {
   }
 
@@ -86,7 +86,7 @@ class ElementaryFeature<T> implements Feature<T> {
 /**
  * A liner combination of other features.
  */
-class LinearCombination<T> implements Feature<T> {
+export class LinearCombination<T> implements Feature<T> {
   constructor(public weights: Score<T>) {
   }
 
