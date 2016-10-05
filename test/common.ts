@@ -1,6 +1,3 @@
-/// <reference path="../typings/main.d.ts" />
-'use strict';
-
 // Set-equality for iterables.
 export function contents_equal<T>(a: Iterable<T>, b: Iterable<T>) {
   let set: Set<T> = new Set();

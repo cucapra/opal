@@ -3,6 +3,7 @@
     "noImplicitAny": true,
     "target": "ES6",
     "module": "commonjs",
-    "outDir": "../build"
+    "outDir": "../build",
+    "strictNullChecks": true
   }
 }

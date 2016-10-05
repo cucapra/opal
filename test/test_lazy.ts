@@ -1,6 +1,4 @@
-'use strict';
-
-import {Lazy} from '../src/opal';
+import {Lazy} from '../src/world';
 
 let test = require('tape');
 
@@ -60,7 +58,7 @@ test('force entirely, in which suspend becomes a no-op', function (t: any) {
 // A simple synchronization mechanism.
 class Signal {
   fired: boolean;
-  waiters: (() => void)[];
+  waiters: (() => void)[] | null;
 
   constructor() {
     this.fired = false;
@@ -71,13 +69,13 @@ class Signal {
     if (this.fired) {
       f();
     } else {
-      this.waiters.push(f);
+      this.waiters!.push(f);
     }
   }
 
   notify() {
     this.fired = true;
-    for (let f of this.waiters) {
+    for (let f of this.waiters!) {
       f();
     }
     this.waiters = null;
