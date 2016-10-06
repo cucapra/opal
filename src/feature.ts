@@ -84,7 +84,7 @@ export class ElementaryFeature<T> implements Feature<T> {
 
 
 /**
- * A liner combination of other features.
+ * A linear combination of other features.
  */
 export class LinearCombination<T> implements Feature<T> {
   constructor(public weights: Score<T>) {
@@ -95,9 +95,10 @@ export class LinearCombination<T> implements Feature<T> {
    * the value.
    */
   fvec(v: T): Score<T> {
+    let this_ = this;  // JavaScript makes me sad sometimes.
     let gen = function*(): Iterable<Score<T>> {
-      for (let i = 0; i < this.feats.length; ++i) {
-        yield this.feats[i].score(v);
+      for (let feat of this_.weights.feats) {
+        yield feat.score(v);
       }
     };
     return Score.union(gen());
