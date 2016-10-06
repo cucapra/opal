@@ -23,8 +23,8 @@ export class Score {
    * Create a Score that consists of all of the components of a collection
    * of smaller Scores.
    */
-  static union<T>(scores: Iterable<Score>) {
-    let feats: Feature<T>[] = [];
+  static union(scores: Iterable<Score>) {
+    let feats: Feature<any>[] = [];
     let amounts: number[] = [];
     for (let score of scores) {
       feats = feats.concat(score.feats);
@@ -37,14 +37,21 @@ export class Score {
    * An alternative constructor that takes a list of pairs instead of a pair
    * of lists.
    */
-  static from_pairs<T>(pairs: [Feature<T>, number][]) {
-    let feats: Feature<T>[] = [];
+  static from_pairs(pairs: [Feature<any>, number][]) {
+    let feats: Feature<any>[] = [];
     let amounts: number[] = [];
     for (let [f, n] of pairs) {
       feats.push(f);
       amounts.push(n);
     }
     return new Score(feats, amounts);
+  }
+
+  /**
+   * Get a score whose value is zero.
+   */
+  static zero() {
+    return new Score([], []);
   }
 }
 
@@ -151,7 +158,7 @@ function adapt<A, B>(feat: Feature<A>, the_b: B | null):
       if (b == the_b) {
         return feat.score(a);
       } else {
-        return new Score([], []);  // Zero.
+        return Score.zero();
       }
     });
   }
