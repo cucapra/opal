@@ -1,8 +1,11 @@
 /**
  * A score is (currently) a sum of values attributed to features.
  */
-export class Score<T> {
-  constructor(public feats: Feature<T>[], public amounts: number[]) {
+export class Score {
+  // TODO: Perhaps this should associate only feature IDs, not full objects.
+  // We don't need to actually execute the feature, for example. But we would
+  // eventually like to use them for provenance information.
+  constructor(public feats: Feature<any>[], public amounts: number[]) {
   }
 
   /**
@@ -20,7 +23,7 @@ export class Score<T> {
    * Create a Score that consists of all of the components of a collection
    * of smaller Scores.
    */
-  static union<T>(scores: Iterable<Score<T>>) {
+  static union<T>(scores: Iterable<Score>) {
     let feats: Feature<T>[] = [];
     let amounts: number[] = [];
     for (let score of scores) {
@@ -48,7 +51,7 @@ export class Score<T> {
 /**
  * The inner product of two Scores.
  */
-function dot<T>(a: Score<T>, b: Score<T>) {
+function dot<T>(a: Score, b: Score) {
   // This actually requires that the two lists of features be the same set,
   // in the same order.
   console.assert(a.feats.length === b.feats.length);
@@ -65,7 +68,7 @@ function dot<T>(a: Score<T>, b: Score<T>) {
  * A common type for all features.
  */
 export interface Feature<T> {
-  score(v: T): Score<T>;
+  score(v: T): Score;
 }
 
 
@@ -77,8 +80,22 @@ export class ElementaryFeature<T> implements Feature<T> {
   constructor(public func: (v: T) => number) {
   }
 
-  score(v: T): Score<T> {
+  score(v: T): Score {
     return new Score([this], [this.func(v)]);
+  }
+}
+
+
+/**
+ * Like an `ElementaryFeature` but produces a Score instead of a plain number.
+ * (Just a plain wrapper around a function.)
+ */
+class ScoreFeature<T> implements Feature<T> {
+  constructor(public func: (v: T) => Score) {
+  }
+
+  score(v: T): Score {
+    return this.func(v);
   }
 }
 
@@ -87,16 +104,16 @@ export class ElementaryFeature<T> implements Feature<T> {
  * A linear combination of other features.
  */
 export class LinearCombination<T> implements Feature<T> {
-  constructor(public weights: Score<T>) {
+  constructor(public weights: Score) {
   }
 
   /**
    * Get the feature vector for a value: i.e., run each of the features on
    * the value.
    */
-  fvec(v: T): Score<T> {
+  fvec(v: T): Score {
     let this_ = this;  // JavaScript makes me sad sometimes.
-    let gen = function*(): Iterable<Score<T>> {
+    let gen = function*(): Iterable<Score> {
       for (let feat of this_.weights.feats) {
         yield feat.score(v);
       }
@@ -104,7 +121,7 @@ export class LinearCombination<T> implements Feature<T> {
     return Score.union(gen());
   }
 
-  score(v: T): Score<T> {
+  score(v: T): Score {
     return dot(this.fvec(v), this.weights);
   }
 }
@@ -124,17 +141,17 @@ function adapt<A, B>(feat: Feature<A>, the_b: B | null):
   if (the_b === null) {
       // This is a general feature: ignore the B and just return the
       // original feature.
-      return new ElementaryFeature<[A, B]>(([a, b]) => {
+      return new ScoreFeature<[A, B]>(([a, b]) => {
         return feat.score(a);
       });
   } else {
     // This is a specific feature: the original feature for the given B
     // and zero otherwise.
-    return new ElementaryFeature<[A, B]>(([a, b]) => {
+    return new ScoreFeature<[A, B]>(([a, b]) => {
       if (b == the_b) {
         return feat.score(a);
       } else {
-        return 0;
+        return new Score([], []);  // Zero.
       }
     });
   }
