@@ -21,10 +21,8 @@ let DOCS = [
  * per-word weights. If the weights aren't provided, they are initialized to
  * 1.0 for all words.
  */
-function get_words_feat(words?: string[],
+function get_words_feat(words: string[] = NOUNS,
                         weights?: number[]): Feature<string> {
-  words = words || NOUNS;
-
   // Build a list of per-word features.
   let termfreqs: Feature<string>[] = [];
   for (let word of words) {
@@ -60,6 +58,8 @@ function get_words_feat(words?: string[],
 
 
 function main() {
+  // First, let's just score the documents using the world's silliest
+  // bag-of-words features.
   let words_feat = get_words_feat();
   for (let doc of DOCS) {
     let score = words_feat.score(doc);
