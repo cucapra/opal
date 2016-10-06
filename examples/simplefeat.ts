@@ -6,6 +6,7 @@ let NOUNS = [
   'hand', 'part', 'child', 'eye', 'woman', 'place', 'work', 'week', 'case',
   'point', 'government', 'company', 'number', 'group', 'problem', 'fact',
 ];
+
 let DOCS = [
   'Life is a gift horse in my opinion.',
   'It pays to be obvious, especially if you have a reputation for subtlety.',
@@ -13,7 +14,12 @@ let DOCS = [
   'Love, I find is like singing. Everybody can do enough to satisfy themselves, though it may not impress the neighbors as being very much.',
   'It is for man to establish the reign of liberty in the midst of the world of the given. To gain the supreme victory, it is necessary, for one thing, that by and through their natural differentiation men and women unequivocally affirm their brotherhood.',
 ];
-let USERS = [
+
+interface User {
+  name: string;
+}
+
+let USERS: User[] = [
   { name: 'Adrian' },
   { name: 'Chris' },
   { name: 'Sarah' },
@@ -49,7 +55,7 @@ function main() {
 
   // First, let's just score the documents using the world's silliest
   // bag-of-words features.
-  let words_feat = new LinearCombination(Score.uniform(word_feats));
+  let words_feat = new LinearCombination<string>(Score.uniform(word_feats));
   for (let doc of DOCS) {
     let score = words_feat.score(doc);
     console.log(score.total());
@@ -57,7 +63,8 @@ function main() {
 
   // Domain adaptation.
   let adapted_word_feats = adaptall(word_feats, USERS);
-  let adapted_words_feat = new LinearCombination(Score.uniform(word_feats));
+  let adapted_words_feat =
+      new LinearCombination<[string, User]>(Score.uniform(adapted_word_feats));
   for (let user of USERS) {
     for (let doc of DOCS) {
       let score = adapted_words_feat.score([doc, user]);

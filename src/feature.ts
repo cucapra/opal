@@ -159,11 +159,11 @@ export function adapt<A, B>(feat: Feature<A>, the_b: B | null):
     Feature<[A, B]>
 {
   if (the_b === null) {
-      // This is a general feature: ignore the B and just return the
-      // original feature.
-      return new ScoreFeature<[A, B]>(([a, b]) => {
-        return feat.score(a);
-      });
+    // This is a general feature: ignore the B and just return the
+    // original feature.
+    return new ScoreFeature<[A, B]>(([a, b]) => {
+      return feat.score(a);
+    });
   } else {
     // This is a specific feature: the original feature for the given B
     // and zero otherwise.
