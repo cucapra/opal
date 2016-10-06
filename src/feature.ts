@@ -53,6 +53,19 @@ export class Score {
   static zero() {
     return new Score([], []);
   }
+
+  /**
+   * Construct a score where every feature has the same amount.
+   */
+  static uniform(features: Iterable<Feature<any>>, amount = 1.0) {
+    let feats: Feature<any>[] = [];
+    let amounts: number[] = [];
+    for (let feat of features) {
+      feats.push(feat);
+      amounts.push(amount);
+    }
+    return new Score(feats, amounts);
+  }
 }
 
 /**

@@ -16,15 +16,9 @@ let DOCS = [
 
 
 /**
- * Construct a LinearCombination feature for the frequencies of a set of
- * words. The arguments are a list of words and (optionally) a list of
- * per-word weights. If the weights aren't provided, they are initialized to
- * 1.0 for all words.
+ * Construct features for the frequencies of a set of words.
  */
-function get_words_feat(words: string[] = NOUNS,
-                        weights?: number[]): Feature<string> {
-  // Build a list of per-word features.
-  let termfreqs: Feature<string>[] = [];
+function* get_word_feats(words: string[] = NOUNS): Iterable<Feature<string>> {
   for (let word of words) {
     // Construct a new feature for this word's frequency in a given document.
     let termfreq = new ElementaryFeature((doc: string) => {
@@ -39,28 +33,18 @@ function get_words_feat(words: string[] = NOUNS,
       }
       return term_count / doc_words.length;
     });
-    termfreqs.push(termfreq);
+    yield termfreq;
   }
-
-  // Initialize the weights to all-1.
-  if (!weights) {
-    weights = [];
-    for (let i = 0; i < words.length; ++i) {
-      weights.push(1.0);
-    }
-  }
-
-  // Map the new features to their weights.
-  return new LinearCombination(
-    new Score(termfreqs, weights),
-  );
 }
 
 
 function main() {
+  // Get our list of single-word features.
+  let word_feats = Array.from(get_word_feats());
+
   // First, let's just score the documents using the world's silliest
   // bag-of-words features.
-  let words_feat = get_words_feat();
+  let words_feat = new LinearCombination(Score.uniform(word_feats));
   for (let doc of DOCS) {
     let score = words_feat.score(doc);
     console.log(score.total());
