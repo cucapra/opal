@@ -41,6 +41,7 @@ function get_words_feat(words?: string[],
       }
       return term_count / doc_words.length;
     });
+    termfreqs.push(termfreq);
   }
 
   // Initialize the weights to all-1.
