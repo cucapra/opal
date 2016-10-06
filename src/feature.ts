@@ -108,3 +108,49 @@ export class LinearCombination<T> implements Feature<T> {
     return dot(this.fvec(v), this.weights);
   }
 }
+
+
+/**
+ * Domain adaptation for a single feature.
+ *
+ * Given a feature for A objects and a specific B (or null to indicate *no*
+ * specific B), return a new feature for A/B pairs. The feature is zero on
+ * a mismatch with the concrete B and the same as the original feature on a
+ * match.
+ */
+function adapt<A, B>(feat: Feature<A>, the_b: B | null):
+    Feature<[A, B]>
+{
+  if (the_b === null) {
+      // This is a general feature: ignore the B and just return the
+      // original feature.
+      return new ElementaryFeature<[A, B]>(([a, b]) => {
+        return feat.score(a);
+      });
+  } else {
+    // This is a specific feature: the original feature for the given B
+    // and zero otherwise.
+    return new ElementaryFeature<[A, B]>(([a, b]) => {
+      if (b == the_b) {
+        return feat.score(a);
+      } else {
+        return 0;
+      }
+    });
+  }
+}
+
+/**
+ * Adapt a set of features according to a cross product with a second
+ * domain.
+ */
+function adaptall<A, B>(feats: Feature<A>[], bs: B[]): Feature<[A, B]>[] {
+  let out: Feature<[A, B]>[] = [];
+  for (let feat of feats) {
+    for (let b of bs) {
+      let ab_feat = adapt(feat, b);
+      out.push(ab_feat);
+    }
+  }
+  return out;
+}
