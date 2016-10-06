@@ -10,7 +10,16 @@
 			"args": [],
 			"runtimeExecutable": null,
 			"runtimeArgs": ["--nolazy"],
-			"sourceMaps": false
+			"sourceMaps": false,
+			"cwd": "${workspaceRoot}"
+		},
+		{
+			"name": "features",
+			"type": "node",
+			"program": "${workspaceRoot}/build/examples/simplefeat.js",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceRoot}"
 		},
 		{
 			"name": "tests",
@@ -21,7 +30,8 @@
 			"args": [],
 			"runtimeExecutable": null,
 			"runtimeArgs": ["--nolazy"],
-			"sourceMaps": false
+			"sourceMaps": false,
+			"cwd": "${workspaceRoot}"
 		}
 	]
 }
