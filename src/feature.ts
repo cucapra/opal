@@ -155,7 +155,7 @@ export class LinearCombination<T> implements Feature<T> {
  * a mismatch with the concrete B and the same as the original feature on a
  * match.
  */
-function adapt<A, B>(feat: Feature<A>, the_b: B | null):
+export function adapt<A, B>(feat: Feature<A>, the_b: B | null):
     Feature<[A, B]>
 {
   if (the_b === null) {
@@ -181,7 +181,9 @@ function adapt<A, B>(feat: Feature<A>, the_b: B | null):
  * Adapt a set of features according to a cross product with a second
  * domain.
  */
-function adaptall<A, B>(feats: Feature<A>[], bs: B[]): Feature<[A, B]>[] {
+export function adaptall<A, B>(feats: Feature<A>[],
+    bs: B[]):Feature<[A, B]>[]
+{
   let out: Feature<[A, B]>[] = [];
   for (let feat of feats) {
     for (let b of bs) {

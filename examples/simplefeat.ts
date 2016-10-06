@@ -1,5 +1,5 @@
 import { Feature, ElementaryFeature, Score,
-  LinearCombination } from '../src/feature';
+  LinearCombination, adaptall } from '../src/feature';
 
 let NOUNS = [
   'time', 'person', 'year', 'way', 'day', 'thing', 'man', 'world', 'life',
@@ -12,6 +12,11 @@ let DOCS = [
   'The world is changing: I feel it in the water, I feel it in the earth, and I smell it in the air.',
   'Love, I find is like singing. Everybody can do enough to satisfy themselves, though it may not impress the neighbors as being very much.',
   'It is for man to establish the reign of liberty in the midst of the world of the given. To gain the supreme victory, it is necessary, for one thing, that by and through their natural differentiation men and women unequivocally affirm their brotherhood.',
+];
+let USERS = [
+  { name: 'Adrian' },
+  { name: 'Chris' },
+  { name: 'Sarah' },
 ];
 
 
@@ -48,6 +53,16 @@ function main() {
   for (let doc of DOCS) {
     let score = words_feat.score(doc);
     console.log(score.total());
+  }
+
+  // Domain adaptation.
+  let adapted_word_feats = adaptall(word_feats, USERS);
+  let adapted_words_feat = new LinearCombination(Score.uniform(word_feats));
+  for (let user of USERS) {
+    for (let doc of DOCS) {
+      let score = adapted_words_feat.score([doc, user]);
+      console.log(score.total());
+    }
   }
 }
 main();
