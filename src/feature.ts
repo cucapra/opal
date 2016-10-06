@@ -171,7 +171,7 @@ export function adapt<A, B>(feat: Feature<A>, the_b: B | null):
       if (b == the_b) {
         return feat.score(a);
       } else {
-        return Score.zero();
+        return new Score([feat], [0.0]);
       }
     });
   }

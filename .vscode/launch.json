@@ -19,7 +19,8 @@
 			"program": "${workspaceRoot}/build/examples/simplefeat.js",
 			"request": "launch",
 			"args": [],
-			"cwd": "${workspaceRoot}"
+			"cwd": "${workspaceRoot}",
+			"sourceMaps": true
 		},
 		{
 			"name": "tests",
