@@ -2,9 +2,14 @@ import {opal, Context} from '../src/opal';
 import {Event} from '../src/calendar';
 import {User} from '../src/office';
 
+// A class for documents that might be relevant. They are currently identified
+// by a general URL.
 class Document {
   constructor(public url: string) {}
 }
+
+
+// Some dummy functions that will eventually get data from the outside world.
 
 function query_event(): Event {
   return new Event(
@@ -19,9 +24,21 @@ function get_docs(): Document[] {
   return [];
 }
 
+
+// Relevance features.
+
+type Feature<T> = string;
+
+type RelFeat = Feature<[Document, Event]>;
+
+let referencesSameAttendees: RelFeat = "rst";
+
 function relevance(event: Event, doc: Document) {
   return 0.99;
 }
+
+
+// The main function.
 
 opal(async function (ctx) {
   // Start with a "key" event and the entire set of documents.
