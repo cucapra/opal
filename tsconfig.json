@@ -22,6 +22,7 @@
     "examples/event_modify.ts",
     "examples/schedule_workday.ts",
     "examples/resolve_day.ts",
-    "examples/simplefeat.ts"
+    "examples/simplefeat.ts",
+    "examples/meetprep.ts"
   ]
 }
