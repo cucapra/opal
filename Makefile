@@ -36,7 +36,7 @@ docs: $(DOCS_NAMES:%=$(DOCSDIR)/build/%.html)
 
 DOCDEPS := $(DOCSDIR)/typescript.json
 $(DOCSDIR)/build/%.html: $(DOCSDIR)/%.md $(DOCDEPS)
-	$(MADOKO) --odir=$(DOCSDIR)/build $<
+	cd $(DOCSDIR) ; $(MADOKO) --odir=build $(notdir $<)
 
 .PHONY: docs-watch
 docs-watch: docs
