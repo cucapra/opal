@@ -7,7 +7,13 @@ const MailParser = require('mailparser').MailParser;
 
 // A document considered for relevance scoring.
 class Document {
-  constructor(public url: string) {}
+  constructor(
+    public url: string,
+    public title: string,
+    public text: string,
+    public author: string,
+    public people: string[],
+  ) {}
 }
 
 
@@ -31,8 +37,8 @@ async function get_docs(): Promise<Document[]> {
     let mbox = new Mbox('mail.mbox');
     mbox.on('message', (msg: any) => {
       let parser = new MailParser();
-      parser.on('headers', (headers: any) => {
-        console.log(headers);
+      parser.on('end', (mail: any) => {
+        out.push(maildoc(mail));
       });
       parser.write(msg);
       parser.end();
@@ -41,6 +47,19 @@ async function get_docs(): Promise<Document[]> {
       resolve(out);
     });
   });
+}
+
+// Given a mail object from the `mailparser` library, construct a Document.
+function maildoc(mail: any) {
+  let recip = mail.to.concat(mail.cc);
+  let mid = mail.headers['message-id'];
+  return new Document(
+    mid,  // TODO Eventually, the URL should use RFC 2392.
+    mail.subject,
+    mail.text,
+    mail.from,
+    recip,
+  );
 }
 
 
