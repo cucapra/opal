@@ -29,12 +29,10 @@ function query_event(): Event {
 }
 
 // Load some email messages from an `mbox` archive.
-// TODO: This is currently a hard-coded path, but you should of course be able
-// to point this at a mailbox file.
-async function get_docs(): Promise<Document[]> {
+async function get_docs(filename: string): Promise<Document[]> {
   return new Promise<Document[]>((resolve, reject) => {
     let out: Document[] = [];
-    let mbox = new Mbox('mail.mbox');
+    let mbox = new Mbox(filename);
     mbox.on('message', (msg: any) => {
       let parser = new MailParser();
       parser.on('end', (mail: any) => {
@@ -81,7 +79,7 @@ function relevance(event: Event, doc: Document) {
 opal(async function (ctx) {
   // Start with a "key" event and the entire set of documents.
   let event = query_event();
-  let all_docs = await get_docs();
+  let all_docs = await get_docs('mail.mbox');  // TODO Hardcoded path.
   let threshold = 0.8;
 
   // A collection where we'll store the documents we found.
