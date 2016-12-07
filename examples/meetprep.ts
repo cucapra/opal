@@ -2,8 +2,10 @@ import {opal, Context} from '../src/opal';
 import {Event} from '../src/calendar';
 import {User} from '../src/office';
 
-// A class for documents that might be relevant. They are currently identified
-// by a general URL.
+const Mbox = require('node-mbox');
+const MailParser = require('mailparser').MailParser;
+
+// A document considered for relevance scoring.
 class Document {
   constructor(public url: string) {}
 }
@@ -20,8 +22,25 @@ function query_event(): Event {
   );
 }
 
-function get_docs(): Document[] {
-  return [];
+// Load some email messages from an `mbox` archive.
+// TODO: This is currently a hard-coded path, but you should of course be able
+// to point this at a mailbox file.
+async function get_docs(): Promise<Document[]> {
+  return new Promise<Document[]>((resolve, reject) => {
+    let out: Document[] = [];
+    let mbox = new Mbox('mail.mbox');
+    mbox.on('message', (msg: any) => {
+      let parser = new MailParser();
+      parser.on('headers', (headers: any) => {
+        console.log(headers);
+      });
+      parser.write(msg);
+      parser.end();
+    });
+    mbox.on('end', () => {
+      resolve(out);
+    });
+  });
 }
 
 
@@ -43,7 +62,7 @@ function relevance(event: Event, doc: Document) {
 opal(async function (ctx) {
   // Start with a "key" event and the entire set of documents.
   let event = query_event();
-  let all_docs = get_docs();
+  let all_docs = await get_docs();
   let threshold = 0.8;
 
   // A collection where we'll store the documents we found.
