@@ -8,7 +8,6 @@
         "email": "chrisq@microsoft.com"
     },
     "dependencies": {
-        "fs": "*",
         "http" : "*",
         "node-outlook": "*",
         "opener" : "*",
