@@ -8,11 +8,8 @@
         "email": "chrisq@microsoft.com"
     },
     "dependencies": {
-        "http" : "*",
-        "node-outlook": "*",
-        "opener" : "*",
-        "path": "*",
-        "simple-oauth2" : "*",
-        "url": "*"
+        "node-outlook": "^1.1.6",
+        "opener" : "^1.4.2",
+        "simple-oauth2" : "^1.0.1"
     }
 }
