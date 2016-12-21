@@ -329,7 +329,7 @@ export class Lazy {
   suspend(): Promise<void> {
     if (this.active()) {
       // We're active, so just continue executing.
-      return Promise.resolve(null);
+      return Promise.resolve();
     } else {
       // Inactive, so actually suspend operation by saving the continuation.
       return new Promise<void>((resolve, reject) => {
