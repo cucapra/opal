@@ -107,7 +107,7 @@ export class MeetingTimeSlot {
 }
 
 // A structure for holding *updates* to an event object.
-interface EventChange {
+export interface EventChange {
   subject?: string;
   start?: Date;
   end?: Date;
@@ -175,7 +175,7 @@ export class Calendar extends ExternalCollection<Event> {
 
   // The `send` method implements the "real" operations that affect the
   // outside world.
-  send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]) {
+  send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]): PSet.Node<Event> {
     // Get the *old* set of events. We'll update this local copy according
     // to all the operations in the log.
     let events: Set<Event> = old.view();

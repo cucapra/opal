@@ -206,7 +206,7 @@ export function merge<T>(base: Node<T>, overlay: Node<T>) {
 /**
  * Create a new set.
  */
-export function set<T>(values?: Iterable<T>) {
+export function set<T>(values?: Iterable<T>): Node<T> {
   if (values) {
     return new FlatNode<T>(Array.from(values));
   } else {
@@ -217,20 +217,20 @@ export function set<T>(values?: Iterable<T>) {
 /**
  * Apply any operation to a collection.
  */
-export function op<T>(coll: Node<T>, op: Operation<T>) {
+export function op<T>(coll: Node<T>, op: Operation<T>): Node<T> {
   return new OperationNode(coll, op);
 }
 
 /**
  * Add a new value to a set.
  */
-export function add<T>(coll: Node<T>, value: T) {
+export function add<T>(coll: Node<T>, value: T): Node<T> {
   return op(coll, new Add(value));
 }
 
 /**
  * Remove a value from a set.
  */
-export function del<T>(coll: Node<T>, value: T) {
+export function del<T>(coll: Node<T>, value: T): Node<T> {
   return op(coll, new Delete(value));
 }

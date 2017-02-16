@@ -38,7 +38,7 @@ class PromiseJar<T> {
  * read that value using `ctx.get`.
  */
 export class Weight<T> {
-  jars: Map<World, PromiseJar<T>>;
+  private jars: Map<World, PromiseJar<T>>;
 
   /**
    * Create a new weight.
@@ -223,7 +223,7 @@ export class Edit<T> {
 /**
  * A struct containing actions for `Edit.foreach`.
  */
-interface EditActions<T> {
+export interface EditActions<T> {
   add?: (value: T) => void;
   delete?: (value: T) => void;
 }

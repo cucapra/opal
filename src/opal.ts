@@ -7,7 +7,7 @@ export { World, Weight, Collection, Edit };
 /**
  * The type of async functions used as the "body" of OPAL worlds.
  */
-type AsyncFunc = (ctx: Context) => Promise<void>;
+export type AsyncFunc = (ctx: Context) => Promise<void>;
 
 
 /**

@@ -2,6 +2,7 @@
   "name": "opal",
   "version": "0.0.1",
   "private": true,
+  "main": "build/src/opal.js",
 
   "dependencies": {
     "node-outlook": "^1.1.5",

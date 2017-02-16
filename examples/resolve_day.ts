@@ -1,7 +1,7 @@
 import {opal, Context} from '../src/opal';
 import {slots, copyDate} from './schedutil';
 
-const enum Weekday {
+export const enum Weekday {
   Sunday = 0,
   Monday = 1,
   Tuesday = 2,
