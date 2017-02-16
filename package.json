@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "main": "build/src/opal.js",
+  "types": "build/src/opal.d.ts",
 
   "dependencies": {
     "node-outlook": "^1.1.5",
