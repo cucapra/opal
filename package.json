@@ -19,6 +19,7 @@
 
   "scripts": {
     "build": "tsc",
+    "postinstall": "tsc",
     "smoketest": "node build/examples/schedule.js",
 
     "pretest": "tsc -p test",
