@@ -1,7 +1,7 @@
 import { World, TopWorld, Weight, Collection, Edit } from './world';
 import * as PSet from './pset';
 import { orderBy, nchk } from './util';
-export { World, Weight, Collection, Edit };
+export { World, Weight, Collection, Edit, PSet };
 
 
 /**
