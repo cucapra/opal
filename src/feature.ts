@@ -1,195 +1,127 @@
-/**
- * A score is (currently) a sum of values attributed to features.
- */
-export class Score {
-  // TODO: Perhaps this should associate only feature IDs, not full objects.
-  // We don't need to actually execute the feature, for example. But we would
-  // eventually like to use them for provenance information.
-  constructor(public feats: Feature<any>[], public amounts: number[]) {
-  }
+export class FeatId { tag: string }
 
-  /**
-   * Get the total value of this score.
-   */
-  total() {
-    let out = 0;
-    for (let amount of this.amounts) {
-      out += amount;
+export class Numeric {
+    form: "n";
+    id: FeatId;
+    data: number;
+
+    static generator(id: FeatId): (d: number) => Numeric {
+        return (data) => {
+            let f = new Numeric();
+            f.form = "n";
+            f.id = id;
+            f.data = data;
+            return f;
+        };
     }
-    return out;
-  }
+}
 
-  /**
-   * Create a Score that consists of all of the components of a collection
-   * of smaller Scores.
-   */
-  static union(scores: Iterable<Score>) {
-    let feats: Feature<any>[] = [];
-    let amounts: number[] = [];
-    for (let score of scores) {
-      feats = feats.concat(score.feats);
-      amounts = amounts.concat(score.amounts);
+export class Bounded<T> {
+    form: "b";
+    id: FeatId;
+    dict: T[];
+    data: T;
+
+    static generator<T>(id: FeatId): (d: T, dict: T[]) => Bounded<T> {
+        return (data, dict) => {
+            let f = new Bounded<T>();
+            f.form = "b";
+            f.id = id;
+            f.dict = dict;
+            f.data = data;
+            return f;
+        };
     }
-    return new Score(feats, amounts);
-  }
+}
 
-  /**
-   * An alternative constructor that takes a list of pairs instead of a pair
-   * of lists.
-   */
-  static from_pairs(pairs: [Feature<any>, number][]) {
-    let feats: Feature<any>[] = [];
-    let amounts: number[] = [];
-    for (let [f, n] of pairs) {
-      feats.push(f);
-      amounts.push(n);
+export class Unbounded<T> {
+    form: "u";
+    id: FeatId;
+    data: T;
+
+    static generator<T>(id: FeatId): (d: T) => Unbounded<T> {
+        return (data) => {
+            let f = new Unbounded<T>();
+            f.form = "u";
+            f.id = id;
+            f.data = data;
+            return f;
+        };
     }
-    return new Score(feats, amounts);
-  }
+}
 
-  /**
-   * Get a score whose value is zero.
-   */
-  static zero() {
-    return new Score([], []);
-  }
+export class Packed {
+    form: "p";
+    id: FeatId;
+    data: number[];
 
-  /**
-   * Construct a score where every feature has the same amount.
-   */
-  static uniform(features: Iterable<Feature<any>>, amount = 1.0) {
-    let feats: Feature<any>[] = [];
-    let amounts: number[] = [];
-    for (let feat of features) {
-      feats.push(feat);
-      amounts.push(amount);
+    static generator<T>(id: FeatId): (d: number[]) => Packed {
+        return (data) => {
+            let f = new Packed();
+            f.form = "p";
+            f.id = id;
+            f.data = data;
+            return f;
+        };
     }
-    return new Score(feats, amounts);
-  }
 }
 
-/**
- * The inner product of two Scores.
- */
-function dot<T>(a: Score, b: Score) {
-  // This actually requires that the two lists of features be the same set,
-  // in the same order.
-  console.assert(a.feats.length === b.feats.length);
+export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed;
 
-  let amounts: number[] = [];
-  for (let i = 0; i < a.feats.length; ++i) {
-    amounts.push(a.amounts[i] * b.amounts[i]);
-  }
-  return new Score(a.feats, amounts);
-}
-
-
-/**
- * A common type for all features.
- */
-export interface Feature<T> {
-  score(v: T): Score;
-}
-
-
-/**
- * A basic feature that extracts a score from a concrete value using
- * a user-defined function.
- */
-export class ElementaryFeature<T> implements Feature<T> {
-  constructor(public func: (v: T) => number) {
-  }
-
-  score(v: T): Score {
-    return new Score([this], [this.func(v)]);
-  }
-}
-
-
-/**
- * Like an `ElementaryFeature` but produces a Score instead of a plain number.
- * (Just a plain wrapper around a function.)
- */
-class ScoreFeature<T> implements Feature<T> {
-  constructor(public func: (v: T) => Score) {
-  }
-
-  score(v: T): Score {
-    return this.func(v);
-  }
-}
-
-
-/**
- * A linear combination of other features.
- */
-export class LinearCombination<T> implements Feature<T> {
-  constructor(public weights: Score) {
-  }
-
-  /**
-   * Get the feature vector for a value: i.e., run each of the features on
-   * the value.
-   */
-  fvec(v: T): Score {
-    let this_ = this;  // JavaScript makes me sad sometimes.
-    let gen = function*(): Iterable<Score> {
-      for (let feat of this_.weights.feats) {
-        yield feat.score(v);
-      }
+export function matchFeature<T>(ncase: (n: Numeric) => T,
+                         bcase: <U>(b: Bounded<U>) => T,
+                         ucase: <U>(u: Unbounded<U>) => T,
+                         pcase: (d: Packed) => T)
+                        : (f: Feature) => T {
+    return (f: Feature) => {
+        switch (f.form) {
+            case "n": return ncase(f);
+            case "b": return bcase(f);
+            case "u": return ucase(f);
+            case "p": return pcase(f);
+        }
     };
-    return Score.union(gen());
-  }
-
-  score(v: T): Score {
-    return dot(this.fvec(v), this.weights);
-  }
 }
 
-
-/**
- * Domain adaptation for a single feature.
- *
- * Given a feature for A objects and a specific B (or null to indicate *no*
- * specific B), return a new feature for A/B pairs. The feature is zero on
- * a mismatch with the concrete B and the same as the original feature on a
- * match.
- */
-export function adapt<A, B>(feat: Feature<A>, the_b: B | null):
-    Feature<[A, B]>
-{
-  if (the_b === null) {
-    // This is a general feature: ignore the B and just return the
-    // original feature.
-    return new ScoreFeature<[A, B]>(([a, b]) => {
-      return feat.score(a);
-    });
-  } else {
-    // This is a specific feature: the original feature for the given B
-    // and zero otherwise.
-    return new ScoreFeature<[A, B]>(([a, b]) => {
-      if (b == the_b) {
-        return feat.score(a);
-      } else {
-        return new Score([feat], [0.0]);
-      }
-    });
-  }
+export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
+                            bcase: <U>(b1: Bounded<U>, b2: Bounded<U>) => T,
+                            ucase: <U>(u1: Unbounded<U>, u2: Unbounded<U>) => T,
+                            pcase: (d1: Packed, d2: Packed) => T)
+                            : (f1: Feature, f2: Feature) => T {
+    return (f1: Feature, f2: Feature) => {
+        if (f1.id.tag !== f2.id.tag) {
+            throw new Error("Feature Mismatch: Incompatible feature IDs.");
+        }
+        if (f1.form === "n" && f2.form === "n") {
+            return ncase(f1, f2);
+        } else if (f1.form === "b" && f2.form === "b") {
+            return bcase(f1, f2);
+        } else if (f1.form === "u" && f2.form === "u") {
+            return ucase(f1, f2);
+        } else if (f1.form === "p" && f2.form === "p") {
+            return pcase(f1, f2);
+        } else {
+            throw new Error("Feature Mismatch: Forms of " +
+                            "features are incompatible.");
+        }
+    };
 }
 
-/**
- * Adapt a set of features according to a cross product with a second
- * domain.
- */
-export function adaptall<A, B>(feats: Feature<A>[],
-    bs: B[]):Feature<[A, B]>[]
-{
-  let out: Feature<[A, B]>[] = [];
-  for (let feat of feats) {
-    for (let b of bs) {
-      let ab_feat = adapt(feat, b);
-      out.push(ab_feat);
+export class FeatureVector {
+    data: Map<FeatId, Feature>;
+
+    constructor(vs: Feature[]) {
+        this.data = new Map();
+        for (let f of vs) {
+            this.data.set(f.id, f);
+        }
     }
-  }
-  return out;
+
+    map<T>(fn: (feat: Feature) => T): T[] {
+        let res = [];
+        for (let feat of this.data.values()) {
+            res.push(fn(feat));
+        }
+        return res;
+    }
 }
