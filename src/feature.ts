@@ -1,5 +1,11 @@
+/**
+ * A simple representation of a feature ID.
+ */
 export class FeatId { tag: string }
 
+/**
+ * A feature type wrapping a single numeric value.
+ */
 export class Numeric {
     form: "n";
     id: FeatId;
@@ -16,6 +22,10 @@ export class Numeric {
     }
 }
 
+/**
+ * A feature type containing a categorical feature from a defined set of
+ * possible categories.
+ */
 export class Bounded<T> {
     form: "b";
     id: FeatId;
@@ -34,6 +44,9 @@ export class Bounded<T> {
     }
 }
 
+/**
+ * A feature representing an arbitrary categorical feature.
+ */
 export class Unbounded<T> {
     form: "u";
     id: FeatId;
@@ -50,6 +63,9 @@ export class Unbounded<T> {
     }
 }
 
+/**
+ * A complex feature that contains a list of unlabeled numeric features.
+ */
 export class Packed {
     form: "p";
     id: FeatId;
@@ -66,8 +82,21 @@ export class Packed {
     }
 }
 
+/**
+ * The type of all features.
+ */
 export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed;
 
+
+/**
+ * Pattern match on a feature.
+ *
+ * @param ncase the `Numeric` branch
+ * @param bcase the `Bounded` branch
+ * @param ucase the `Unbounded` branch
+ * @param pcase the `Packed` branch
+ * @returns     a function that takes any feature to a `T`
+ */
 export function matchFeature<T>(ncase: (n: Numeric) => T,
                          bcase: <U>(b: Bounded<U>) => T,
                          ucase: <U>(u: Unbounded<U>) => T,
@@ -83,6 +112,15 @@ export function matchFeature<T>(ncase: (n: Numeric) => T,
     };
 }
 
+/**
+ * Pattern match on two features.
+ *
+ * @param ncase the `Numeric` branch
+ * @param bcase the `Bounded` branch
+ * @param ucase the `Unbounded` branch
+ * @param pcase the `Packed` branch
+ * @returns     a function that takes any pair of features to a `T`
+ */
 export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
                             bcase: <U>(b1: Bounded<U>, b2: Bounded<U>) => T,
                             ucase: <U>(u1: Unbounded<U>, u2: Unbounded<U>) => T,
@@ -107,6 +145,10 @@ export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
     };
 }
 
+/**
+ * The type of a feature vector, optimized for lookup as well as efficient
+ * transformation to other representations.
+ */
 export class FeatureVector {
     data: Map<FeatId, Feature>;
 
