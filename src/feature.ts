@@ -98,10 +98,10 @@ export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed;
  * @returns     a function that takes any feature to a `T`
  */
 export function matchFeature<T>(ncase: (n: Numeric) => T,
-                         bcase: <U>(b: Bounded<U>) => T,
-                         ucase: <U>(u: Unbounded<U>) => T,
-                         pcase: (d: Packed) => T)
-                        : (f: Feature) => T {
+    bcase: <U>(b: Bounded<U>) => T,
+    ucase: <U>(u: Unbounded<U>) => T,
+    pcase: (d: Packed) => T)
+    : (f: Feature) => T {
     return (f: Feature) => {
         switch (f.form) {
             case "n": return ncase(f);
@@ -122,10 +122,10 @@ export function matchFeature<T>(ncase: (n: Numeric) => T,
  * @returns     a function that takes any pair of features to a `T`
  */
 export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
-                            bcase: <U>(b1: Bounded<U>, b2: Bounded<U>) => T,
-                            ucase: <U>(u1: Unbounded<U>, u2: Unbounded<U>) => T,
-                            pcase: (d1: Packed, d2: Packed) => T)
-                            : (f1: Feature, f2: Feature) => T {
+    bcase: <U>(b1: Bounded<U>, b2: Bounded<U>) => T,
+    ucase: <U>(u1: Unbounded<U>, u2: Unbounded<U>) => T,
+    pcase: (d1: Packed, d2: Packed) => T)
+    : (f1: Feature, f2: Feature) => T {
     return (f1: Feature, f2: Feature) => {
         if (f1.id.tag !== f2.id.tag) {
             throw new Error("Feature Mismatch: Incompatible feature IDs.");
