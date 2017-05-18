@@ -48,11 +48,11 @@ export class Bounded<T> {
     dict: T[];
     data: T;
 
-    static generator<T>(id: FeatId): (d: T, dict: T[]) => Bounded<T> {
+    static generator<T>(id: FeatId, dict: T[]): (d: T) => Bounded<T> {
         if (id.form != "b") {
             throw new Error("ID for Bounded must have form \"b\".");
         }
-        return (data, dict) => {
+        return (data) => {
             let f = new Bounded<T>();
             f.form = "b";
             f.id = id;
@@ -94,13 +94,13 @@ export class Packed<T> {
     data: number[];
     lookup: (idx: T) => number;
 
-    static generator<T>(id: FeatId):
-        (d: number[], lookup: (idx: T) => number) => Packed<T> {
+    static generator<T>(id: FeatId, lookup: (idx: T) => number):
+        (d: number[]) => Packed<T> {
 
         if (id.form != "p") {
             throw new Error("ID for Packed must have form \"p\".");
         }
-        return (data, lookup) => {
+        return (data) => {
             let f = new Packed();
             f.form = "p";
             f.id = id;
