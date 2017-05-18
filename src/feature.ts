@@ -17,25 +17,88 @@ export class FeatId {
 }
 
 /**
+ * A Numeric feature ID, containing a generator for features.
+ */
+export class NumericId extends FeatId {
+    gen: (d: number) => Numeric;
+
+    constructor(tag: string) {
+        super(tag, "n");
+        this.gen = (data: number) => {
+            let f = new Numeric();
+            f.form = "n";
+            f.id = this;
+            f.data = data;
+            return f;
+        };
+    }
+}
+
+/**
+ * A Bounded feature ID, containing a generator for features.
+ */
+export class BoundedId<T> extends FeatId {
+    gen: <T>(d: T) => Bounded<T>;
+
+    constructor(tag: string, dict: T[]) {
+        super(tag, "b");
+        this.gen = (data: T) => {
+            if (dict.indexOf(data) === -1)
+                throw new Error("Invalid category.");
+            let f = new Bounded();
+            f.form = "b";
+            f.id = this;
+            f.data = data;
+            f.dict = dict;
+            return f;
+        };
+    }
+}
+
+/**
+ * An Unbounded feature ID, containing a generator for features.
+ */
+export class UnboundedId<T> extends FeatId {
+    gen: <T>(d: T) => Unbounded<T>;
+
+    constructor(tag: string) {
+        super(tag, "u");
+        this.gen = (data: T) => {
+            let f = new Unbounded();
+            f.form = "u";
+            f.id = this;
+            f.data = data;
+            return f;
+        };
+    }
+}
+
+/**
+ * A Packed feature ID, containing a generator for features.
+ */
+export class PackedId<T> extends FeatId {
+    gen: <T>(d: number[]) => Packed<T>;
+
+    constructor(tag: string, lookup: (idx: T) => number) {
+        super(tag, "p");
+        this.gen = (data: number[]) => {
+            let f = new Packed();
+            f.form = "p";
+            f.id = this;
+            f.data = data;
+            f.lookup = lookup;
+            return f;
+        };
+    }
+}
+
+/**
  * A feature type wrapping a single numeric value.
  */
 export class Numeric {
     form: "n";
     id: FeatId;
     data: number;
-
-    static generator(id: FeatId): (d: number) => Numeric {
-        if (id.form != "n") {
-            throw new Error("ID for Numeric must have form \"n\".");
-        }
-        return (data) => {
-            let f = new Numeric();
-            f.form = "n";
-            f.id = id;
-            f.data = data;
-            return f;
-        };
-    }
 }
 
 /**
@@ -47,23 +110,6 @@ export class Bounded<T> {
     id: FeatId;
     dict: T[];
     data: T;
-
-    static generator<T>(id: FeatId, dict: T[]): (d: T) => Bounded<T> {
-        if (id.form != "b") {
-            throw new Error("ID for Bounded must have form \"b\".");
-        }
-        return (data) => {
-            if (dict.indexOf(data) === -1) {
-                throw new Error("Invalid category: \"" + data + "\".");
-            }
-            let f = new Bounded<T>();
-            f.form = "b";
-            f.id = id;
-            f.dict = dict;
-            f.data = data;
-            return f;
-        };
-    }
 }
 
 /**
@@ -73,19 +119,6 @@ export class Unbounded<T> {
     form: "u";
     id: FeatId;
     data: T;
-
-    static generator<T>(id: FeatId): (d: T) => Unbounded<T> {
-        if (id.form != "u") {
-            throw new Error("ID for Unbounded must have form \"u\".");
-        }
-        return (data) => {
-            let f = new Unbounded<T>();
-            f.form = "u";
-            f.id = id;
-            f.data = data;
-            return f;
-        };
-    }
 }
 
 /**
@@ -96,22 +129,6 @@ export class Packed<T> {
     id: FeatId;
     data: number[];
     lookup: (idx: T) => number;
-
-    static generator<T>(id: FeatId, lookup: (idx: T) => number):
-        (d: number[]) => Packed<T> {
-
-        if (id.form != "p") {
-            throw new Error("ID for Packed must have form \"p\".");
-        }
-        return (data) => {
-            let f = new Packed();
-            f.form = "p";
-            f.id = id;
-            f.data = data;
-            f.lookup = lookup;
-            return f;
-        };
-    }
 
     get(idx: T): (number | null) {
         let i = this.lookup(idx);
