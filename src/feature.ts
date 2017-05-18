@@ -88,29 +88,42 @@ export class Unbounded<T> {
 /**
  * A complex feature that contains a list of unlabeled numeric features.
  */
-export class Packed {
+export class Packed<T> {
     form: "p";
     id: FeatId;
     data: number[];
+    lookup: (idx: T) => number;
 
-    static generator<T>(id: FeatId): (d: number[]) => Packed {
+    static generator<T>(id: FeatId):
+        (d: number[], lookup: (idx: T) => number) => Packed<T> {
+
         if (id.form != "p") {
             throw new Error("ID for Packed must have form \"p\".");
         }
-        return (data) => {
+        return (data, lookup) => {
             let f = new Packed();
             f.form = "p";
             f.id = id;
             f.data = data;
+            f.lookup = lookup;
             return f;
         };
+    }
+
+    get(idx: T): (number | null) {
+        let i = this.lookup(idx);
+        if (i < this.data.length) {
+            return this.data[i];
+        } else {
+            return null;
+        }
     }
 }
 
 /**
  * The type of all features.
  */
-export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed;
+export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed<any>;
 
 
 /**
@@ -125,7 +138,7 @@ export type Feature = Numeric | Bounded<any> | Unbounded<any> | Packed;
 export function matchFeature<T>(ncase: (n: Numeric) => T,
     bcase: <U>(b: Bounded<U>) => T,
     ucase: <U>(u: Unbounded<U>) => T,
-    pcase: (d: Packed) => T)
+    pcase: <U>(d: Packed<U>) => T)
     : (f: Feature) => T {
     return (f: Feature) => {
         switch (f.form) {
@@ -149,7 +162,7 @@ export function matchFeature<T>(ncase: (n: Numeric) => T,
 export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
     bcase: <U>(b1: Bounded<U>, b2: Bounded<U>) => T,
     ucase: <U>(u1: Unbounded<U>, u2: Unbounded<U>) => T,
-    pcase: (d1: Packed, d2: Packed) => T)
+    pcase: <U>(d1: Packed<U>, d2: Packed<U>) => T)
     : (f1: Feature, f2: Feature) => T {
     return (f1: Feature, f2: Feature) => {
         if (f1.id.tag !== f2.id.tag) {
@@ -184,7 +197,7 @@ export class FeatureVector {
         }
     }
 
-    getT<T extends Feature>(id: FeatId, form: FeatureForm): T {
+    private getT<T extends Feature>(id: FeatId, form: FeatureForm): T {
         if (id.form != form) {
             throw new Error("Expected form \"" +
                 form +
@@ -202,7 +215,7 @@ export class FeatureVector {
     getN(id: FeatId): Numeric { return this.getT<Numeric>(id, "n"); }
     getB<T>(id: FeatId): Bounded<T> { return this.getT<Bounded<T>>(id, "b"); }
     getU<T>(id: FeatId): Unbounded<T> { return this.getT<Unbounded<T>>(id, "u"); }
-    getP(id: FeatId): Packed { return this.getT<Packed>(id, "p"); }
+    getP<T>(id: FeatId): Packed<T> { return this.getT<Packed<T>>(id, "p"); }
 
     map<T>(fn: (feat: Feature) => T): T[] {
         let res = [];
