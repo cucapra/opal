@@ -53,6 +53,9 @@ export class Bounded<T> {
             throw new Error("ID for Bounded must have form \"b\".");
         }
         return (data) => {
+            if (dict.indexOf(data) === -1) {
+                throw new Error("Invalid category: \"" + data + "\".");
+            }
             let f = new Bounded<T>();
             f.form = "b";
             f.id = id;
@@ -197,7 +200,7 @@ export class FeatureVector {
         }
     }
 
-    private getT<T extends Feature>(id: FeatId, form: FeatureForm): T {
+    private get<T extends Feature>(id: FeatId, form: FeatureForm): T {
         if (id.form != form) {
             throw new Error("Expected form \"" +
                 form +
@@ -212,10 +215,10 @@ export class FeatureVector {
         return f as T;
     }
 
-    getN(id: FeatId): Numeric { return this.getT<Numeric>(id, "n"); }
-    getB<T>(id: FeatId): Bounded<T> { return this.getT<Bounded<T>>(id, "b"); }
-    getU<T>(id: FeatId): Unbounded<T> { return this.getT<Unbounded<T>>(id, "u"); }
-    getP<T>(id: FeatId): Packed<T> { return this.getT<Packed<T>>(id, "p"); }
+    getN(id: FeatId): Numeric { return this.get<Numeric>(id, "n"); }
+    getB<T>(id: FeatId): Bounded<T> { return this.get<Bounded<T>>(id, "b"); }
+    getU<T>(id: FeatId): Unbounded<T> { return this.get<Unbounded<T>>(id, "u"); }
+    getP<T>(id: FeatId): Packed<T> { return this.get<Packed<T>>(id, "p"); }
 
     map<T>(fn: (feat: Feature) => T): T[] {
         let res = [];
