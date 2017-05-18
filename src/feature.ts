@@ -1,3 +1,6 @@
+/**
+ * The form of a feature.
+ */
 export type FeatureForm = "n" | "b" | "u" | "p";
 
 /**
