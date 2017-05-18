@@ -1,7 +1,17 @@
+export type FeatureForm = "n" | "b" | "u" | "p";
+
 /**
  * A simple representation of a feature ID.
  */
-export class FeatId { tag: string }
+export class FeatId {
+    tag: string;
+    form: FeatureForm;
+
+    constructor(tag: string, form: FeatureForm) {
+        this.tag = tag;
+        this.form = form;
+    }
+}
 
 /**
  * A feature type wrapping a single numeric value.
@@ -12,6 +22,9 @@ export class Numeric {
     data: number;
 
     static generator(id: FeatId): (d: number) => Numeric {
+        if (id.form != "n") {
+            throw new Error("ID for Numeric must have form \"n\".");
+        }
         return (data) => {
             let f = new Numeric();
             f.form = "n";
@@ -33,6 +46,9 @@ export class Bounded<T> {
     data: T;
 
     static generator<T>(id: FeatId): (d: T, dict: T[]) => Bounded<T> {
+        if (id.form != "b") {
+            throw new Error("ID for Bounded must have form \"b\".");
+        }
         return (data, dict) => {
             let f = new Bounded<T>();
             f.form = "b";
@@ -53,6 +69,9 @@ export class Unbounded<T> {
     data: T;
 
     static generator<T>(id: FeatId): (d: T) => Unbounded<T> {
+        if (id.form != "u") {
+            throw new Error("ID for Unbounded must have form \"u\".");
+        }
         return (data) => {
             let f = new Unbounded<T>();
             f.form = "u";
@@ -72,6 +91,9 @@ export class Packed {
     data: number[];
 
     static generator<T>(id: FeatId): (d: number[]) => Packed {
+        if (id.form != "p") {
+            throw new Error("ID for Packed must have form \"p\".");
+        }
         return (data) => {
             let f = new Packed();
             f.form = "p";
@@ -140,7 +162,7 @@ export function matchTwoFeature<T>(ncase: (n1: Numeric, n2: Numeric) => T,
             return pcase(f1, f2);
         } else {
             throw new Error("Feature Mismatch: Forms of " +
-                            "features are incompatible.");
+                "features are incompatible.");
         }
     };
 }
@@ -158,6 +180,26 @@ export class FeatureVector {
             this.data.set(f.id, f);
         }
     }
+
+    getT<T extends Feature>(id: FeatId, form: FeatureForm): T {
+        if (id.form != form) {
+            throw new Error("Expected form \"" +
+                form +
+                "\" found \"" +
+                id.form +
+                "\".");
+        }
+        let f = this.data.get(id);
+        if (!f) {
+            throw new Error("Cannot find feature with ID (" + id.tag + ").");
+        }
+        return f as T;
+    }
+
+    getN(id: FeatId): Numeric { return this.getT<Numeric>(id, "n"); }
+    getB<T>(id: FeatId): Bounded<T> { return this.getT<Bounded<T>>(id, "b"); }
+    getU<T>(id: FeatId): Unbounded<T> { return this.getT<Unbounded<T>>(id, "u"); }
+    getP(id: FeatId): Packed { return this.getT<Packed>(id, "p"); }
 
     map<T>(fn: (feat: Feature) => T): T[] {
         let res = [];
