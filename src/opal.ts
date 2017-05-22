@@ -1,7 +1,9 @@
 import { World, TopWorld, Weight, Collection, Edit } from './world';
 import * as PSet from './pset';
 import { orderBy, nchk } from './util';
-export { World, Weight, Collection, Edit, PSet };
+import * as distributed from './distributed';
+import { OpalNode } from './distributed';
+export { World, Weight, Collection, Edit, PSet, OpalNode };
 
 
 /**
@@ -29,6 +31,15 @@ export class Context {
         let world: World = new World(this.world, () => func(new Context(world)));
         this.world.subworlds.add(world);
         return world;
+    }
+
+    async executeAt(node: distributed.OpalNode, func: (ctx: Context, ...params: (Weight<any> | Collection<any>)[]) => Promise<void>, ...params: [string, (Weight<any> | Collection<any>)][]): Promise<void> {
+        await distributed.executeAt(this, node, func, params);
+    }
+
+    async executeWith(node: distributed.OpalNode, func: (ctx: Context, node: OpalNode) => Promise<void>): Promise<void> {
+        console.log(`Executing with ${node}`);
+        await func(this, {} as any);
     }
 
     /**
@@ -161,7 +172,7 @@ export class Context {
      * @returns       An iterable of new `World`s (with the same cardinality
      *                as `domain`).
      */
-    *explore<T>(domain: Iterable<T>,
+    * explore<T>(domain: Iterable<T>,
         func: (choice: T) => AsyncFunc): Iterable<World> {
         for (let value of domain) {
             yield this.hypothetical(func(value));
@@ -217,8 +228,11 @@ export class Context {
  *
  * @returns A promise that resolves when OPAL execution finishes.
  */
-export function opal(func: AsyncFunc): Promise<void> {
+export function opal(func: AsyncFunc, port?: number, addr?: string): Promise<void> {
     let world: World = new TopWorld(() => func(new Context(world)));
     world.acquire();  // Run to completion.
-    return world.finish();
+    return Promise.race([
+        world.finish(),
+        distributed.launchOpalServer(port !== undefined ? port : 0, addr)
+    ]);
 }
