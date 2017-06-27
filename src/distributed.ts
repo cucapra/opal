@@ -1,7 +1,7 @@
 import { Either } from "./either";
 import * as opal from "./opal";
-import * as PSet from './pset';
-import { World, TopWorld, Weight, Collection, Edit } from './world';
+import * as PSet from "./pset";
+import { World, TopWorld, Weight, Collection, Edit } from "./world";
 import * as util from "./util";
 
 import * as http from "http";
