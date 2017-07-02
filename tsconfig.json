@@ -21,7 +21,6 @@
     "src/util.ts",
     "src/distributed.ts",
     "src/either.ts",
-    "src/ivar.ts",
     "examples/schedule.ts",
     "examples/event_modify.ts",
     "examples/schedule_workday.ts",
