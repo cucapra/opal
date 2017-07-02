@@ -228,11 +228,14 @@ export class Context {
  *
  * @returns A promise that resolves when OPAL execution finishes.
  */
-export function opal(func: AsyncFunc, port?: number, addr?: string): Promise<void> {
+export async function opal(func: AsyncFunc, port?: number, addr?: string): Promise<void> {
     let world: World = new TopWorld(() => func(new Context(world)));
     world.acquire();  // Run to completion.
-    return Promise.race([
+    let res = await Promise.race([
         world.finish(),
         distributed.launchOpalServer(port !== undefined ? port : 0, addr)
     ]);
+    if (typeof res === "string") {
+        throw Error(`Opal server failed with ${res}`);
+    }
 }
