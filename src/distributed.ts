@@ -42,6 +42,7 @@ export async function launchOpalServer(port: number, addr?: string): Promise<str
     console.log(`Server is listening on http://${server.address().address}:${server.address().port}`);
 
     while (true) {
+        // TODO why not handle ~infinitely~ many events here, no reason to force this to be hyper single threaded
         // handle each request as it comes
         let [name, [req, resp]] = await util.eventToPromise<[http.IncomingMessage, http.ServerResponse]>(server, "request");
         await handleRequest(req, resp);
@@ -75,119 +76,21 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
     }
 }
 
+// an OpalEntity is a value that persists across distributed worlds
+export type OpalEntity = Weight<any> | Collection<any>;
+export type OpalEntityMap = [string, OpalEntity][];
+export type OpalRemoteFunction = (ctx: opal.Context, ...params: OpalEntity[]) => Promise<void>;
+
 interface ExecuteArg {
-    code: (ctx: opal.Context, ...params: any[]) => Promise<void>;
-    params: [string, (Weight<any> | Collection<any>)][];
+    code: OpalRemoteFunction;
+    params: OpalEntityMap;
 }
 
 interface ExecuteResponse {
-    params: {
-        [name: string]: any
-    };
+    [name: string]: any;
 }
 
-async function executeEndpoint(data: string, response: http.ServerResponse) {
-    let topworld: World = new TopWorld(async () => {
-        let executeArg = deserializeExecuteArg(data, topworld);
-        let ctx = new opal.Context(topworld);
-        let subWorld = ctx.hypothetical(async (ctx: opal.Context) => {
-            let realArgs = executeArg.params.map((a: [string, Weight<any> | Collection<any>]) => a[1]);
-            await executeArg.code(ctx, ...realArgs);
-        });
-        subWorld.acquire();
-        await subWorld.finish();
-
-        let resp: ExecuteResponse = { params: {} };
-        for (let [name, val] of executeArg.params) {
-            console.log(`Setting ${name} = ${JSON.stringify(val)}: ${typeof val}, ${val instanceof Weight}`);
-            if (val instanceof Weight) {
-                await val.get(subWorld).then((v: any) => resp.params[name] = v, () => { });
-            } else {
-                resp.params[name] = PSet.diff(val.lookup(ctx.world), val.lookup(subWorld));
-            }
-        }
-        response.end(JSON.stringify(resp), (key: any, value: any) => {
-            if (value instanceof PSet.Add) {
-                return { __opal_type: "Add", value: value.value };
-            } else if (value instanceof PSet.Delete) {
-                return { __opal_type: "Delete", value: value.value };
-            } else {
-                return value;
-            }
-        });
-    });
-    topworld.acquire();
-}
-
-function deserializeExecuteArg(serialized: string, world: opal.World) {
-    let parsed = JSON.parse(serialized, (key: any, value: any) => {
-        if (typeof value === "object" &&
-            "__opal_type" in value) {
-            switch (value["__opal_type"]) {
-                case "Weight":
-                    return new opal.Weight(world);
-                case "Collection":
-                    return new opal.Collection(world, value["__opal_val"]);
-                case "Node":
-                    return PSet.set(value["__opal_val"]);
-                default:
-                    throw Error(`Invalid opal type ${value["__opal_type"]}`);
-            }
-        }
-        return value;
-    });
-
-    // TODO: the line below is not at all safe
-    parsed.code = eval(parsed.code);
-
-    return parsed as ExecuteArg;
-}
-
-export async function executeAt(ctx: opal.Context, node: OpalNode, func: (ctx: opal.Context, ...params: (Weight<any> | Collection<any>)[]) => Promise<void>, params: [string, (Weight<any> | Collection<any>)][]) {
-    let arg: ExecuteArg = {
-        code: func,
-        params: params
-    };
-    let data = serializeExecuteArg(arg, ctx.world);
-    let response = await sendDataToNode(node, "execute", "POST", data);
-    let respParams = JSON.parse(response, (name: any, value: any) => {
-        if (typeof value === "object" &&
-            "__opal_type" in value) {
-            switch (value["__opal_type"]) {
-                case "Add":
-                    return new PSet.Add(value["value"]);
-                case "Delete":
-                    return new PSet.Delete(value["value"]);
-                default:
-                    throw Error(`Invalid opal type ${value["__opal_type"]}`);
-            }
-        }
-        return value;
-    }).params;
-    for (let name in respParams) {
-        // TODO: n^2, can be n
-        for (let [o_name, o_val] of params) {
-            if (o_name !== name) {
-                continue;
-            }
-            if (o_val instanceof Weight) {
-                ctx.set(o_val, respParams[name]);
-            } else {
-                let val = respParams[name] as PSet.Operation<any>[];
-                new opal.Edit(val).foreach({
-                    add(value) {
-                        ctx.add(o_val as Collection<any>, value);
-                    },
-                    delete(value) {
-                        ctx.del(o_val as Collection<any>, value);
-                    }
-                });
-            }
-            break;
-        }
-    }
-}
-
+// TODO: serialization is hard. Should we allow serialization of code / closures?
 function serializeExecuteArg(arg: ExecuteArg, world: opal.World) {
     let code = arg.code.toString();
 
@@ -207,10 +110,123 @@ function serializeExecuteArg(arg: ExecuteArg, world: opal.World) {
                 __opal_type: "Node",
                 __opal_val: value.view()
             };
+        } else if (typeof value === "function") {
+            throw new Error("Code shipping is not supported, weights/collections passed over the wire may only contain data.");
         } else {
             return value;
         }
     });
+}
+
+function deserializeExecuteArg(serialized: string, world: opal.World) {
+    let parsed = JSON.parse(serialized, (key: any, value: any) => {
+        if (typeof value === "object" &&
+            "__opal_type" in value) {
+            switch (value["__opal_type"]) {
+                case "Weight":
+                    return new opal.Weight(world);
+                case "Collection":
+                    return new opal.Collection(world, value["__opal_val"]);
+                case "Node":
+                    return PSet.set(value["__opal_val"]);
+                default:
+                    throw Error(`Invalid opal type "${value["__opal_type"]}"`);
+            }
+        }
+        return value;
+    });
+
+    // TODO: the line below is not at all safe
+    parsed.code = eval(parsed.code);
+
+    return parsed as ExecuteArg;
+}
+
+async function executeEndpoint(data: string, response: http.ServerResponse) {
+    let topworld: World = new TopWorld(async () => {
+        let executeArg = deserializeExecuteArg(data, topworld);
+        let ctx = new opal.Context(topworld);
+
+        let realArgs = executeArg.params.map((a: [string, OpalEntity]) => a[1]);
+        let subWorld = ctx.hypothetical(async (ctx: opal.Context) => {
+            await executeArg.code(ctx, ...realArgs);
+        });
+        subWorld.acquire();
+        await subWorld.finish();
+
+        let resp: ExecuteResponse = {};
+        for (let [name, val] of executeArg.params) {
+            let serialized;
+            if (val instanceof Weight) {
+                serialized = await val.get(subWorld);
+            } else {
+                serialized = PSet.diff(val.lookup(ctx.world), val.lookup(subWorld));
+            }
+            resp[name] = serialized;
+        }
+        response.end(JSON.stringify(resp, (name: any, value: any) => {
+            if (value instanceof PSet.Add) {
+                return {
+                    __opal_type: "Add",
+                    __opal_val: value.value
+                };
+            } else if (value instanceof PSet.Delete) {
+                return {
+                    __opal_type: "Delete",
+                    __opal_val: value.value
+                };
+            }
+        }));
+    });
+    topworld.acquire();
+}
+
+export async function executeAt(ctx: opal.Context, node: OpalNode, func: OpalRemoteFunction, params: OpalEntityMap) {
+    let arg: ExecuteArg = {
+        code: func,
+        params: params
+    };
+    let data = serializeExecuteArg(arg, ctx.world);
+    let response = await sendDataToNode(node, "execute", "POST", data);
+    let resp: ExecuteResponse = JSON.parse(response, (name: any, value: any) => {
+        if (typeof value === "object" &&
+            "__opal_type" in value) {
+            switch (value["__opal_type"]) {
+                case "Add":
+                    return new PSet.Add(value["value"]);
+                case "Delete":
+                    return new PSet.Delete(value["value"]);
+                default:
+                    throw Error(`Invalid opal type ${value["__opal_type"]}`);
+            }
+        }
+        return value;
+    });
+
+    // preprocess the params into a dict for easier updating
+    let paramsDict = params.reduce((acc, [name, val]) => {
+        acc[name] = val;
+        return acc;
+    }, {} as { [name: string]: OpalEntity });
+
+    for (let resp_name in resp) {
+        let opal_ent = paramsDict[resp_name];
+        if (opal_ent instanceof Weight) {
+            ctx.set(opal_ent, resp[resp_name]);
+        } else if (opal_ent instanceof Collection) {
+            let val = resp[resp_name] as PSet.Operation<any>[];
+            new opal.Edit(val).foreach({
+                add(value) {
+                    ctx.add(opal_ent as Collection<any>, value);
+                },
+                delete(value) {
+                    ctx.del(opal_ent as Collection<any>, value);
+                }
+            });
+        } else {
+            throw Error(`Unknown type for "${resp_name}": "${opal_ent}"`);
+        }
+    }
 }
 
 async function sendDataToNode(node: OpalNode, endpoint: string, method: string, data: string) {
