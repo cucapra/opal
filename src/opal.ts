@@ -19,7 +19,7 @@ export type AsyncFunc = (ctx: Context) => Promise<void>;
  * convenient ways to access it.
  */
 export class Context {
-    constructor(public world: World) { }
+    constructor(public world: World, private localNode?: OpalNode) { }
 
     /**
      * Create a new child world.
@@ -28,7 +28,7 @@ export class Context {
      * @returns     A new `World` object.
      */
     hypothetical(func: AsyncFunc): World {
-        let world: World = new World(this.world, () => func(new Context(world)));
+        let world: World = new World(this.world, () => func(new Context(world, this.localNode)));
         this.world.subworlds.add(world);
         return world;
     }
@@ -38,8 +38,9 @@ export class Context {
     }
 
     async executeWith(node: distributed.OpalNode, func: (ctx: Context, node: OpalNode) => Promise<void>): Promise<void> {
-        console.log(`Executing with ${node}`);
-        await func(this, {} as any);
+        let token = await distributed.requestToken(this.localNode as OpalNode, node, func.toString());
+        let phony = await distributed.tokenizeRemoteNode(this.localNode as OpalNode, node, token);
+        await func(this, phony);
     }
 
     /**
@@ -228,12 +229,12 @@ export class Context {
  *
  * @returns A promise that resolves when OPAL execution finishes.
  */
-export async function opal(func: AsyncFunc, port?: number, addr?: string): Promise<void> {
-    let world: World = new TopWorld(() => func(new Context(world)));
+export async function opal(func: AsyncFunc, node?: OpalNode): Promise<void> {
+    let world: World = new TopWorld(() => func(new Context(world, node)));
     world.acquire();  // Run to completion.
     let res = await Promise.race([
         world.finish(),
-        distributed.launchOpalServer(port !== undefined ? port : 0, addr)
+        node !== undefined ? distributed.launchOpalServer(node) : Promise.resolve({})
     ]);
     if (typeof res === "string") {
         throw Error(`Opal server failed with ${res}`);
