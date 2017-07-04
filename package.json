@@ -4,24 +4,22 @@
   "private": true,
   "main": "build/src/opal.js",
   "types": "build/src/opal.d.ts",
-
   "dependencies": {
+    "@types/uuid": "^3.0.0",
     "node-outlook": "^1.1.5",
-    "simple-oauth2" : "^0.6.0"
+    "simple-oauth2": "^0.6.0",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
     "tape": "^4.2.2",
     "faucet": "^0.0.1",
     "typescript": "^2.1.0",
-
     "@types/node": "^6.0.42"
   },
-
   "scripts": {
     "build": "tsc",
     "postinstall": "tsc",
     "smoketest": "node build/examples/schedule.js",
-
     "pretest": "tsc -p test",
     "test": "tape build/test/test_*.js | faucet"
   }
