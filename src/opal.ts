@@ -33,14 +33,14 @@ export class Context {
         return world;
     }
 
-    async executeAt(node: distributed.OpalNode, func: (ctx: Context, ...params: (Weight<any> | Collection<any>)[]) => Promise<void>, ...params: [string, (Weight<any> | Collection<any>)][]): Promise<void> {
+    async executeAt(node: distributed.OpalNode, func: (ctx: Context, ...params: (Weight<any> | Collection<any> | OpalNode)[]) => Promise<void>, ...params: [string, (Weight<any> | Collection<any> | OpalNode)][]): Promise<void> {
         await distributed.executeAt(this, node, func, params);
     }
 
     async executeWith(node: distributed.OpalNode, func: (ctx: Context, node: OpalNode) => Promise<void>): Promise<void> {
         let token = await distributed.requestToken(this.localNode as OpalNode, node, func.toString());
-        let phony = await distributed.tokenizeRemoteNode(this.localNode as OpalNode, node, token);
-        await func(this, phony);
+        let phony = distributed.tokenizeRemoteNode(node, token);
+        await func(this, phony as any);
     }
 
     /**

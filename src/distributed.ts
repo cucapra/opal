@@ -10,49 +10,26 @@ import * as readline from "readline";
 import * as url from "url";
 import * as uuid from "uuid/v4";
 
-export abstract class OpalNode {
-    private tokens: { [index: string]: string } = {};
-    private uuid: string;
-
-    constructor(public readonly hostname: string, public readonly port: number) {
-        this.uuid = uuid();
-    }
-
-    public getIndexSignature(): string {
-        return `${this.hostname}:${this.port}:${this.uuid}`;
-    }
-
-    public storeToken(index: string, token: string) {
-        this.tokens[index] = token;
-    }
-
-    public hasToken(index: string, token: string) {
-        return this.tokens[index] === token;
-    }
+export interface RemoteOpalNode {
+    readonly hostname: string;
+    readonly port: number;
 }
 
-function phonyNodeConstructor(node: OpalNode, phonyFunction: (name: string) => any) {
-    let phonyNode: { [name: string]: any } = {};
+export abstract class OpalNode implements RemoteOpalNode {
+    private tokens: { [token: string]: null } = {};
 
-    let item = node;
-    while (item !== null) {
-        for (let member of Object.getOwnPropertyNames(item)) {
-            switch (member) {
-                case "tokens":
-                case "uuid":
-                case "getIndexSignature":
-                case "storeToken":
-                case "hasToken":
-                case "hostname":
-                case "port":
-                    break;
-                default:
-                    phonyNode[member] = phonyFunction(member);
-            }
-        }
-        item = Object.getPrototypeOf(item);
+    constructor(public readonly hostname: string, public readonly port: number) {
     }
-    return phonyNode;
+
+    public abstract getId(): string;
+
+    public storeToken(token: string) {
+        this.tokens[token] = null;
+    }
+
+    public hasToken(token: string) {
+        return this.tokens[token] === null;
+    }
 }
 
 /**
@@ -86,11 +63,11 @@ export async function launchOpalServer(node: OpalNode): Promise<string | never> 
 
     console.log(`Server is listening on http://${server.address().address}:${server.address().port}`);
 
+    let promises = [];
+
     while (true) {
-        // TODO why not handle ~infinitely~ many events here, no reason to force this to be hyper single threaded
-        // handle each request as it comes
         let [name, [req, resp]] = await util.eventToPromise<[http.IncomingMessage, http.ServerResponse]>(server, "request");
-        await handleRequest(node, req, resp);
+        promises.push(handleRequest(node, req, resp).catch(() => { }));
     }
 }
 
@@ -116,7 +93,7 @@ async function handleRequest(node: OpalNode, request: http.IncomingMessage, resp
             await executeEndpoint(node, data, response);
             break;
         case "/tokenize":
-            await tokenizeEndpoint(node, data, response);
+            await tokenizeEndpoint(node, data, request, response);
             break;
         case "/access":
             await accessEndpoint(node, data, response);
@@ -128,7 +105,7 @@ async function handleRequest(node: OpalNode, request: http.IncomingMessage, resp
 }
 
 // an OpalEntity is a value that persists across distributed worlds
-export type OpalEntity = Weight<any> | Collection<any>;
+export type OpalEntity = Weight<any> | Collection<any> | OpalNode;
 export type OpalEntityMap = [string, OpalEntity][];
 export type OpalRemoteFunction = (ctx: opal.Context, ...params: OpalEntity[]) => Promise<void>;
 
@@ -161,6 +138,21 @@ function serializeExecuteArg(arg: ExecuteArg, world: opal.World) {
                 __opal_type: "Node",
                 __opal_val: value.view()
             };
+        } else if (value instanceof OpalNode ||
+            value.__opal_is_untokenized_remote === true) {
+            return {
+                __opal_type: "UntokenizedRemoteNode",
+                hostname: value.hostname,
+                port: value.port
+            };
+        } else if (value.__opal_is_tokenized_remote === true) {
+            console.log(`Serializing ${value.port} as TokenizedRemoteNode`);
+            return {
+                __opal_type: "TokenizedRemoteNode",
+                token: value.__opal_tokenized_remote_token,
+                hostname: value.hostname,
+                port: value.port
+            };
         } else if (typeof value === "function") {
             throw new Error("Code shipping is not supported, weights/collections passed over the wire may only contain data.");
         } else {
@@ -180,6 +172,13 @@ function deserializeExecuteArg(serialized: string, world: opal.World) {
                     return new opal.Collection(world, value["__opal_val"]);
                 case "Node":
                     return PSet.set(value["__opal_val"]);
+                case "UntokenizedRemoteNode":
+                    return {
+                        hostname: value.hostname,
+                        port: value.port
+                    };
+                case "TokenizedRemoteNode":
+                    return tokenizeRemoteNode({ hostname: value.hostname, port: value.port }, value.token);
                 default:
                     throw Error(`Invalid opal type "${value["__opal_type"]}"`);
             }
@@ -207,13 +206,13 @@ async function executeEndpoint(localNode: OpalNode, data: string, response: http
 
         let resp: ExecuteResponse = {};
         for (let [name, val] of executeArg.params) {
-            let serialized;
             if (val instanceof Weight) {
-                serialized = await val.get(subWorld);
-            } else {
-                serialized = PSet.diff(val.lookup(ctx.world), val.lookup(subWorld));
+                await val.get(subWorld)
+                    .then((val) => { resp[name] = val; })
+                    .catch(() => { console.log(`No value set for ${name}`); });
+            } else if (val instanceof Collection) {
+                resp[name] = PSet.diff(val.lookup(ctx.world), val.lookup(subWorld));
             }
-            resp[name] = serialized;
         }
 
         response.end(JSON.stringify(resp, (name: any, value: any) => {
@@ -283,7 +282,7 @@ export async function executeAt(ctx: opal.Context, node: OpalNode, func: OpalRem
     }
 }
 
-async function sendDataToNode(node: OpalNode, endpoint: string, method: string, data: string) {
+function sendDataToNode(node: RemoteOpalNode, endpoint: string, method: string, data: string) {
     let options = {
         hostname: node.hostname,
         port: node.port,
@@ -313,7 +312,7 @@ async function sendDataToNode(node: OpalNode, endpoint: string, method: string, 
 }
 
 interface TokenizeRequest {
-    source: string;
+    id: string;
     request: string;
 }
 
@@ -322,9 +321,9 @@ interface TokenizeResponse {
 }
 
 
-async function tokenizeEndpoint(node: OpalNode, data: string, response: http.ServerResponse) {
+async function tokenizeEndpoint(localNode: OpalNode, data: string, request: http.IncomingMessage, response: http.ServerResponse) {
     let tokenizeRequest: TokenizeRequest = JSON.parse(data);
-    console.log(`Node ${tokenizeRequest.source} is requesting access to:\n${tokenizeRequest.request}`);
+    console.log(`Node ${tokenizeRequest.id} is requesting access to:\n${tokenizeRequest.request}`);
     let rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -353,7 +352,7 @@ async function tokenizeEndpoint(node: OpalNode, data: string, response: http.Ser
     let token: string | null;
     if (grant) {
         token = uuid();
-        node.storeToken(tokenizeRequest.source, token);
+        localNode.storeToken(token);
     } else {
         token = null;
     }
@@ -367,7 +366,7 @@ async function tokenizeEndpoint(node: OpalNode, data: string, response: http.Ser
 
 export async function requestToken(local: OpalNode, remote: OpalNode, description: string) {
     let request: TokenizeRequest = {
-        source: local.getIndexSignature(),
+        id: `${local.hostname}:${local.port}`,
         request: description
     };
     let response = await sendDataToNode(remote, "tokenize", "POST", JSON.stringify(request));
@@ -379,16 +378,34 @@ export async function requestToken(local: OpalNode, remote: OpalNode, descriptio
     }
 }
 
-export async function tokenizeRemoteNode(local: OpalNode, remote: OpalNode, token: string) {
-    return phonyNodeConstructor(remote, (name: string) => {
-        return (...args: any[]) => {
-            return accessRemoteFunction(local, remote, token, name, args);
-        };
-    }) as OpalNode;
+export function tokenizeRemoteNode(remote: RemoteOpalNode, token: string): RemoteOpalNode {
+    return new Proxy<RemoteOpalNode>(
+        {
+        } as RemoteOpalNode, {
+            get: (target: any, name: any) => {
+                switch (name) {
+                    case "hostname":
+                        return remote.hostname;
+                    case "port":
+                        return remote.port;
+                    case "__opal_is_tokenized_remote":
+                        return true;
+                    case "__opal_tokenized_remote_token":
+                        return token;
+                    case "toJSON":
+                    case Symbol.toPrimitive:
+                        return undefined;
+                    default:
+                        return async (...args: any[]) => {
+                            return await accessRemoteFunction(remote, token, name, args);
+                        };
+                }
+            }
+        }
+    );
 }
 
 interface AccessRequest {
-    source: string;
     accessToken: string;
     functionName: string;
     args: any[];
@@ -403,7 +420,7 @@ async function accessEndpoint(node: OpalNode, data: string, response: http.Serve
     let request: AccessRequest = JSON.parse(data);
     let accessResponse: AccessResponse;
 
-    if (node.hasToken(request.source, request.accessToken)) {
+    if (node.hasToken(request.accessToken)) {
         accessResponse = {
             success: true,
             result: (node as any)[request.functionName](...request.args)
@@ -417,13 +434,13 @@ async function accessEndpoint(node: OpalNode, data: string, response: http.Serve
     response.end(JSON.stringify(accessResponse));
 }
 
-async function accessRemoteFunction(local: OpalNode, remote: OpalNode, token: string, functionName: string, args: any[]) {
+async function accessRemoteFunction(remote: RemoteOpalNode, token: string, functionName: string, args: any[]) {
     let accessRequest: AccessRequest = {
-        source: local.getIndexSignature(),
         accessToken: token,
         functionName: functionName,
         args: args
     };
+
     let response = await sendDataToNode(remote, "access", "POST", JSON.stringify(accessRequest));
     let accessResponse: AccessResponse = JSON.parse(response);
     if (!accessResponse.success) {
