@@ -229,6 +229,7 @@ export interface EditActions<T> {
     delete?: (value: T) => void;
 }
 
+export let currentlyExecutingLazy: Lazy;
 
 /**
  * An abstract mechanism for coordinating lazy evaluation via promises.
@@ -301,6 +302,7 @@ export class Lazy {
             console.assert(this.waiters === 1);
             let next = this.next;
             this.next = null;
+            currentlyExecutingLazy = this;
             next();
         }
     }

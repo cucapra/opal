@@ -1,4 +1,4 @@
-import { World, TopWorld, Weight, Collection, Edit } from './world';
+import { World, TopWorld, Weight, Collection, Edit, Lazy, currentlyExecutingLazy } from './world';
 import * as PSet from './pset';
 import { orderBy, nchk } from './util';
 import * as distributed from './distributed';
@@ -11,6 +11,7 @@ export { World, Weight, Collection, Edit, PSet, OpalNode };
  */
 export type AsyncFunc = (ctx: Context) => Promise<void>;
 
+let worldToCtxMap = new Map<Lazy, Context>();
 
 /**
  * A wrapper for all the API calls available to OPAL code.
@@ -19,7 +20,9 @@ export type AsyncFunc = (ctx: Context) => Promise<void>;
  * convenient ways to access it.
  */
 export class Context {
-    constructor(public world: World, private localNode?: OpalNode) { }
+    constructor(public world: World, private localNode?: OpalNode) {
+        worldToCtxMap.set(world, this);
+    }
 
     /**
      * Create a new child world.
@@ -240,3 +243,16 @@ export async function opal(func: AsyncFunc, node?: OpalNode): Promise<void> {
         throw Error(`Opal server failed with ${res}`);
     }
 }
+
+export let ctx = new Proxy<Context>({} as Context, {
+    get: (target: Context, prop: PropertyKey) => {
+        let ctx = worldToCtxMap.get(currentlyExecutingLazy);
+        let res = (ctx as any)[prop];
+
+        if (res instanceof Function) {
+            return res.bind(ctx);
+        } else {
+            return res;
+        }
+    }
+});
