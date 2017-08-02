@@ -194,8 +194,9 @@ function deserializeExecuteArg(serialized: string, world: opal.World) {
 
 async function executeEndpoint(localNode: OpalNode, data: string, response: http.ServerResponse) {
     let topworld: World = new TopWorld(async () => {
-        let executeArg = deserializeExecuteArg(data, topworld);
         let ctx = new opal.Context(topworld, localNode);
+
+        let executeArg = deserializeExecuteArg(data, topworld);
 
         let realArgs = executeArg.params.map((a: [string, OpalEntity]) => a[1]);
         let subWorld = ctx.hypothetical(async (ctx: opal.Context) => {
@@ -423,7 +424,7 @@ async function accessEndpoint(node: OpalNode, data: string, response: http.Serve
     if (node.hasToken(request.accessToken)) {
         accessResponse = {
             success: true,
-            result: (node as any)[request.functionName](...request.args)
+            result: await (node as any)[request.functionName](...request.args)
         };
     } else {
         accessResponse = {
