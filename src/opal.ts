@@ -244,12 +244,24 @@ export async function opal(func: AsyncFunc, node?: OpalNode): Promise<void> {
     }
 }
 
+/**
+ * Global context that proxies field accesses through to the currently
+ * executing Opal context.
+ *
+ * TODO: this is relatively incomplete, and functions mostly as a
+ * proof-of-concept. More methods should be added, or a different
+ * solution should be found that's less vulnerable to misuse.
+ */
 export let ctx = new Proxy<Context>({} as Context, {
     get: (target: Context, prop: PropertyKey) => {
         let ctx = worldToCtxMap.get(currentlyExecutingLazy);
+        // delegate the access to the actual context
         let res = (ctx as any)[prop];
 
         if (res instanceof Function) {
+            // functions are assumed to be methods -- bind the "this"
+            // keyword to this context, otherwise unexpected behavior
+            // happens when mehtods acccess "this"
             return res.bind(ctx);
         } else {
             return res;
