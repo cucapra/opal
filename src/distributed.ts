@@ -21,8 +21,6 @@ export abstract class OpalNode implements RemoteOpalNode {
     constructor(public readonly hostname: string, public readonly port: number) {
     }
 
-    public abstract getId(): string;
-
     public storeToken(token: string) {
         this.tokens[token] = null;
     }
