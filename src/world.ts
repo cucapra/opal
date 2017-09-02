@@ -88,6 +88,7 @@ export class Collection<T> {
      * `Collection`.
      */
     sets: Map<World, PSet.Node<T>>;
+    onTopCommits: Array<(set: Set<T>) => void>;
 
     /**
      * Create a new `Collection`.
@@ -103,6 +104,7 @@ export class Collection<T> {
 
         this.sets = new Map();
         this.sets.set(owner, init);
+        this.onTopCommits = [];
     }
 
     /**
@@ -124,6 +126,13 @@ export class Collection<T> {
     }
 
     /**
+     * Add a listener for when the top world is merged into
+     */
+    onTopCommit(func: (set: Set<T>) => void) {
+        this.onTopCommits.push(func);
+    }
+
+    /**
      * Replace the current set for a given world.
      *
      * The world must have an old set associated with it.
@@ -132,6 +141,10 @@ export class Collection<T> {
         console.assert(this.sets.has(world),
             "updating set that does not exist: %j not in %j", world, this.sets);
         this.sets.set(world, set);
+        if (world instanceof TopWorld) {
+          let view = set.view();
+          this.onTopCommits.forEach((f) => f(view));
+        }
     }
 
     /**
