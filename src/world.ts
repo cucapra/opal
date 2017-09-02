@@ -135,7 +135,7 @@ export class Collection<T> {
     }
 
     /**
-     * Apply any updates in a child wolrd to its parent's view of the
+     * Apply any updates in a child world to its parent's view of the
      * collection.
      */
     merge(world: World) {
