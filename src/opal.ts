@@ -74,8 +74,13 @@ export class Context {
     /**
      * Create a new `Collection` based in this world.
      */
-    collection<T>(): Collection<T> {
-        let c = new Collection<T>(this.world);
+    collection<T>(constructor?: (world: World) => Collection<T>): Collection<T> {
+        let c: Collection<T>;
+        if (constructor) {
+            c = constructor(this.world);
+        } else {
+            c = new Collection<T>(this.world);
+        }
         this.world.collections.add(c);
         return c;
     }
