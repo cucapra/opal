@@ -175,7 +175,7 @@ export class Calendar extends ExternalCollection<Event> {
 
   // The `send` method implements the "real" operations that affect the
   // outside world.
-  send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]): PSet.Node<Event> {
+  async send(old: PSet.Node<Event>, ops: PSet.Operation<Event>[]): Promise<PSet.Node<Event>> {
     // Get the *old* set of events. We'll update this local copy according
     // to all the operations in the log.
     let events: Set<Event> = old.view();
@@ -187,14 +187,16 @@ export class Calendar extends ExternalCollection<Event> {
       if (op instanceof PSet.Add) {
         let add = op;
         let data = add.value.toOffice();
-        this.user.addEvent(data, (error, result) => {
-          if (error) {
-            console.log("error adding event:", error);
-          } else {
-            // TODO Await the completion of the request before returning.
-            // (This requires `send` to be an async call.)
-            add.value.id = result.Id;
-          }
+        await new Promise<void>((resolve, reject) => {
+          this.user.addEvent(data, (error, result) => {
+            if (error) {
+              console.log("error adding event:", error);
+              reject(error);
+            } else {
+              add.value.id = result.Id;
+              resolve();
+            }
+          });
         });
 
       // Delete an event.
@@ -203,10 +205,17 @@ export class Calendar extends ExternalCollection<Event> {
 
       // Modify an event.
       } else if (op instanceof Modify) {
-        this.user.modifyEvent(op.id, changeToOffice(op.changes), (error, result) => {
-          if (error) {
-            console.log("error modifying event:", error);
-          }
+        // alias op as mod to avoid javascript scope messing with the promise
+        let mod: Modify = op;
+        await new Promise<void>((resolve, reject) => {
+          this.user.modifyEvent(mod.id, changeToOffice(mod.changes), (error, result) => {
+            if (error) {
+              console.log("error modifying event:", error);
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
         });
       }
 
