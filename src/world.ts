@@ -128,7 +128,7 @@ export class Collection<T> {
      *
      * The world must have an old set associated with it.
      */
-    update(world: World, set: PSet.Node<T>) {
+    async update(world: World, set: PSet.Node<T>) {
         console.assert(this.sets.has(world),
             "updating set that does not exist: %j not in %j", world, this.sets);
         this.sets.set(world, set);
@@ -138,11 +138,11 @@ export class Collection<T> {
      * Apply any updates in a child world to its parent's view of the
      * collection.
      */
-    merge(world: World) {
+    async merge(world: World) {
         if (this.sets.has(world)) {
             let child_set = this.sets.get(world) !;
             let parent_set = this.lookup(nchk(world.parent));
-            this.update(nchk(world.parent), PSet.merge(parent_set, child_set));
+            await this.update(nchk(world.parent), PSet.merge(parent_set, child_set));
         }
     }
 }
@@ -160,19 +160,19 @@ export abstract class ExternalCollection<T> extends Collection<T> {
      * This is called whenever operations are applied in the top-level OPAL
      * world or committed to the top-level world from some child world.
      */
-    abstract send(old: PSet.Node<T>, ops: PSet.Operation<T>[]): PSet.Node<T>;
+    abstract async send(old: PSet.Node<T>, ops: PSet.Operation<T>[]): Promise<PSet.Node<T>>;
 
-    update(world: World, set: PSet.Node<T>) {
+    async update(world: World, set: PSet.Node<T>) {
         if (world instanceof TopWorld) {
             // Assume for now that the new set is a *descendant* of the old set, so
             // we just need to replay the operations "in between" the old and new
             // sets.
             let old = this.lookup(world);
             let log = set.log(old);
-            let newset = this.send(old, log);
-            super.update(world, newset);
+            let newset = await this.send(old, log);
+            await super.update(world, newset);
         } else {
-            super.update(world, set);
+            await super.update(world, set);
         }
     }
 }

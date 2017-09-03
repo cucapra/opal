@@ -167,7 +167,7 @@ export class Context {
 
         // Merge all of its modified Collections.
         for (let coll of subworld.collections) {
-            coll.merge(subworld);
+            await coll.merge(subworld);
         }
     }
 
