@@ -1,9 +1,9 @@
-import { World, TopWorld, Weight, Collection, Edit } from './world';
+import { World, TopWorld, Weight, Collection, ExternalCollection, Edit } from './world';
 import * as PSet from './pset';
 import { orderBy, nchk } from './util';
 import * as distributed from './distributed';
 import { OpalNode } from './distributed';
-export { World, Weight, Collection, Edit, PSet, OpalNode };
+export { World, Weight, Collection, ExternalCollection, Edit, PSet, OpalNode };
 
 
 /**
