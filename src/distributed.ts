@@ -424,7 +424,7 @@ async function accessEndpoint(node: OpalNode, data: string, response: http.Serve
     if (node.hasToken(request.accessToken)) {
         accessResponse = {
             success: true,
-            result: await (node as any)[request.functionName](ctx, ...request.args)
+            result: await (node as any)[request.functionName](ctx, ...request.args.slice(1))
         };
     } else {
         accessResponse = {
