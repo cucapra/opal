@@ -422,10 +422,16 @@ async function accessEndpoint(node: OpalNode, data: string, response: http.Serve
     let ctx = opal.topctx;
 
     if (node.hasToken(request.accessToken)) {
+        let result = ctx.weight<any>();
+        let world = ctx.hypothetical(async (ctx: opal.Context) => {
+          ctx.set(result, await (node as any)[request.functionName](ctx, ...request.args.slice(1)));
+        });
+        ctx.commit(world);
+
         accessResponse = {
             success: true,
-            result: await (node as any)[request.functionName](ctx, ...request.args.slice(1))
-        };
+            result: await ctx.get(result, world),
+        }
     } else {
         accessResponse = {
             success: false,
