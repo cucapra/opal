@@ -229,13 +229,19 @@ export class Context {
 }
 
 
+export let topctx: Context;
+
+
 /**
  * Create and invoke a top-level OPAL world.
  *
  * @returns A promise that resolves when OPAL execution finishes.
  */
 export async function opal(func: AsyncFunc, node?: OpalNode): Promise<void> {
-    let world: World = new TopWorld(() => func(new Context(world, node)));
+    let world: World = new TopWorld(() => {
+      topctx = new Context(world, node);
+      return func(topctx);
+    });
     world.acquire();  // Run to completion.
     let res = await Promise.race([
         world.finish(),
