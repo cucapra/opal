@@ -405,6 +405,7 @@ export function tokenizeRemoteNode(remote: RemoteOpalNode, token: string): Remot
 }
 
 interface AccessRequest {
+     // TODO: this should include some information about the context
     accessToken: string;
     functionName: string;
     args: any[];
@@ -418,11 +419,12 @@ interface AccessResponse {
 async function accessEndpoint(node: OpalNode, data: string, response: http.ServerResponse) {
     let request: AccessRequest = JSON.parse(data);
     let accessResponse: AccessResponse;
+    let ctx = opal.topctx;
 
     if (node.hasToken(request.accessToken)) {
         accessResponse = {
             success: true,
-            result: await (node as any)[request.functionName](...request.args)
+            result: await (node as any)[request.functionName](ctx, ...request.args)
         };
     } else {
         accessResponse = {
