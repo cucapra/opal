@@ -228,6 +228,10 @@ export class Context {
     }
 }
 
+export async function launchNode(node: OpalNode) {
+    await distributed.launchOpalServer(node);
+}
+
 
 export let topctx: Context;
 
